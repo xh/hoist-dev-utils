@@ -28,6 +28,9 @@ const _ = require('lodash'),
  *      + appName - user-facing display name of overall web application - baked into client as XH.appName
  *      + appVersion - client version - baked into client as XH.appVersion
  *      + appBuild - build number / tag - baked into client as XH.appBuild
+ *      + baseUrl - root context/path prepended to all relative URLs called via FetchService (Hoist's core service
+ *                   for making Ajax requests). Defaults to /api/ in production mode to work with proxy-based
+ *                   deployments and to localhost:8080 in dev mode to point to a local Grails server.
  *
  * This project's package.json file defines simple script entry points to either build or run the dev-server.
  *      + yarn build - run a production build
@@ -41,6 +44,7 @@ function configureWebpack(env = {}) {
         appName = env.appName,
         appVersion = env.appVersion || 'UNKNOWN',
         appBuild = env.appBuild || 'UNKNOWN',
+        baseUrl = env.baseUrl || (prodBuild ? '/api/' : 'http://localhost:8080/'),
         favicon = env.favicon || null,
         devServerPort = env.devServerPort || 3000;
 
@@ -199,11 +203,10 @@ function configureWebpack(env = {}) {
             // We can discuss if this is a useful pattern for XH apps or if we want to go another route.
             new webpack.DefinePlugin({
                 'process.env': {NODE_ENV: JSON.stringify(process.env.NODE_ENV)},
-                xhIsLocalDevelopment: JSON.stringify(!prodBuild),
-                xhInlineHoist: JSON.stringify(inlineHoist),
                 xhAppName: JSON.stringify(appName),
                 xhAppVersion: JSON.stringify(appVersion),
-                xhAppBuild: JSON.stringify(appBuild)
+                xhAppBuild: JSON.stringify(appBuild),
+                xhBaseUrl: JSON.stringify(baseUrl)
             }),
 
             // Extract common (i.e. library, vendor) code into a dedicated chunk for re-use across app updates
