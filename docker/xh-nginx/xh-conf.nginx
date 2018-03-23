@@ -9,7 +9,7 @@ server {
         index  index.html;
     }
 
-    # Proxy to Grails back-end
+    # Proxy to Grails back-end - note this *requires* xh-tomcat to be defined by a docker swarm (or mocked via etc/hosts)
     location /api/ {
         proxy_pass http://xh-tomcat:8080/;
 
