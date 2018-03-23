@@ -9,4 +9,4 @@ RUN cd webapps && \
   rm -rf host-manager
 
 # Set standard Java Opts with elevated memory allocation
-ENV JAVA_OPTS="$JAVA_OPTS -Xmx4g"
+ENV JAVA_OPTS="$JAVA_OPTS -Xmx2g"
