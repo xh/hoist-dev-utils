@@ -1,67 +1,62 @@
-http {
-    sendfile on;
+gzip on;
+gzip_comp_level 2;
+gzip_min_length 1000;
+gzip_proxied any;
+gzip_types application/json application/javascript text/css;
 
-    gzip on;
-    gzip_comp_level 2;
-    gzip_min_length 1000;
-    gzip_proxied any;
-    gzip_types application/json application/javascript text/css text/html;
+map $sent_http_content_type $expires {
+    default                 off;
+    application/javascript  max;
+    font/woff2              max;
+    image/png               max;
+    text/css                max;
+    text/html               epoch;
+}
 
-    map $sent_http_content_type $expires {
-        default                 off;
-        application/javascript  max;
-        font/woff2              max;
-        image/png               max;
-        text/css                max;
-        text/html               epoch;
+server {
+    listen       80;
+    server_name  localhost;
+
+    # Static Javascript client assets
+    location / {
+        root   /usr/share/nginx/html;
+        index  index.html;
+        expires $expires;
     }
 
-    server {
-        listen       80;
-        server_name  localhost;
+    # Proxy to Grails back-end - note this *requires* xh-tomcat to be defined by a docker swarm (or mocked via etc/hosts)
+    location /api/ {
+        proxy_pass http://xh-tomcat:8080/;
 
-        # Static Javascript client assets
-        location / {
-            root   /usr/share/nginx/html;
-            index  index.html;
-            expires $expires;
-        }
+        # Standard proxy headers
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Server $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
 
-        # Proxy to Grails back-end - note this *requires* xh-tomcat to be defined by a docker swarm (or mocked via etc/hosts)
-        location /api/ {
-            proxy_pass http://xh-tomcat:8080/;
+        # Required for NTLM SSO when using Jespa
+        proxy_set_header Jespa-Connection-Id $remote_addr:$remote_port;
 
-            # Standard proxy headers
-            proxy_set_header Host $http_host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-Host $host;
-            proxy_set_header X-Forwarded-Server $host;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        # Additional SSL support
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_redirect http:// $scheme://;
 
-            # Required for NTLM SSO when using Jespa
-            proxy_set_header Jespa-Connection-Id $remote_addr:$remote_port;
+        # Required for websockets support
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
 
-            # Additional SSL support
-            proxy_set_header X-Forwarded-Proto $scheme;
-            proxy_redirect http:// $scheme://;
-
-            # Required for websockets support
-            proxy_http_version 1.1;
-            proxy_set_header Upgrade $http_upgrade;
-            proxy_set_header Connection "upgrade";
-
-            # Longer timeouts to allow long-running calls
-            proxy_connect_timeout 120;
-            proxy_read_timeout 120;
-            proxy_send_timeout 120;
-        }
-
-        # TODO - basic sane-looking pages
-        #error_page  404              /404.html;
-        error_page   500 502 503 504  /50x.html;
-        location = /50x.html {
-            root   /usr/share/nginx/html;
-        }
+        # Longer timeouts to allow long-running calls
+        proxy_connect_timeout 120;
+        proxy_read_timeout 120;
+        proxy_send_timeout 120;
     }
 
+    # TODO - basic sane-looking pages
+    #error_page  404              /404.html;
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   /usr/share/nginx/html;
+    }
 }
