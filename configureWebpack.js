@@ -16,40 +16,37 @@ const _ = require('lodash'),
     basePath = fs.realpathSync(process.cwd());
 
 /**
- * Consolidated Webpack configuration for both dev-time and production builds. Built largely from the example generated
- * by an ejected create-react-app (~v1.5 aka "CRA") project, simplified as much as possible to provide what we need.
+ * Consolidated Webpack configuration for both dev-time and production builds of Hoist React web applications.
  *
- * Two custom environment variables are checked and can be passed into webpack / webpack-dev-server via --env flags.
- *      + prodBuild - true to indicate this is a build (as opposed to startup of webpack-dev-server)
- *      + inlineHoist - true to use an inline (checked-out) copy of hoist-react when running the dev server, as opposed
- *                    to using the downloaded dependency. This allows hoist-react developers to test plugin changes.
- *                    Has no effect (i.e. always set to false) for builds.
- *      + analyzeBundles - true to launch an interactive bundle analyzer to review output bundles, contents, and sizes.
- *      + appName - user-facing display name of overall web application - baked into client as XH.appName
- *      + appVersion - client version - baked into client as XH.appVersion
- *      + appBuild - build number / tag - baked into client as XH.appBuild
- *      + baseUrl - root context/path prepended to all relative URLs called via FetchService (Hoist's core service
- *                   for making Ajax requests). Defaults to /api/ in production mode to work with proxy-based
- *                   deployments and to localhost:8080 in dev mode to point to a local Grails server.
- *
- * This project's package.json file defines simple script entry points to either build or run the dev-server.
- *      + yarn build - run a production build
- *      + yarn start - start webpack-dev-server w/the packaged version of hoist-react
- *      + yarn startWithHoist - as above, w/inline version of hoist-react
+ * @param {Object} env - config with values passed in from app-level webpack config or the CLI runner via --env flags
+ * @param {string} env.appName - user-facing display name of overall web application - baked into client as XH.appName
+ * @param {boolean} [env.prodBuild=false] - true to indicate this is a build (as opposed to run of webpack-dev-server)
+ * @param {boolean} [env.inlineHoist=false] - true to use an inline (checked-out) copy of hoist-react when running the
+ *      dev server, as opposed to using the downloaded dependency. This allows hoist-react developers to test
+ *      plugin changes. Has no effect (i.e. always set to false) for builds.
+ * @param {boolean} [env.analyzeBundles=false] - true to launch an interactive bundle analyzer to review output bundles,
+ *      contents, and sizes.
+ * @param {string} [env.appVersion] - client version - baked into client as XH.appVersion
+ * @param {string} [env.appBuild] - build/git tag - baked into client as XH.appBuild
+ * @param {string} [env.baseUrl] - root context/path prepended to all relative URLs called via FetchService (the core
+ *      Hoist service for making Ajax requests). Defaults to /api/ in production mode to work with proxy-based
+ *      deployments and to localhost:8080 in dev mode to point to a local Grails server - these typically should not
+ *      need to be changed at the app level.
+ * @param {string} [env.favicon] - relative path to a favicon source image to be processed
+ * @param {string} [env.devServerOpenPage] - string path to open automatically when webpack-dev-server starts.
+ *      Leave null to disable automatic page open on dev server startup.
  */
-function configureWebpack(env = {}) {
-    const prodBuild = !!env.prodBuild,
-        inlineHoist = !prodBuild && !!env.inlineHoist,
-        analyzeBundles = !!env.analyzeBundles,
-        appName = env.appName,
+function configureWebpack(env) {
+    const appName = env.appName,
+        prodBuild = env.prodBuild === true,
+        inlineHoist = !prodBuild && env.inlineHoist === true,
+        analyzeBundles = env.analyzeBundles === true,
         appVersion = env.appVersion || 'UNKNOWN',
         appBuild = env.appBuild || 'UNKNOWN',
         baseUrl = env.baseUrl || (prodBuild ? '/api/' : 'http://localhost:8080/'),
         favicon = env.favicon || null,
         devServerPort = env.devServerPort || 3000;
 
-    // CRA depends on these env. variables being set. Specifically, the babel-preset-react-app we still use checks them
-    // to switch React transpilation between dev and prod modes. (Might be other reasons why we want them defined.)
     process.env.BABEL_ENV = prodBuild ? 'production' : 'development';
     process.env.NODE_ENV = prodBuild ? 'production' : 'development';
 
@@ -118,7 +115,7 @@ function configureWebpack(env = {}) {
         },
 
         module: {
-            // From CRA - flags missing exports as a failure vs. warning
+            // Flag missing exports as a failure vs. warning
             strictExportPresence: true,
 
             rules: [
@@ -287,11 +284,16 @@ function configureWebpack(env = {}) {
             overlay: true,
             compress: true,
             hot: true,
+            open: env.devServerOpenPage != null,
+            openPage: env.devServerOpenPage,
+            // Support HTML5 history routes for apps, with /appName/ as the base route for each
             historyApiFallback: {
-                rewrites: [
-                    { from: /^\/app/, to: '/app/index.html' },
-                    { from: /^\/admin/, to: '/admin/index.html' }
-                ]
+                rewrites: apps.map(app => {
+                    return {
+                        from: new RegExp(`^/${app.name}`),
+                        to: `/${app.name}/index.html`
+                    };
+                })
             }
         }
     };
