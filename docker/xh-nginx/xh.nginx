@@ -32,27 +32,23 @@ map $sent_http_content_type $expires {
 #        return 301 $scheme://$host/app/;
 #    }
 #
-#    # Static JS/CSS/etc assets not matching a more specific selector below
+#    # Static JS/CSS/etc assets not matching a more specific app selector below
 #    location / {
 #        expires $expires;
 #    }
 #
-#    # Paths w/o a trailing slash (or dots - i.e. not a file path)...
-#    location ~ ^([^.\?]*[^/])$ {
-#        try_files                 $uri @addslash;
+#    # App entry points - ensure trailing slash, try for match, fallback to app index for sub-routes
+#    location = /admin {
+#        return 301 $uri/;
 #    }
-#
-#    # ...get a trailing slash added automatically
-#    location @addslash {
-#        return                    301 $uri/;
-#    }
-#
-#    # App entry points - look for actual match, default to app index for sub-routes
 #    location /admin/ {
 #        try_files $uri /admin/index.html;
 #        expires $expires;
 #    }
 #
+#    location = /app {
+#        return 301 $uri/;
+#    }
 #    location /app/ {
 #        try_files $uri /app/index.html;
 #        expires $expires;

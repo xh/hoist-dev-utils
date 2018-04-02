@@ -7,6 +7,6 @@ ENV XH_NGINX_CONTENT_PATH=/usr/share/nginx/html
 # Clear out default nginx config and welcome page
 RUN rm $XH_NGINX_CONFIG_PATH/default.conf && rm $XH_NGINX_CONTENT_PATH/*
 
-# Copy in custom config / partials
-COPY xh-nginx.conf $XH_NGINX_CONFIG_PATH/
+# Copy in custom config / partials (note local file is xh.nginx vs xh.conf only for IntelliJ plugin support)
+COPY xh.nginx $XH_NGINX_CONFIG_PATH/xh.conf
 COPY includes $XH_NGINX_CONFIG_INCL_PATH/
