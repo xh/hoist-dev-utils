@@ -288,7 +288,10 @@ function configureWebpack(env = {}) {
             compress: true,
             hot: true,
             historyApiFallback: {
-                disableDotRule: true  // from CRA - unclear if needed
+                rewrites: [
+                    { from: /^\/app/, to: '/app/index.html' },
+                    { from: /^\/admin/, to: '/admin/index.html' }
+                ]
             }
         }
     };
