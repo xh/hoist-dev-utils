@@ -12,9 +12,9 @@
     "configureWebpack.js"
   ],
   "dependencies": {
+    "@xh/eslint-config": "~0.1.0",
     "autoprefixer": "~8.2.0",
     "babel-core": "~6.26.0",
-    "babel-eslint": "~8.2.2",
     "babel-loader": "~7.1.4",
     "babel-plugin-transform-decorators-legacy": "~1.3.4",
     "babel-preset-react-app": "~3.1.1",
@@ -24,7 +24,6 @@
     "css-loader": "~0.28.11",
     "eslint": "~4.19.1",
     "eslint-loader": "~2.0.0",
-    "eslint-plugin-react": "~7.7.0",
     "extract-text-webpack-plugin": "~3.0.2",
     "favicons-webpack-plugin": "~0.0.8",
     "file-loader": "~1.1.11",
