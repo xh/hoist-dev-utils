@@ -45,7 +45,11 @@ module.exports = {
         'react/jsx-uses-react': 2,
         'react/jsx-uses-vars': 2,
 
-        // Hoist - enabled
+        // Hoist - enabled / customized
+        'no-unused-vars': [2, {
+            ignoreRestSiblings: true,
+            args: 'none'
+        }],
         'array-bracket-spacing': [2, 'never'],
         'consistent-this': [2, 'me'],
         'comma-dangle': 2,
