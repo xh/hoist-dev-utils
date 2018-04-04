@@ -18,6 +18,10 @@ const _ = require('lodash'),
 /**
  * Consolidated Webpack configuration for both dev-time and production builds of Hoist React web applications.
  *
+ * Sample commands to run configurations produced by this method include:
+ *      `webpack --env.prodBuild --env.appVersion=1.2.3` to trigger a build at version 1.2.3
+ *      `webpack-dev-server --env.inlineHoist` to run webpack dev server w/hoist-react in inline mode
+ *
  * @param {Object} env - config with values passed in from app-level webpack config or the CLI runner via --env flags
  * @param {string} env.appName - user-facing display name of overall web application - baked into client as XH.appName
  * @param {boolean} [env.prodBuild=false] - true to indicate this is a build (as opposed to run of webpack-dev-server)
