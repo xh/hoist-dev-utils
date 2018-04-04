@@ -78,9 +78,9 @@
     lodash "^4.2.0"
     to-fast-properties "^2.0.0"
 
-"@xh/eslint-config@~0.1.0":
-  version "0.1.0"
-  resolved "https://repo.xh.io/repository/npm-hosted/@xh/eslint-config/-/eslint-config-0.1.0.tgz#c0df2d1179512d03db6096a45a7b48449d348acf"
+"@xh/eslint-config@~0.1.1":
+  version "0.1.1"
+  resolved "https://repo.xh.io/repository/npm-hosted/@xh/eslint-config/-/eslint-config-0.1.1.tgz#7c25731e8b2a31960c20b203b9fc7bbc6be75d5a"
   dependencies:
     babel-eslint "~8.2.2"
     eslint "~4.19.1"
