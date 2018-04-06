@@ -55,10 +55,10 @@ function configureWebpack(env) {
     process.env.NODE_ENV = prodBuild ? 'production' : 'development';
 
     console.log('/-----------------------------------------------/');
-    console.log(`Configuring ${appName} v${appVersion}`);
+    console.log(`  Configuring ${appName} v${appVersion}`);
     console.log('/-----------------------------------------------/');
-    console.log(`🚀  Production build: ${printBool(prodBuild)}`);
-    console.log(`🏗️  Inline Hoist: ${printBool(inlineHoist)}`);
+    console.log(`  🚀  Production build: ${printBool(prodBuild)}`);
+    console.log(`  🏗️  Inline Hoist: ${printBool(inlineHoist)}`);
     if (analyzeBundles) console.log('🎁  Bundle analysis enabled - will launch after webpack completes.');
     console.log('/-----------------------------------------------/');
 
@@ -456,13 +456,14 @@ const extraPluginsDev = () => {
 };
 
 const printBool = v => {
-    const oks = ['yes', 'yep', 'sure', 'ok'],
-        nos = ['no', 'nope', 'nah', 'never'],
-        rand = Math.floor(Math.random()*4);
+    const oks = ['true', 'yes', 'yep', 'sure', 'ok', 'you bet', 'happy to', 'please', 'for sure', '+1', 'oui', 'agreed', 'certainly', 'aye', 'affirmative'],
+        nos = ['false', 'no', 'nope', 'nah', 'never', 'no way', 'uh-uh', 'not today', 'pass', 'nyet', 'meh', 'negative', 'nay'],
+        answers = v ? oks : nos,
+        answer = ` ${answers[Math.floor(Math.random() * answers.length)]} `;
 
     return v ?
-        chalk.whiteBright.bgGreen(` ${oks[rand]} `) :
-        chalk.whiteBright.bgRed(` ${nos[rand]} `);
+        chalk.whiteBright.bgGreen(answer) :
+        chalk.whiteBright.bgRed(answer);
 };
 
 module.exports = configureWebpack;
