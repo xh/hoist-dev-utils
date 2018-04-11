@@ -18,7 +18,8 @@ module.exports = {
         xhAppName: false,
         xhAppVersion: false,
         xhAppBuild: false,
-        xhBaseUrl: false
+        xhBaseUrl: false,
+        xhAgGridLicenseKey: false
     },
 
     env: {

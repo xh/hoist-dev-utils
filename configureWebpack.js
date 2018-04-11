@@ -36,6 +36,7 @@ const _ = require('lodash'),
  *      Hoist service for making Ajax requests). Defaults to /api/ in production mode to work with proxy-based
  *      deployments and to localhost:8080 in dev mode to point to a local Grails server - these typically should not
  *      need to be changed at the app level.
+ * @param {string} env.agGridLicenseKey - client-supplied key for appropriate ag-Grid enterprise license.
  * @param {string} [env.favicon] - relative path to a favicon source image to be processed
  * @param {string} [env.devServerOpenPage] - string path to open automatically when webpack-dev-server starts.
  *      Leave null to disable automatic page open on dev server startup.
@@ -199,15 +200,13 @@ function configureWebpack(env) {
             new CleanWebpackPlugin([outPath], {verbose: false}),
 
             // Inject global constants at compile time.
-            // process.env is a recommended export due to use within libs to determine prod vs. dev-time behavior.
-            // xhIsLocalDevelopment is referenced within FetchService to prepend localhost:8080 to all URLs.
-            // We can discuss if this is a useful pattern for XH apps or if we want to go another route.
             new webpack.DefinePlugin({
                 'process.env': {NODE_ENV: JSON.stringify(process.env.NODE_ENV)},
                 xhAppName: JSON.stringify(appName),
                 xhAppVersion: JSON.stringify(appVersion),
                 xhAppBuild: JSON.stringify(appBuild),
-                xhBaseUrl: JSON.stringify(baseUrl)
+                xhBaseUrl: JSON.stringify(baseUrl),
+                xhAgGridLicenseKey: JSON.stringify(env.agGridLicenseKey)
             }),
 
             // Extract common (i.e. library, vendor) code into a dedicated chunk for re-use across app updates
