@@ -12,7 +12,7 @@
     "configureWebpack.js"
   ],
   "dependencies": {
-    "@xh/eslint-config": "~0.1.2",
+    "@xh/eslint-config": "~0.2.0",
     "autoprefixer": "~8.2.0",
     "babel-core": "~6.26.0",
     "babel-loader": "~7.1.4",
