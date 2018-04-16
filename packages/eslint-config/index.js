@@ -13,15 +13,6 @@ module.exports = {
         }
     },
 
-    globals: {
-        XH: false,
-        xhAppName: false,
-        xhAppVersion: false,
-        xhAppBuild: false,
-        xhBaseUrl: false,
-        xhAgGridLicenseKey: false
-    },
-
     env: {
         browser: true,
         commonjs: true,
