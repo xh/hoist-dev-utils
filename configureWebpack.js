@@ -22,27 +22,36 @@ const _ = require('lodash'),
  *      `webpack --env.prodBuild --env.appVersion=1.2.3` to trigger a build at version 1.2.3
  *      `webpack-dev-server --env.inlineHoist` to run webpack dev server w/hoist-react in inline mode
  *
- * @param {Object} env - config with values passed in from app-level webpack config or the CLI runner via --env flags
- * @param {string} env.appName - user-facing display name of overall web application - baked into client as XH.appName
- * @param {boolean} [env.prodBuild=false] - true to indicate this is a build (as opposed to run of webpack-dev-server)
- * @param {boolean} [env.inlineHoist=false] - true to use an inline (checked-out) copy of hoist-react when running the
- *      dev server, as opposed to using the downloaded dependency. This allows hoist-react developers to test
- *      plugin changes. Has no effect (i.e. always set to false) for builds.
- * @param {boolean} [env.analyzeBundles=false] - true to launch an interactive bundle analyzer to review output bundles,
- *      contents, and sizes.
+ * @param {Object} env - config passed in from app webpack config or the CLI via --env flags.
+ * @param {string} env.appCode - short, internal code for the application - baked into client as
+ *      XH.appCode. Should be lowercase, dash-separated, and should match the Gradle project name
+ *      (e.g. portfolio-manager).
+ * @param {string} [env.appName] - user-facing display name for the application - baked into client
+ *      as XH.appName. Should be title cased and space-separated. If null, will be defaulted based
+ *      on appCode (e.g. portfolio-manager -> Portfolio Manager).
+ * @param {boolean} [env.prodBuild=false] - true to indicate this is a build (as opposed to run of
+ *      webpack-dev-server)
+ * @param {boolean} [env.inlineHoist=false] - true to use a locally checked-out copy of hoist-react
+ *      when running the dev server, as opposed to using the downloaded dependency. This allows
+ *      hoist-react developers to test plugin changes. Has no effect (always false) for builds.
+ * @param {boolean} [env.analyzeBundles=false] - true to launch an interactive bundle analyzer to
+ *      review output bundles, contents, and sizes.
  * @param {string} [env.appVersion] - client version - baked into client as XH.appVersion
  * @param {string} [env.appBuild] - build/git tag - baked into client as XH.appBuild
- * @param {string} [env.baseUrl] - root context/path prepended to all relative URLs called via FetchService (the core
- *      Hoist service for making Ajax requests). Defaults to /api/ in production mode to work with proxy-based
- *      deployments and to localhost:8080 in dev mode to point to a local Grails server - these typically should not
- *      need to be changed at the app level.
- * @param {string} env.agGridLicenseKey - client-supplied key for appropriate ag-Grid enterprise license.
- * @param {string} [env.favicon] - relative path to a favicon source image to be processed
- * @param {string} [env.devServerOpenPage] - string path to open automatically when webpack-dev-server starts.
- *      Leave null to disable automatic page open on dev server startup.
+ * @param {string} [env.baseUrl] - root path prepended to all relative URLs called via FetchService
+ *      (the core Hoist service for making Ajax requests). Defaults to `/api/` in production mode to
+ *      work with proxy-based deployments and to `localhost:8080` in dev mode to point to a local
+ *      Grails server - these typically should not need to be changed at the app level.
+ * @param {string} env.agGridLicenseKey - client-supplied key for ag-Grid enterprise license.
+ * @param {string} [env.favicon] - relative path to a favicon source image to be processed.
+ * @param {string} [env.devServerOpenPage] - path to auto-open when webpack-dev-server starts.
+ *      Leave null to disable automatic page open on startup.
  */
 function configureWebpack(env) {
-    const appName = env.appName,
+    if (!env.appCode) throw 'Missing required "appCode" config - cannot proceed';
+
+    const appCode = env.appCode,
+        appName = env.appName || _.startCase(appCode),
         prodBuild = env.prodBuild === true,
         inlineHoist = !prodBuild && env.inlineHoist === true,
         analyzeBundles = env.analyzeBundles === true,
@@ -202,6 +211,7 @@ function configureWebpack(env) {
             // Inject global constants at compile time.
             new webpack.DefinePlugin({
                 'process.env': {NODE_ENV: JSON.stringify(process.env.NODE_ENV)},
+                xhAppCode: JSON.stringify(appCode),
                 xhAppName: JSON.stringify(appName),
                 xhAppVersion: JSON.stringify(appVersion),
                 xhAppBuild: JSON.stringify(appBuild),
