@@ -55,7 +55,7 @@ function configureWebpack(env) {
         prodBuild = env.prodBuild === true,
         inlineHoist = !prodBuild && env.inlineHoist === true,
         analyzeBundles = env.analyzeBundles === true,
-        appVersion = env.appVersion || 'UNKNOWN',
+        appVersion = env.appVersion || '0.0.0',
         appBuild = env.appBuild || 'UNKNOWN',
         baseUrl = env.baseUrl || (prodBuild ? '/api/' : 'http://localhost:8080/'),
         favicon = env.favicon || null,
