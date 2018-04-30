@@ -444,9 +444,12 @@ const extraPluginsProd = () => {
             sourceMap: true,
             parallel: true,
             uglifyOptions: {
-                // Options here sourced from CRA config
+                mangle: {
+                    // In particular, avoid mangling constructor names, which may be used in error messages.
+                    keep_fnames: true,
+                    safari10: true
+                },
                 compress: {comparisons: false},
-                mangle: {safari10: true, keep_fnames:true},
                 output: {comments: false}
             }
         })
