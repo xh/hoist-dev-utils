@@ -446,7 +446,7 @@ const extraPluginsProd = () => {
             uglifyOptions: {
                 // Options here sourced from CRA config
                 compress: {comparisons: false},
-                mangle: {safari10: true},
+                mangle: {safari10: true, keep_fnames:true},
                 output: {comments: false}
             }
         })
