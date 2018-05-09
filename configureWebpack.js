@@ -13,8 +13,7 @@ const _ = require('lodash'),
     FaviconsWebpackPlugin = require('favicons-webpack-plugin'),
     HtmlWebpackPlugin = require('html-webpack-plugin'),
     UglifyJsPlugin = require('uglifyjs-webpack-plugin'),
-    basePath = fs.realpathSync(process.cwd()),
-    browserDetectionScript = require('./browser-detection');
+    basePath = fs.realpathSync(process.cwd());
 
 /**
  * Consolidated Webpack configuration for both dev-time and production builds of Hoist React web applications.
@@ -269,7 +268,7 @@ function configureWebpack(env) {
                 return new HtmlWebpackPlugin({
                     inject: true,
                     title: appName,
-                    browserDetection: browserDetectionScript(hoistPath),
+                    browserDetection: fs.readFileSync(path.resolve(hoistPath, 'view/browser-detection.js'), 'utf8'),
                     template: path.resolve(hoistPath, 'view/index.html'), 
                     filename: `${app.name}/index.html`,
                     // Ensure common chunks are included!
