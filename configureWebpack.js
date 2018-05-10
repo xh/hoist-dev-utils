@@ -268,7 +268,8 @@ function configureWebpack(env) {
                 return new HtmlWebpackPlugin({
                     inject: true,
                     title: appName,
-                    template: 'public/index.html',
+                    lockout: fs.readFileSync(path.resolve(hoistPath, 'template/lockout.js'), 'utf8'),
+                    template: path.resolve(hoistPath, 'template/index.html'), 
                     filename: `${app.name}/index.html`,
                     // Ensure common chunks are included!
                     chunks: [app.name, 'common', 'runtime']
