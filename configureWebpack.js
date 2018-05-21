@@ -34,6 +34,8 @@ const _ = require('lodash'),
  * @param {boolean} [env.inlineHoist=false] - true to use a locally checked-out copy of hoist-react
  *      when running the dev server, as opposed to using the downloaded dependency. This allows
  *      hoist-react developers to test plugin changes. Has no effect (always false) for builds.
+ * @param {Object} [env.resolveAliases] - object mapping for custom webpack module resolution.
+ *      When inlineHoist=true, a mapping between @xh/hoist and the local path will be added.
  * @param {boolean} [env.analyzeBundles=false] - true to launch an interactive bundle analyzer to
  *      review output bundles, contents, and sizes.
  * @param {string} [env.appVersion] - client version - baked into client as XH.appVersion
@@ -54,8 +56,9 @@ function configureWebpack(env) {
         appName = env.appName || _.startCase(appCode),
         prodBuild = env.prodBuild === true,
         inlineHoist = !prodBuild && env.inlineHoist === true,
+        resolveAliases = Object.assign({}, env.resolveAliases),
         analyzeBundles = env.analyzeBundles === true,
-        appVersion = env.appVersion || '0.0.0',
+        appVersion = env.appVersion || '1.0-SNAPSHOT',
         appBuild = env.appBuild || 'UNKNOWN',
         baseUrl = env.baseUrl || (prodBuild ? '/api/' : 'http://localhost:8080/'),
         favicon = env.favicon || null,
@@ -80,6 +83,12 @@ function configureWebpack(env) {
     const hoistPath = inlineHoist ?
         path.resolve(basePath, '../../hoist-react') :
         path.resolve(basePath, 'node_modules/@xh/hoist');
+
+    // Tell webpack where to look for modules when resolving imports - this is the key to getting
+    // inlineHoist mode to look in within the checked-out hoist-react project at hoistPath.
+    if (inlineHoist) {
+        resolveAliases['@xh/hoist'] = hoistPath;
+    }
 
     // When running inline, resolve inline Hoist's own node_modules package so we can tell Babel to exclude
     const hoistNodeModulesPath = inlineHoist ?
@@ -119,13 +128,8 @@ function configureWebpack(env) {
             devtoolModuleFilenameTemplate: info => path.resolve(info.absoluteResourcePath).replace(/\\/g, '/')
         },
 
-        // Tell webpack where to look for modules when resolving imports - this is the key to getting
-        // inlineHoist mode to look in within the checked-out hoist-react project at hoistPath.
-        // In bundled (non inline) mode, this allows `import {Foo} from hoist` vs `import {Foo} from @xh/hoist`
         resolve: {
-            alias: {
-                hoist: inlineHoist ? hoistPath : '@xh/hoist'
-            }
+            alias: resolveAliases
         },
 
         module: {
