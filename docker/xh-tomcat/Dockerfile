@@ -10,3 +10,6 @@ RUN cd webapps && \
 
 # Copy in setenv for environment variable support
 COPY setenv.sh bin/
+
+# Install some useful basic utilities
+RUN apt-get update && apt-get install -y nano vim procps htop
