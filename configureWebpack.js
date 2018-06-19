@@ -220,7 +220,8 @@ function configureWebpack(env) {
                 xhAppVersion: JSON.stringify(appVersion),
                 xhAppBuild: JSON.stringify(appBuild),
                 xhBaseUrl: JSON.stringify(baseUrl),
-                xhAgGridLicenseKey: JSON.stringify(env.agGridLicenseKey)
+                xhAgGridLicenseKey: JSON.stringify(env.agGridLicenseKey),
+                xhIsDevelopmentMode: !prodBuild
             }),
 
             // Extract common (i.e. library, vendor) code into a dedicated chunk for re-use across app updates
