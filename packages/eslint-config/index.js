@@ -63,7 +63,11 @@ module.exports = {
             before: true,
             after: true
         }],
-        'space-before-function-paren': [2, 'never'],
+        'space-before-function-paren': [2, {
+            'anonymous': 'never',
+            'named': 'never',
+            'asyncArrow': 'always'
+        }],
         'no-spaced-func': 2,
         'space-in-parens': 2,
         'space-before-blocks': 2,
