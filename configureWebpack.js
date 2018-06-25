@@ -85,7 +85,7 @@ function configureWebpack(env) {
 
     const srcPath = path.resolve(basePath, 'src'),
         outPath = path.resolve(basePath, 'build'),
-        publicPath = '/';  // Path on which fully built app is served - i.e. root context
+        publicPath = prodBuild ? '../' : '/';  // Path on which fully built app is served - i.e. root context
 
     // Resolve Hoist as either a sibling (inline, checked-out) project or a downloaded package dependency
     const hoistPath = inlineHoist ?
