@@ -2,12 +2,11 @@
   "name": "@xh/hoist-dev-utils",
   "version": "2.1.2",
   "description": "Utilities for configuring builds of Hoist-React client applications.",
-  "repository": "https://github.com/exhi/hoist-dev-utils",
+  "repository": "github:exhi/hoist-dev-utils",
+  "homepage": "https://github.com/exhi/hoist-dev-utils",
+  "bugs": "https://github.com/exhi/hoist-dev-utils/issues",
   "author": "Extremely Heavy Industries, Inc.",
   "license": "UNLICENSED",
-  "publishConfig": {
-    "registry": "https://repo.xh.io/repository/npm-hosted/"
-  },
   "files": [
     "configureWebpack.js"
   ],

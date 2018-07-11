@@ -2,12 +2,11 @@
   "name": "@xh/eslint-config",
   "version": "0.2.1",
   "description": "Sharable base eslint config for Hoist React applications",
-  "repository": "https://github.com/exhi/hoist-dev-utils",
+  "repository": "github:exhi/hoist-dev-utils",
+  "homepage": "https://github.com/exhi/hoist-dev-utils",
+  "bugs": "https://github.com/exhi/hoist-dev-utils/issues",
   "author": "Extremely Heavy Industries, Inc.",
   "license": "UNLICENSED",
-  "publishConfig": {
-    "registry": "https://repo.xh.io/repository/npm-hosted/"
-  },
   "files": [
     "index.js"
   ],
