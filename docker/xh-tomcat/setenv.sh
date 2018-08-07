@@ -1,1 +1,0 @@
-export JAVA_OPTS="$JAVA_OPTS -Xmx${XH_XMX:=2g} ${XH_JAVA_OPTS}"

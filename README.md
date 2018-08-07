@@ -2,8 +2,7 @@
 
 Tooling for building and deploying web applications built on the Hoist React platform. This
 repository is made available as the `@xh/hoist-dev-utils` package on npm for import and use by
-applications. It also hosts a distinct eslint-config package and Dockerfiles for base xh-tomcat and
-xh-nginx deployment containers.
+applications. It also hosts a distinct `@xh/eslint-config` package for standardized ESLint configs.
 
 ### Shared development dependencies
 
@@ -65,13 +64,3 @@ simply:
 
 If required, rules and other settings extended from this base configuration can be overridden at the
 app level.
-
-### Docker base images
-
-Hoist React apps can be deployed via Docker containers running Tomcat (for Hoist's Grails based
-back-end) and nginx (to serve compiled client JS/CSS and other assets). This repo contains the
-minimal Dockerfiles and associated configs to build our xh-tomcat and xh-nginx container images,
-which can then be used as the base for app Docker deployments with additional, app specific
-configurations.
-
-These base images are built via [ExHI's Teamcity](build.xh.io) and stored on Docker hub.
