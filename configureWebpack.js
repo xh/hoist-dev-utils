@@ -33,20 +33,24 @@ const _ = require('lodash'),
  *      webpack-dev-server)
  * @param {boolean} [env.inlineHoist=false] - true to use a locally checked-out copy of hoist-react
  *      when running the dev server, as opposed to using the downloaded dependency. This allows
- *      hoist-react developers to test plugin changes. Has no effect (always false) for builds.
+ *      hoist-react developers to test plugin changes. Dev-mode only.
  * @param {Object} [env.resolveAliases] - object mapping for custom webpack module resolution.
  *      When inlineHoist=true, a mapping between @xh/hoist and the local path will be added.
  * @param {boolean} [env.analyzeBundles=false] - true to launch an interactive bundle analyzer to
  *      review output bundles, contents, and sizes.
  * @param {string} [env.appVersion] - client version - baked into client as XH.appVersion
  * @param {string} [env.appBuild] - build/git tag - baked into client as XH.appBuild
- * @param {string} [env.serverName] - specified server name for device testing.
  * @param {string} [env.baseUrl] - root path prepended to all relative URLs called via FetchService
  *      (the core Hoist service for making Ajax requests). Defaults to `/api/` in production mode to
- *      work with proxy-based deployments and to `localhost:8080` in dev mode to point to a local
- *      Grails server - these typically should not need to be changed at the app level.
+ *      work with proxy-based deployments and to `$devServerHost:$devServerGrailsPort` in dev mode.
+ *      This should not typically need to be changed at the app level.
  * @param {string} env.agGridLicenseKey - client-supplied key for ag-Grid enterprise license.
  * @param {string} [env.favicon] - relative path to a favicon source image to be processed.
+ * @param {string} [env.devHost] - hostname for both local Grails and Webpack dev servers.
+ *      Defaults to localhost, but may be overridden to a proper hostname for testing on alternate
+ *      workstations or devices. Dev-mode only.
+ * @param {number} [env.devGrailsPort] - port of local Grails server. Dev-mode only.
+ * @param {number} [env.devWebpackPort] - port on which to start webpack-dev server. Dev-mode only.
  * @param {string} [env.devServerOpenPage] - path to auto-open when webpack-dev-server starts.
  *      Leave null to disable automatic page open on startup.
  */
@@ -61,10 +65,11 @@ function configureWebpack(env) {
         analyzeBundles = env.analyzeBundles === true,
         appVersion = env.appVersion || '1.0-SNAPSHOT',
         appBuild = env.appBuild || 'UNKNOWN',
-        serverName = env.serverName || null,
-        baseUrl = env.baseUrl || (serverName ? `http://${serverName.toLowerCase()}:8080/` : null) || (prodBuild ? '/api/' : 'http://localhost:8080/'),
-        favicon = env.favicon || null,
-        devServerPort = env.devServerPort || 3000;
+        devHost = env.devHost || 'localhost',
+        devGrailsPort = env.devGrailsPort || 8080,
+        devWebpackPort = env.devWebpackPort || 3000,
+        baseUrl = env.baseUrl || (prodBuild ? '/api/' : `http://${devHost}:${devGrailsPort}/`),
+        favicon = env.favicon || null;
 
     process.env.BABEL_ENV = prodBuild ? 'production' : 'development';
     process.env.NODE_ENV = prodBuild ? 'production' : 'development';
@@ -300,8 +305,8 @@ function configureWebpack(env) {
 
         // Inline dev-time configuration for webpack-dev-server.
         devServer: prodBuild ? undefined : {
-            host: new URL(baseUrl).hostname,
-            port: devServerPort,
+            host: devHost,
+            port: devWebpackPort,
             overlay: true,
             compress: true,
             hot: true,
