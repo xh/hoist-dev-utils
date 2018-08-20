@@ -40,6 +40,7 @@ const _ = require('lodash'),
  *      review output bundles, contents, and sizes.
  * @param {string} [env.appVersion] - client version - baked into client as XH.appVersion
  * @param {string} [env.appBuild] - build/git tag - baked into client as XH.appBuild
+ * @param {string} [env.serverName] - specified server name for device testing.
  * @param {string} [env.baseUrl] - root path prepended to all relative URLs called via FetchService
  *      (the core Hoist service for making Ajax requests). Defaults to `/api/` in production mode to
  *      work with proxy-based deployments and to `localhost:8080` in dev mode to point to a local
@@ -60,7 +61,8 @@ function configureWebpack(env) {
         analyzeBundles = env.analyzeBundles === true,
         appVersion = env.appVersion || '1.0-SNAPSHOT',
         appBuild = env.appBuild || 'UNKNOWN',
-        baseUrl = env.baseUrl || (prodBuild ? '/api/' : 'http://localhost:8080/'),
+        serverName = env.serverName || null,
+        baseUrl = env.baseUrl || (serverName ? `http://${serverName.toLowerCase()}:8080/` : null) || (prodBuild ? '/api/' : 'http://localhost:8080/'),
         favicon = env.favicon || null,
         devServerPort = env.devServerPort || 3000;
 
@@ -298,7 +300,7 @@ function configureWebpack(env) {
 
         // Inline dev-time configuration for webpack-dev-server.
         devServer: prodBuild ? undefined : {
-            host: 'localhost',
+            host: new URL(baseUrl).hostname,
             port: devServerPort,
             overlay: true,
             compress: true,
