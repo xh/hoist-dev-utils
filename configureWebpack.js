@@ -298,7 +298,7 @@ function configureWebpack(env) {
 
         // Inline dev-time configuration for webpack-dev-server.
         devServer: prodBuild ? undefined : {
-            host: 'localhost',
+            host: new URL(baseUrl).hostname,
             port: devServerPort,
             overlay: true,
             compress: true,
