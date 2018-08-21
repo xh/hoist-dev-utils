@@ -48,7 +48,8 @@ const _ = require('lodash'),
  * @param {string} [env.favicon] - relative path to a favicon source image to be processed.
  * @param {string} [env.devHost] - hostname for both local Grails and Webpack dev servers.
  *      Defaults to localhost, but may be overridden to a proper hostname for testing on alternate
- *      workstations or devices. Dev-mode only.
+ *      workstations or devices. Will be automatically set to lowercase to comply with
+ *      webpack-dev-server's host checking. Dev-mode only.
  * @param {number} [env.devGrailsPort] - port of local Grails server. Dev-mode only.
  * @param {number} [env.devWebpackPort] - port on which to start webpack-dev server. Dev-mode only.
  * @param {string} [env.devServerOpenPage] - path to auto-open when webpack-dev-server starts.
@@ -65,7 +66,7 @@ function configureWebpack(env) {
         analyzeBundles = env.analyzeBundles === true,
         appVersion = env.appVersion || '1.0-SNAPSHOT',
         appBuild = env.appBuild || 'UNKNOWN',
-        devHost = env.devHost || 'localhost',
+        devHost = (env.devHost ? env.devHost.toLowerCase() : 'localhost'),
         devGrailsPort = env.devGrailsPort || 8080,
         devWebpackPort = env.devWebpackPort || 3000,
         baseUrl = env.baseUrl || (prodBuild ? '/api/' : `http://${devHost}:${devGrailsPort}/`),
