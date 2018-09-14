@@ -44,6 +44,8 @@ const _ = require('lodash'),
  *      (the core Hoist service for making Ajax requests). Defaults to `/api/` in production mode to
  *      work with proxy-based deployments and to `$devServerHost:$devServerGrailsPort` in dev mode.
  *      This should not typically need to be changed at the app level.
+ * @param {string} [env.contextRoot] - root path for where the app will be served, used as the base
+ *      path for static files.
  * @param {string} env.agGridLicenseKey - client-supplied key for ag-Grid enterprise license.
  * @param {string} [env.favicon] - relative path to a favicon source image to be processed.
  * @param {string} [env.devHost] - hostname for both local Grails and Webpack dev servers.
@@ -70,7 +72,8 @@ function configureWebpack(env) {
         devGrailsPort = env.devGrailsPort || 8080,
         devWebpackPort = env.devWebpackPort || 3000,
         baseUrl = env.baseUrl || (prodBuild ? '/api/' : `http://${devHost}:${devGrailsPort}/`),
-        favicon = env.favicon || null;
+        favicon = env.favicon || null,
+        contextRoot = env.contextRoot || '/';
 
     process.env.BABEL_ENV = prodBuild ? 'production' : 'development';
     process.env.NODE_ENV = prodBuild ? 'production' : 'development';
@@ -85,7 +88,7 @@ function configureWebpack(env) {
 
     const srcPath = path.resolve(basePath, 'src'),
         outPath = path.resolve(basePath, 'build'),
-        publicPath = prodBuild ? '../' : '/';  // Path on which fully built app is served - i.e. root context
+        publicPath = contextRoot;  // Path on which fully built app is served - i.e. root context
 
     // Resolve Hoist as either a sibling (inline, checked-out) project or a downloaded package dependency
     const hoistPath = inlineHoist ?
