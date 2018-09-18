@@ -10,6 +10,7 @@ const _ = require('lodash'),
     CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin'),
     CleanWebpackPlugin = require('clean-webpack-plugin'),
     // ExtractTextPlugin = require('extract-text-webpack-plugin'),
+    MiniCssExtractPlugin = require('mini-css-extract-plugin'),
     FaviconsWebpackPlugin = require('favicons-webpack-plugin'),
     HtmlWebpackPlugin = require('html-webpack-plugin'),
     UglifyJsPlugin = require('uglifyjs-webpack-plugin'),
@@ -72,7 +73,8 @@ function configureWebpack(env) {
         devHost = (env.devHost ? env.devHost.toLowerCase() : 'localhost'),
         devGrailsPort = env.devGrailsPort || 8080,
         devWebpackPort = env.devWebpackPort || 3000,
-        baseUrl = env.baseUrl || (prodBuild ? '/api/' : `http://${devHost}:${devGrailsPort}/`),
+        // baseUrl = env.baseUrl || (prodBuild ? '/api/' : `http://${devHost}:${devGrailsPort}/`),
+        baseUrl = env.baseUrl || (`http://${devHost}:${devGrailsPort}/`),
         favicon = env.favicon || null;
 
     process.env.BABEL_ENV = prodBuild ? 'production' : 'development';
@@ -120,7 +122,7 @@ function configureWebpack(env) {
 
     return {
 
-        mode: prodBuild ? 'production' : 'development',
+        mode: prodBuild ? 'none' : 'development',
 
         // One named entry chunk per app, as above.
         entry: {
@@ -206,6 +208,8 @@ function configureWebpack(env) {
                         // Process CSS and SASS - distinct workflows for prod build vs. dev-time
                         // prodBuild ? cssConfProd() : cssConfDev(),
                         // prodBuild ? sassConfProd() : sassConfDev(),
+                        cssConfDev(),
+                        sassConfDev(),
 
                         // Fall-through entry to process all other assets via a file-loader.
                         // Exclude config here is from CRA source config (commented there, but didn't understand).
@@ -366,6 +370,14 @@ function configureWebpack(env) {
 // Production builds use ExtractTextPlugin to break built styles into dedicated CSS output files (vs. tags injected
 // into DOM) for production builds. Note relies on ExtractTextPlugin being called within the prod plugins section.
 const cssConfProd = () => {
+
+    return {
+        test: /\.css$/,
+        use: [
+            MiniCssExtractPlugin.loader,
+            { loader: 'css-loader', options: { url: false, sourceMap: true } },
+        ]
+    };
     // return {
     //     test: /\.css$/,
     //     loader: ExtractTextPlugin.extract(
@@ -385,6 +397,14 @@ const cssConfProd = () => {
 };
 
 const sassConfProd = () => {
+    return {
+        test: /\.scss$/,
+        use: [
+            MiniCssExtractPlugin.loader,
+            { loader: 'sass-loader', options: { sourceMap: true } }
+        ]
+    };
+
     // return {
     //     test: /\.scss$/,
     //     loader: ExtractTextPlugin.extract(
