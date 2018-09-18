@@ -152,22 +152,22 @@ function configureWebpack(env) {
             rules: [
                 // Production builds run eslint before anything.
                 // Currently only for builds to avoid dev-time friction with small in-flight changes breaking build.
-                // prodBuild ? {
-                //     test: /\.(js)$/,
-                //     enforce: 'pre',
-                //     use: [
-                //         {
-                //             loader: 'eslint-loader',
-                //             options: {
-                //                 eslintPath: require.resolve('eslint')
-                //             }
-                //         }
-                //     ],
-                //     // If we do run during dev-time (in future, maybe with flag?), lint Hoist when running inline.
-                //     // Note that we'll need to rely on the Teamcity build to ensure Hoist gets linted.
-                //     include: inlineHoist ? [hoistPath, srcPath] : srcPath,
-                //     exclude: inlineHoist ? [hoistNodeModulesPath] : undefined
-                // } : undefined,
+                prodBuild ? {
+                    test: /\.(js)$/,
+                    enforce: 'pre',
+                    use: [
+                        {
+                            loader: 'eslint-loader',
+                            options: {
+                                eslintPath: require.resolve('eslint')
+                            }
+                        }
+                    ],
+                    // If we do run during dev-time (in future, maybe with flag?), lint Hoist when running inline.
+                    // Note that we'll need to rely on the Teamcity build to ensure Hoist gets linted.
+                    include: inlineHoist ? [hoistPath, srcPath] : srcPath,
+                    exclude: inlineHoist ? [hoistNodeModulesPath] : undefined
+                } : undefined,
 
                 // Core loaders for all assets
                 {
