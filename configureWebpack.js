@@ -9,7 +9,7 @@ const _ = require('lodash'),
     BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin,
     CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin'),
     CleanWebpackPlugin = require('clean-webpack-plugin'),
-    ExtractTextPlugin = require('extract-text-webpack-plugin'),
+    // ExtractTextPlugin = require('extract-text-webpack-plugin'),
     FaviconsWebpackPlugin = require('favicons-webpack-plugin'),
     HtmlWebpackPlugin = require('html-webpack-plugin'),
     UglifyJsPlugin = require('uglifyjs-webpack-plugin'),
@@ -56,6 +56,9 @@ const _ = require('lodash'),
  *      Leave null to disable automatic page open on startup.
  */
 function configureWebpack(env) {
+
+    console.log('---------------------------- I AM USING ARJUN TEST SCRIPT ----------------------------');
+
     if (!env.appCode) throw 'Missing required "appCode" config - cannot proceed';
 
     const appCode = env.appCode,
@@ -117,6 +120,8 @@ function configureWebpack(env) {
 
     return {
 
+        mode: prodBuild ? 'production' : 'development',
+
         // One named entry chunk per app, as above.
         entry: {
             ..._.chain(apps)
@@ -147,22 +152,22 @@ function configureWebpack(env) {
             rules: [
                 // Production builds run eslint before anything.
                 // Currently only for builds to avoid dev-time friction with small in-flight changes breaking build.
-                prodBuild ? {
-                    test: /\.(js)$/,
-                    enforce: 'pre',
-                    use: [
-                        {
-                            loader: 'eslint-loader',
-                            options: {
-                                eslintPath: require.resolve('eslint')
-                            }
-                        }
-                    ],
-                    // If we do run during dev-time (in future, maybe with flag?), lint Hoist when running inline.
-                    // Note that we'll need to rely on the Teamcity build to ensure Hoist gets linted.
-                    include: inlineHoist ? [hoistPath, srcPath] : srcPath,
-                    exclude: inlineHoist ? [hoistNodeModulesPath] : undefined
-                } : undefined,
+                // prodBuild ? {
+                //     test: /\.(js)$/,
+                //     enforce: 'pre',
+                //     use: [
+                //         {
+                //             loader: 'eslint-loader',
+                //             options: {
+                //                 eslintPath: require.resolve('eslint')
+                //             }
+                //         }
+                //     ],
+                //     // If we do run during dev-time (in future, maybe with flag?), lint Hoist when running inline.
+                //     // Note that we'll need to rely on the Teamcity build to ensure Hoist gets linted.
+                //     include: inlineHoist ? [hoistPath, srcPath] : srcPath,
+                //     exclude: inlineHoist ? [hoistNodeModulesPath] : undefined
+                // } : undefined,
 
                 // Core loaders for all assets
                 {
@@ -199,8 +204,8 @@ function configureWebpack(env) {
                         },
 
                         // Process CSS and SASS - distinct workflows for prod build vs. dev-time
-                        prodBuild ? cssConfProd() : cssConfDev(),
-                        prodBuild ? sassConfProd() : sassConfDev(),
+                        // prodBuild ? cssConfProd() : cssConfDev(),
+                        // prodBuild ? sassConfProd() : sassConfDev(),
 
                         // Fall-through entry to process all other assets via a file-loader.
                         // Exclude config here is from CRA source config (commented there, but didn't understand).
@@ -218,7 +223,10 @@ function configureWebpack(env) {
 
         plugins: [
             // Clean (remove) the output directory before each run.
-            new CleanWebpackPlugin([outPath], {verbose: false}),
+            new CleanWebpackPlugin([outPath], {
+                verbose: true,
+                root: basePath
+            }),
 
             // Inject global constants at compile time.
             new webpack.DefinePlugin({
@@ -237,16 +245,16 @@ function configureWebpack(env) {
             // be for us to define explicit vendor dependencies within an entry point to break out as common.
             // By default, if a module is called by >=2 entry points, it gets bundled into common.
             // We should evaluate once we have a more fully built set of example apps!
-            new webpack.optimize.CommonsChunkPlugin({
-                name: ['common']
-            }),
+            // new webpack.optimize.CommonsChunkPlugin({
+            //     name: ['common']
+            // }),
 
             // This second invocation of the plugin extracts the webpack runtime into its own chunk to avoid
             // changes to our app-level code and modules modifying the common chunk hash as well and preventing caching.
             // See https://medium.com/webpack/predictable-long-term-caching-with-webpack-d3eee1d3fa31
-            new webpack.optimize.CommonsChunkPlugin({
-                name: ['runtime']
-            }),
+            // new webpack.optimize.CommonsChunkPlugin({
+            //     name: ['runtime']
+            // }),
 
             // More plugins to avoid unwanted hash changes and support better caching - uses paths to identify
             // modules vs. numeric IDs, helping to keep generated chunks (specifically their hashes) stable.
@@ -302,6 +310,30 @@ function configureWebpack(env) {
 
         ].filter(Boolean),
 
+        // optimization: {
+        //     splitChunks: {
+        //         chunks: 'async',
+        //         minSize: 30000,
+        //         maxSize: 0,
+        //         minChunks: 1,
+        //         maxAsyncRequests: 5,
+        //         maxInitialRequests: 3,
+        //         automaticNameDelimiter: '~',
+        //         name: true,
+        //         cacheGroups: {
+        //             vendors: {
+        //                 test: /[\\/]node_modules[\\/]/,
+        //                 priority: -10
+        //             },
+        //             default: {
+        //                 minChunks: 2,
+        //                 priority: -20,
+        //                 reuseExistingChunk: true
+        //             }
+        //         }
+        //     }
+        // },
+
         devtool: prodBuild ? 'source-map' : 'eval-source-map',
 
         // Inline dev-time configuration for webpack-dev-server.
@@ -334,41 +366,41 @@ function configureWebpack(env) {
 // Production builds use ExtractTextPlugin to break built styles into dedicated CSS output files (vs. tags injected
 // into DOM) for production builds. Note relies on ExtractTextPlugin being called within the prod plugins section.
 const cssConfProd = () => {
-    return {
-        test: /\.css$/,
-        loader: ExtractTextPlugin.extract(
-            {
-                fallback: {
-                    // For CSS that does not end up extracted into a dedicated file - inject inline.
-                    loader: 'style-loader',
-                    options: {hmr: false}
-                },
-                use: [
-                    cssLoader(1),
-                    postCssLoader()
-                ]
-            }
-        )
-    };
+    // return {
+    //     test: /\.css$/,
+    //     loader: ExtractTextPlugin.extract(
+    //         {
+    //             fallback: {
+    //                 // For CSS that does not end up extracted into a dedicated file - inject inline.
+    //                 loader: 'style-loader',
+    //                 options: {hmr: false}
+    //             },
+    //             use: [
+    //                 cssLoader(1),
+    //                 postCssLoader()
+    //             ]
+    //         }
+    //     )
+    // };
 };
 
 const sassConfProd = () => {
-    return {
-        test: /\.scss$/,
-        loader: ExtractTextPlugin.extract(
-            {
-                fallback: {
-                    loader: 'style-loader',
-                    options: {hmr: false}
-                },
-                use: [
-                    cssLoader(2),
-                    postCssLoader(),
-                    sassLoader()
-                ]
-            }
-        )
-    };
+    // return {
+    //     test: /\.scss$/,
+    //     loader: ExtractTextPlugin.extract(
+    //         {
+    //             fallback: {
+    //                 loader: 'style-loader',
+    //                 options: {hmr: false}
+    //             },
+    //             use: [
+    //                 cssLoader(2),
+    //                 postCssLoader(),
+    //                 sassLoader()
+    //             ]
+    //         }
+    //     )
+    // };
 };
 
 // Dev-time CSS/SASS configs do not extract CSS into dedicated files - keeping it inline via default style-loader.
@@ -447,11 +479,11 @@ const sassLoader =  () => {
 const extraPluginsProd = () => {
     return [
         // Extract built CSS files into sub-directories by chunk / entry point name.
-        new ExtractTextPlugin({
-            filename: '[name]/[name].[contenthash:8].css',
-            // Required by CommonsChunkPlugin to ensure we extract CSS from common chunk as well as app entry points.
-            allChunks: true
-        }),
+        // new ExtractTextPlugin({
+        //     filename: '[name]/[name].[contenthash:8].css',
+        //     // Required by CommonsChunkPlugin to ensure we extract CSS from common chunk as well as app entry points.
+        //     allChunks: true
+        // }),
 
         // Enable JS minification and tree-shaking.
         new UglifyJsPlugin({
