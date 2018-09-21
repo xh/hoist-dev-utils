@@ -12,6 +12,7 @@ const _ = require('lodash'),
     MiniCssExtractPlugin = require('mini-css-extract-plugin'),
     FaviconsWebpackPlugin = require('favicons-webpack-plugin'),
     HtmlWebpackPlugin = require('html-webpack-plugin'),
+    HtmlWebpackExcludeAssetsPlugin = require('html-webpack-exclude-assets-plugin'),
     UglifyJsPlugin = require('uglifyjs-webpack-plugin'),
     basePath = fs.realpathSync(process.cwd());
 
@@ -282,7 +283,7 @@ function configureWebpack(env) {
                     title: appName,
                     lockout: fs.readFileSync(path.resolve(hoistPath, 'template/lockout.js'), 'utf8'),
                     template: path.resolve(hoistPath, 'template/index.html'),
-                    filename: `${app.name}/index.html`
+                    filename: `${app.name}/index.html`,
                 });
             }),
 
