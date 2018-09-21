@@ -73,8 +73,7 @@ function configureWebpack(env) {
         devHost = (env.devHost ? env.devHost.toLowerCase() : 'localhost'),
         devGrailsPort = env.devGrailsPort || 8080,
         devWebpackPort = env.devWebpackPort || 3000,
-        // baseUrl = env.baseUrl || (prodBuild ? '/api/' : `http://${devHost}:${devGrailsPort}/`),
-        baseUrl = env.baseUrl || (`http://${devHost}:${devGrailsPort}/`),
+        baseUrl = env.baseUrl || (prodBuild ? '/api/' : `http://${devHost}:${devGrailsPort}/`),
         favicon = env.favicon || null;
 
     process.env.BABEL_ENV = prodBuild ? 'production' : 'development';
@@ -143,8 +142,18 @@ function configureWebpack(env) {
             devtoolModuleFilenameTemplate: info => path.resolve(info.absoluteResourcePath).replace(/\\/g, '/')
         },
 
+        optimization: {
+            splitChunks: {
+                chunks: 'all',
+                minSize: 0
+            }
+        },
+
         resolve: {
-            alias: resolveAliases
+            alias: resolveAliases,
+            // Needed to support JSX extention files without have to specifically specify .jsx in import.
+            // NOTE: since we're over-riding defaults we need to explicitly specify the supported module extentions going forward
+            extensions: ['*', '.js', '.jsx', '.json']
         },
 
         module: {
@@ -155,7 +164,7 @@ function configureWebpack(env) {
                 // Production builds run eslint before anything.
                 // Currently only for builds to avoid dev-time friction with small in-flight changes breaking build.
                 prodBuild ? {
-                    test: /\.(js)$/,
+                    test: /\.(jsx?)$/,
                     enforce: 'pre',
                     use: [
                         {
@@ -187,7 +196,7 @@ function configureWebpack(env) {
 
                         // Transpile JS via Babel
                         {
-                            test: /\.(js)$/,
+                            test: /\.(jsx?)$/,
                             use: {
                                 loader: 'babel-loader',
                                 options: {
@@ -205,16 +214,13 @@ function configureWebpack(env) {
                             exclude: inlineHoist ? [hoistNodeModulesPath] : undefined
                         },
 
-                        // Process CSS and SASS - distinct workflows for prod build vs. dev-time
-                        // prodBuild ? cssConfProd() : cssConfDev(),
-                        // prodBuild ? sassConfProd() : sassConfDev(),
-                        cssConfDev(),
-                        sassConfDev(),
+                        // Use MiniCssExtractPlugin to extract css and scss files in Prod
+                        cssModuleConfig(prodBuild),
 
                         // Fall-through entry to process all other assets via a file-loader.
                         // Exclude config here is from CRA source config (commented there, but didn't understand).
                         {
-                            exclude: [/\.js$/, /\.html$/, /\.json$/],
+                            exclude: [/\.jsx?$/, /\.html$/, /\.json$/],
                             loader: 'file-loader',
                             options: {
                                 name: 'static/media/[name].[hash:8].[ext]'
@@ -297,7 +303,7 @@ function configureWebpack(env) {
                     template: path.resolve(hoistPath, 'template/index.html'),
                     filename: `${app.name}/index.html`,
                     // Ensure common chunks are included!
-                    chunks: [app.name, 'common', 'runtime']
+                    // chunks: [app.name, 'common', 'runtime']
                 });
             }),
 
@@ -307,7 +313,7 @@ function configureWebpack(env) {
             }) : undefined,
 
             // Who wants errors? Not us.
-            new webpack.NoEmitOnErrorsPlugin(),
+            // new webpack.NoEmitOnErrorsPlugin(),
 
             // Environment-specific plugins
             ...(prodBuild ? extraPluginsProd() : extraPluginsDev())
@@ -367,80 +373,14 @@ function configureWebpack(env) {
 // Implementation
 //------------------------
 
-// Production builds use ExtractTextPlugin to break built styles into dedicated CSS output files (vs. tags injected
-// into DOM) for production builds. Note relies on ExtractTextPlugin being called within the prod plugins section.
-const cssConfProd = () => {
+// Production builds use MiniCssExtractPlugin to break built styles into dedicated output files (vs. tags injected
+// into DOM) for production builds. Note relies on MiniCssExtractPlugin being called within the prod plugins section.
+const cssModuleConfig = (prodBuild) => {
 
     return {
-        test: /\.css$/,
+        test: /\.(sa|sc|c)ss$/,
         use: [
-            MiniCssExtractPlugin.loader,
-            { loader: 'css-loader', options: { url: false, sourceMap: true } },
-        ]
-    };
-    // return {
-    //     test: /\.css$/,
-    //     loader: ExtractTextPlugin.extract(
-    //         {
-    //             fallback: {
-    //                 // For CSS that does not end up extracted into a dedicated file - inject inline.
-    //                 loader: 'style-loader',
-    //                 options: {hmr: false}
-    //             },
-    //             use: [
-    //                 cssLoader(1),
-    //                 postCssLoader()
-    //             ]
-    //         }
-    //     )
-    // };
-};
-
-const sassConfProd = () => {
-    return {
-        test: /\.scss$/,
-        use: [
-            MiniCssExtractPlugin.loader,
-            { loader: 'sass-loader', options: { sourceMap: true } }
-        ]
-    };
-
-    // return {
-    //     test: /\.scss$/,
-    //     loader: ExtractTextPlugin.extract(
-    //         {
-    //             fallback: {
-    //                 loader: 'style-loader',
-    //                 options: {hmr: false}
-    //             },
-    //             use: [
-    //                 cssLoader(2),
-    //                 postCssLoader(),
-    //                 sassLoader()
-    //             ]
-    //         }
-    //     )
-    // };
-};
-
-// Dev-time CSS/SASS configs do not extract CSS into dedicated files - keeping it inline via default style-loader.
-// This is a common dev setup, and is compatible with HMR.
-const cssConfDev = () => {
-    return {
-        test: /\.css$/,
-        use: [
-            'style-loader',
-            cssLoader(1),
-            postCssLoader()
-        ]
-    };
-};
-
-const sassConfDev = () => {
-    return {
-        test: /\.scss$/,
-        use: [
-            'style-loader',
+            prodBuild ? MiniCssExtractPlugin.loader : 'style-loader',
             cssLoader(2),
             postCssLoader(),
             sassLoader()
@@ -456,7 +396,8 @@ const cssLoader = (importLoaders) => {
             // Indicate how many prior loaders (postCssLoader/sassLoader) to also run on @imported resources.
             importLoaders: importLoaders,
             // Generate CSS sourcemaps
-            sourceMap: true
+            sourceMap: true,
+            url: false
         }
     };
 };
@@ -499,11 +440,9 @@ const sassLoader =  () => {
 const extraPluginsProd = () => {
     return [
         // Extract built CSS files into sub-directories by chunk / entry point name.
-        // new ExtractTextPlugin({
-        //     filename: '[name]/[name].[contenthash:8].css',
-        //     // Required by CommonsChunkPlugin to ensure we extract CSS from common chunk as well as app entry points.
-        //     allChunks: true
-        // }),
+        new MiniCssExtractPlugin({
+            filename: '[name]/[name].[contenthash:8].css'
+        }),
 
         // Enable JS minification and tree-shaking.
         new UglifyJsPlugin({
