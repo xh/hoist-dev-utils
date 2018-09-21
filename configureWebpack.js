@@ -9,7 +9,6 @@ const _ = require('lodash'),
     BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin,
     CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin'),
     CleanWebpackPlugin = require('clean-webpack-plugin'),
-    // ExtractTextPlugin = require('extract-text-webpack-plugin'),
     MiniCssExtractPlugin = require('mini-css-extract-plugin'),
     FaviconsWebpackPlugin = require('favicons-webpack-plugin'),
     HtmlWebpackPlugin = require('html-webpack-plugin'),
@@ -57,8 +56,6 @@ const _ = require('lodash'),
  *      Leave null to disable automatic page open on startup.
  */
 function configureWebpack(env) {
-
-    console.log('---------------------------- I AM USING ARJUN TEST SCRIPT ----------------------------');
 
     if (!env.appCode) throw 'Missing required "appCode" config - cannot proceed';
 
@@ -250,22 +247,6 @@ function configureWebpack(env) {
                 xhIsDevelopmentMode: !prodBuild
             }),
 
-            // Extract common (i.e. library, vendor) code into a dedicated chunk for re-use across app updates
-            // and multiple entry points. This is the simplest configuration of this plugin - an alternative would
-            // be for us to define explicit vendor dependencies within an entry point to break out as common.
-            // By default, if a module is called by >=2 entry points, it gets bundled into common.
-            // We should evaluate once we have a more fully built set of example apps!
-            // new webpack.optimize.CommonsChunkPlugin({
-            //     name: ['common']
-            // }),
-
-            // This second invocation of the plugin extracts the webpack runtime into its own chunk to avoid
-            // changes to our app-level code and modules modifying the common chunk hash as well and preventing caching.
-            // See https://medium.com/webpack/predictable-long-term-caching-with-webpack-d3eee1d3fa31
-            // new webpack.optimize.CommonsChunkPlugin({
-            //     name: ['runtime']
-            // }),
-
             // More plugins to avoid unwanted hash changes and support better caching - uses paths to identify
             // modules vs. numeric IDs, helping to keep generated chunks (specifically their hashes) stable.
             // Also required for HMR to work.
@@ -302,8 +283,6 @@ function configureWebpack(env) {
                     lockout: fs.readFileSync(path.resolve(hoistPath, 'template/lockout.js'), 'utf8'),
                     template: path.resolve(hoistPath, 'template/index.html'),
                     filename: `${app.name}/index.html`
-                    // Ensure common chunks are included!
-                    // chunks: [app.name, 'common', 'runtime']
                 });
             }),
 
@@ -313,36 +292,12 @@ function configureWebpack(env) {
             }) : undefined,
 
             // Who wants errors? Not us.
-            // new webpack.NoEmitOnErrorsPlugin(),
+            new webpack.NoEmitOnErrorsPlugin(),
 
             // Environment-specific plugins
             ...(prodBuild ? extraPluginsProd() : extraPluginsDev())
 
         ].filter(Boolean),
-
-        // optimization: {
-        //     splitChunks: {
-        //         chunks: 'async',
-        //         minSize: 30000,
-        //         maxSize: 0,
-        //         minChunks: 1,
-        //         maxAsyncRequests: 5,
-        //         maxInitialRequests: 3,
-        //         automaticNameDelimiter: '~',
-        //         name: true,
-        //         cacheGroups: {
-        //             vendors: {
-        //                 test: /[\\/]node_modules[\\/]/,
-        //                 priority: -10
-        //             },
-        //             default: {
-        //                 minChunks: 2,
-        //                 priority: -20,
-        //                 reuseExistingChunk: true
-        //             }
-        //         }
-        //     }
-        // },
 
         devtool: prodBuild ? 'source-map' : 'eval-source-map',
 
