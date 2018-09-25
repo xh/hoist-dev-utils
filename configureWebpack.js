@@ -44,6 +44,12 @@ const _ = require('lodash'),
  *      (the core Hoist service for making Ajax requests). Defaults to `/api/` in production mode to
  *      work with proxy-based deployments and to `$devServerHost:$devServerGrailsPort` in dev mode.
  *      This should not typically need to be changed at the app level.
+ * @param {string[]} [env.babelIncludePaths] - additional paths to pass Babel for transpiling via
+ *      settings shared with app-level and @xh/hoist code. Intended for custom packages.
+ * @param {string[]} [env.babelExcludePaths] - paths to exclude from Babel transpilation. An example
+ *      use would be a local package with a nested node_modules folder.
+ * @param {string} [env.contextRoot] - root path for where the app will be served, used as the base
+ *      path for static files.
  * @param {string} env.agGridLicenseKey - client-supplied key for ag-Grid enterprise license.
  * @param {string} [env.favicon] - relative path to a favicon source image to be processed.
  * @param {string} [env.devHost] - hostname for both local Grails and Webpack dev servers.
@@ -56,7 +62,6 @@ const _ = require('lodash'),
  *      Leave null to disable automatic page open on startup.
  */
 function configureWebpack(env) {
-
     if (!env.appCode) throw 'Missing required "appCode" config - cannot proceed';
 
     const appCode = env.appCode,
@@ -71,8 +76,10 @@ function configureWebpack(env) {
         devGrailsPort = env.devGrailsPort || 8080,
         devWebpackPort = env.devWebpackPort || 3000,
         baseUrl = env.baseUrl || (prodBuild ? '/api/' : `http://${devHost}:${devGrailsPort}/`),
-        favicon = env.favicon || null,
-        contextRoot = env.contextRoot || '/';
+        babelIncludePaths = env.babelIncludePaths || [],
+        babelExcludePaths = env.babelExcludePaths || [],
+        contextRoot = env.contextRoot || '/',
+        favicon = env.favicon || null;
 
     process.env.BABEL_ENV = prodBuild ? 'production' : 'development';
     process.env.NODE_ENV = prodBuild ? 'production' : 'development';
@@ -159,25 +166,6 @@ function configureWebpack(env) {
             strictExportPresence: true,
 
             rules: [
-                // Production builds run eslint before anything.
-                // Currently only for builds to avoid dev-time friction with small in-flight changes breaking build.
-                prodBuild ? {
-                    test: /\.(jsx?)$/,
-                    enforce: 'pre',
-                    use: [
-                        {
-                            loader: 'eslint-loader',
-                            options: {
-                                eslintPath: require.resolve('eslint')
-                            }
-                        }
-                    ],
-                    // If we do run during dev-time (in future, maybe with flag?), lint Hoist when running inline.
-                    // Note that we'll need to rely on the Teamcity build to ensure Hoist gets linted.
-                    include: inlineHoist ? [hoistPath, srcPath] : srcPath,
-                    exclude: inlineHoist ? [hoistNodeModulesPath] : undefined
-                } : undefined,
-
                 // Core loaders for all assets
                 {
                     oneOf: [
@@ -207,9 +195,9 @@ function configureWebpack(env) {
 
                             // Always transpile Hoist - even when "packaged" we have the raw source as we are not
                             // currently transpiling anything in hoist-react on its own.
-                            include: [srcPath, hoistPath],
+                            include: [srcPath, hoistPath, ...babelIncludePaths],
                             // In inline mode also *avoid* transpiling inline hoist's own node_modules libraries.
-                            exclude: inlineHoist ? [hoistNodeModulesPath] : undefined
+                            exclude: inlineHoist ? [hoistNodeModulesPath, ...babelExcludePaths] : babelExcludePaths
                         },
 
                         // Use MiniCssExtractPlugin to extract css and scss files in Prod
@@ -288,9 +276,6 @@ function configureWebpack(env) {
                     excludeChunks: excludeAssets
                 });
             }),
-
-            // Needed to filter in or out chunked assets per app. Configurations are applied in the HtmlWebpackPlugin above
-            // new HtmlWebpackExcludeAssetsPlugin(),
 
             // Support an optional post-build/run interactive treemap of output bundles and their sizes / contents.
             analyzeBundles ? new BundleAnalyzerPlugin({

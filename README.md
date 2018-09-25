@@ -64,3 +64,8 @@ simply:
 
 If required, rules and other settings extended from this base configuration can be overridden at the
 app level.
+
+----
+📫☎️🌎 info@xh.io | https://xh.io/contact
+
+Copyright © 2018 Extremely Heavy Industries Inc.
