@@ -12,7 +12,6 @@ const _ = require('lodash'),
     MiniCssExtractPlugin = require('mini-css-extract-plugin'),
     FaviconsWebpackPlugin = require('favicons-webpack-plugin'),
     HtmlWebpackPlugin = require('html-webpack-plugin'),
-    HtmlWebpackExcludeAssetsPlugin = require('html-webpack-exclude-assets-plugin'),
     UglifyJsPlugin = require('uglifyjs-webpack-plugin'),
     basePath = fs.realpathSync(process.cwd());
 
@@ -72,7 +71,8 @@ function configureWebpack(env) {
         devGrailsPort = env.devGrailsPort || 8080,
         devWebpackPort = env.devWebpackPort || 3000,
         baseUrl = env.baseUrl || (prodBuild ? '/api/' : `http://${devHost}:${devGrailsPort}/`),
-        favicon = env.favicon || null;
+        favicon = env.favicon || null,
+        contextRoot = env.contextRoot || '/';
 
     process.env.BABEL_ENV = prodBuild ? 'production' : 'development';
     process.env.NODE_ENV = prodBuild ? 'production' : 'development';
@@ -87,7 +87,7 @@ function configureWebpack(env) {
 
     const srcPath = path.resolve(basePath, 'src'),
         outPath = path.resolve(basePath, 'build'),
-        publicPath = '/';  // Path on which fully built app is served - i.e. root context
+        publicPath = contextRoot;  // Path on which fully built app is served - i.e. root context
 
     // Resolve Hoist as either a sibling (inline, checked-out) project or a downloaded package dependency
     const hoistPath = inlineHoist ?
@@ -278,14 +278,19 @@ function configureWebpack(env) {
 
             // Generate HTML index pages - one per app.
             ...apps.map(app => {
+                const excludeAssets = getChunkCombinations(['vendors', ...(apps.filter(innerApp => innerApp.name !== app.name).map(innerApp => innerApp.name))]);
                 return new HtmlWebpackPlugin({
                     inject: true,
                     title: appName,
                     lockout: fs.readFileSync(path.resolve(hoistPath, 'template/lockout.js'), 'utf8'),
                     template: path.resolve(hoistPath, 'template/index.html'),
                     filename: `${app.name}/index.html`,
+                    excludeChunks: excludeAssets
                 });
             }),
+
+            // Needed to filter in or out chunked assets per app. Configurations are applied in the HtmlWebpackPlugin above
+            // new HtmlWebpackExcludeAssetsPlugin(),
 
             // Support an optional post-build/run interactive treemap of output bundles and their sizes / contents.
             analyzeBundles ? new BundleAnalyzerPlugin({
@@ -438,5 +443,17 @@ const printBool = v => {
         chalk.whiteBright.bgGreen(answer) :
         chalk.whiteBright.bgRed(answer);
 };
+
+function getChunkCombinations(chunkNames) {
+    let result = [];
+    let f = function(prefix, chunkNames) {
+        for (let i = 0; i < chunkNames.length; i++) {
+            result.push(prefix + (prefix === '' ? '' : '~') + chunkNames[i]);
+            f(prefix + (prefix === '' ? '' : '~') + chunkNames[i], chunkNames.slice(i + 1));
+        }
+    };
+    f('', chunkNames);
+    return result.filter(chunk => chunk !== 'vendors');
+}
 
 module.exports = configureWebpack;
