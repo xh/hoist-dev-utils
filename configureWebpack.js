@@ -12,6 +12,7 @@ const _ = require('lodash'),
     MiniCssExtractPlugin = require('mini-css-extract-plugin'),
     FaviconsWebpackPlugin = require('favicons-webpack-plugin'),
     HtmlWebpackPlugin = require('html-webpack-plugin'),
+    TerserPlugin = require('terser-webpack-plugin'),
     UglifyJsPlugin = require('uglifyjs-webpack-plugin'),
     basePath = fs.realpathSync(process.cwd());
 
@@ -132,7 +133,7 @@ function configureWebpack(env) {
         entry: {
             ..._.chain(apps)
                 .keyBy('name')
-                .mapValues(app => [app.path])
+                .mapValues(app => ['@babel/polyfill', app.path])
                 .value()
         },
 
@@ -186,8 +187,18 @@ function configureWebpack(env) {
                             use: {
                                 loader: 'babel-loader',
                                 options: {
-                                    presets: ['react-app'],
-                                    plugins: ['transform-decorators-legacy'],
+                                    presets: [
+                                        '@babel/preset-react',
+                                        ['@babel/preset-env', {
+                                            targets: '>1%, last 2 versions, not ie < 11, not opera > 0, not op_mob > 0, not op_mini all'
+                                        }]
+                                    ],
+                                    plugins: [
+                                        ['@babel/plugin-proposal-decorators', { legacy: true }],
+                                        ['@babel/plugin-proposal-class-properties', { loose: true }],
+                                        '@babel/plugin-proposal-object-rest-spread',
+                                        '@babel/plugin-transform-regenerator'
+                                    ],
                                     compact: true,
                                     cacheDirectory: !prodBuild
                                 }
@@ -390,6 +401,13 @@ const extraPluginsProd = () => {
             filename: '[name]/[name].[contenthash:8].css'
         }),
 
+        new TerserPlugin({
+            test: /\.(jsx?)$/,
+            terserOptions: {
+                safari10: true
+            }
+        }),
+
         // Enable JS minification and tree-shaking.
         new UglifyJsPlugin({
             sourceMap: true,
@@ -397,8 +415,8 @@ const extraPluginsProd = () => {
             uglifyOptions: {
                 mangle: {
                     // In particular, avoid mangling constructor names, which may be used in error messages.
-                    keep_fnames: true,
-                    safari10: true
+                    keep_fnames: true
+                    // safari10: true
                 },
                 compress: {comparisons: false},
                 output: {comments: false}
