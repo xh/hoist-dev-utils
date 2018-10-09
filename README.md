@@ -2,7 +2,7 @@
 
 Tooling for building and deploying web applications built on the Hoist React platform. This
 repository is made available as the `@xh/hoist-dev-utils` package on npm for import and use by
-applications. It also hosts a distinct `@xh/eslint-config` package for standardized ESLint configs.
+applications.
 
 ### Shared development dependencies
 
@@ -49,9 +49,9 @@ versioned 1.2.3 release).
 
 ### ESLint Configuration
 
-This top-level hoist-dev-utils package includes a dependency on the `@xh/eslint-config` package
-nested within this repository. That package exports an eslint configuration object with ExHI's
-coding conventions and best practices for Hoist React based development.
+This top-level hoist-dev-utils package includes a dependency on the `@xh/eslint-config` package.
+That package exports an eslint configuration object with ExHI's coding conventions and best
+practices for Hoist React based development.
 
 Applications can use these rules for their own ESLint config by specifying their `.eslintrc` file as
 simply:

@@ -19,7 +19,7 @@
     "@babel/polyfill": "~7.0.0",
     "@babel/preset-env": "~7.1.0",
     "@babel/preset-react": "~7.0.0",
-    "@xh/eslint-config": "~0.2.1",
+    "@xh/eslint-config": "~0.2.3",
     "autoprefixer": "~9.1.5",
     "babel-loader": "~8.0.4",
     "case-sensitive-paths-webpack-plugin": "~2.1.2",
