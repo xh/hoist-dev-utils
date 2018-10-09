@@ -23,20 +23,23 @@ client application entry points with preconfigured loaders for JS code (Babel), 
 details.
 
 The generated Webpack configuration also sets the value of several XH globals within the built JS
-code, via the Webpack DefinePlugin. These include `XH.appName` (required), `XH.appVersion` and
-similar.
+code, via the Webpack DefinePlugin. These include `XH.appCode` and `XH.appName` (both required),
+`XH.appVersion` (typically set as part of the build) and similar.
 
 The intention is to reduce application webpack config files to a minimal and manageable subset of
 options. An example of such a file would be:
 
-```
+```javascript
 const configureWebpack = require('@xh/hoist-dev-utils/configureWebpack');
 
 module.exports = (env = {}) => {
     return configureWebpack({
-        appName: 'My App',
+        appCode: 'myApp',
+        appName: 'My Application',
         appVersion: env.appVersion || '1.0-SNAPSHOT',
-        favicon: './public/app-logo.png'
+        agGridLicenseKey: 'myOrgsAgGridLicenseKey',
+        favicon: './public/favicon.png',
+        devServerOpenPage: 'app/',
         ...env
     });
 };
@@ -47,14 +50,17 @@ specify initial defaults (such as appVersion above, checked in as a SNAPSHOT) th
 overridden for particular builds (e.g. via `webpack --env.prodBuild --env.appVersion=1.2.3` to cut a
 versioned 1.2.3 release).
 
+See the [Hoist React readme](https://github.com/exhi/hoist-react) for step-by-step details on the
+build process.
+
 ### ESLint Configuration
 
-This top-level hoist-dev-utils package includes a dependency on the `@xh/eslint-config` package.
-That package exports an eslint configuration object with ExHI's coding conventions and best
-practices for Hoist React based development.
+✨ This package includes a development dependency on the `@xh/eslint-config` package.
+[That package](https://github.com/exhi/eslint-config) exports an eslint configuration object with
+ExHI's coding conventions and best practices for Hoist React based development.
 
-Applications can use these rules for their own ESLint config by specifying their `.eslintrc` file as
-simply:
+Applications that already have `@xh/hoist-dev-utils` as a dependency can use these rules for their
+own ESLint config by specifying their `.eslintrc` file as simply:
 
 ```
 {
@@ -65,7 +71,7 @@ simply:
 If required, rules and other settings extended from this base configuration can be overridden at the
 app level.
 
-----
+------------------------------------------
 📫☎️🌎 info@xh.io | https://xh.io/contact
 
 Copyright © 2018 Extremely Heavy Industries Inc.
