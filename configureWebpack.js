@@ -9,10 +9,11 @@ const _ = require('lodash'),
     BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin,
     CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin'),
     CleanWebpackPlugin = require('clean-webpack-plugin'),
-    ExtractTextPlugin = require('extract-text-webpack-plugin'),
+    MiniCssExtractPlugin = require('mini-css-extract-plugin'),
     FaviconsWebpackPlugin = require('favicons-webpack-plugin'),
     HtmlWebpackPlugin = require('html-webpack-plugin'),
     UglifyJsPlugin = require('uglifyjs-webpack-plugin'),
+    WebpackBar = require('webpackbar'),
     basePath = fs.realpathSync(process.cwd());
 
 /**
@@ -52,6 +53,7 @@ const _ = require('lodash'),
  *      path for static files.
  * @param {string} env.agGridLicenseKey - client-supplied key for ag-Grid enterprise license.
  * @param {string} [env.favicon] - relative path to a favicon source image to be processed.
+ * @param {string} [env.stats] - stats output - see https://webpack.js.org/configuration/stats/.
  * @param {string} [env.devHost] - hostname for both local Grails and Webpack dev servers.
  *      Defaults to localhost, but may be overridden to a proper hostname for testing on alternate
  *      workstations or devices. Will be automatically set to lowercase to comply with
@@ -79,7 +81,8 @@ function configureWebpack(env) {
         babelIncludePaths = env.babelIncludePaths || [],
         babelExcludePaths = env.babelExcludePaths || [],
         contextRoot = env.contextRoot || '/',
-        favicon = env.favicon || null;
+        favicon = env.favicon || null,
+        stats = env.stats || 'errors-only';
 
     process.env.BABEL_ENV = prodBuild ? 'production' : 'development';
     process.env.NODE_ENV = prodBuild ? 'production' : 'development';
@@ -124,13 +127,24 @@ function configureWebpack(env) {
                 };
             });
 
+    // Browserlist target list for Babel and postCSS loaders.
+    const targetBrowsers = [
+        '>1%',
+        'last 2 versions',
+        'not ie > 0',
+        'not opera > 0',
+        'not op_mob > 0',
+        'not op_mini all'
+    ];
+
     return {
+        mode: prodBuild ? 'none' : 'development',
 
         // One named entry chunk per app, as above.
         entry: {
             ..._.chain(apps)
                 .keyBy('name')
-                .mapValues(app => [app.path])
+                .mapValues(app => ['@babel/polyfill', app.path])
                 .value()
         },
 
@@ -145,20 +159,35 @@ function configureWebpack(env) {
             devtoolModuleFilenameTemplate: info => path.resolve(info.absoluteResourcePath).replace(/\\/g, '/')
         },
 
-        resolve: {
-            alias: resolveAliases
+        optimization: {
+            splitChunks: {
+                chunks: 'all',
+                minSize: 0
+            }
         },
+
+        resolve: {
+            alias: resolveAliases,
+            // Add JSX to support imports from .jsx source w/o needing to add the extension.
+            // Include "*" to continue supporting other imports that *do* specify an extension
+            // within the import statement (i.e. `import './foo.png'`).
+            extensions: ['*', '.js', '.jsx', '.json']
+        },
+
+        stats: stats,
 
         module: {
             // Flag missing exports as a failure vs. warning
             strictExportPresence: true,
 
             rules: [
-                // Core loaders for all assets
                 {
                     oneOf: [
 
-                        // Encode small-enough images into inline data URLs
+                        //------------------------
+                        // Image processing
+                        // Encodes `url()` references directly when small enough.
+                        //------------------------
                         {
                             test: [/\.bmp$/, /\.gif$/, /\.jpe?g$/, /\.png$/],
                             loader: 'url-loader',
@@ -168,14 +197,26 @@ function configureWebpack(env) {
                             }
                         },
 
-                        // Transpile JS via Babel
+
+                        //------------------------
+                        // JS processing
+                        // Transpile via Babel, with presets/plugins to support Hoist's use of modern / staged JS features.
+                        //------------------------
                         {
                             test: /\.(jsx?)$/,
                             use: {
                                 loader: 'babel-loader',
                                 options: {
-                                    presets: ['react-app'],
-                                    plugins: ['transform-decorators-legacy'],
+                                    presets: [
+                                        '@babel/preset-react',
+                                        ['@babel/preset-env', {targets: targetBrowsers.join(', ')}]
+                                    ],
+                                    plugins: [
+                                        ['@babel/plugin-proposal-decorators', {legacy: true}],
+                                        ['@babel/plugin-proposal-class-properties', {loose: true}],
+                                        '@babel/plugin-proposal-object-rest-spread',
+                                        '@babel/plugin-transform-regenerator'
+                                    ],
                                     compact: true,
                                     cacheDirectory: !prodBuild
                                 }
@@ -188,12 +229,54 @@ function configureWebpack(env) {
                             exclude: inlineHoist ? [hoistNodeModulesPath, ...babelExcludePaths] : babelExcludePaths
                         },
 
-                        // Process CSS and SASS - distinct workflows for prod build vs. dev-time
-                        prodBuild ? cssConfProd() : cssConfDev(),
-                        prodBuild ? sassConfProd() : sassConfDev(),
 
+                        //------------------------
+                        // SASS/CSS processing
+                        // NOTE these loaders are applied in bottom-to-top (reverse) order.
+                        //------------------------
+                        {
+                            test: /\.(sa|sc|c)ss$/,
+                            use: [
+                                // 3) Production builds use MiniCssExtractPlugin to break built styles into dedicated output files
+                                //    (vs. tags injected into DOM) for production builds. Note relies on MiniCssExtractPlugin being
+                                //    called within the prod plugins section.
+                                prodBuild ? MiniCssExtractPlugin.loader : 'style-loader',
+
+                                // 2) Resolve @imports within CSS, similar to module support in JS.
+                                {
+                                    loader: 'css-loader',
+                                    options: {
+                                        importLoaders: 2, // Indicate how many prior loaders (postCssLoader/sassLoader) to also run on @imported resources.
+                                        sourceMap: true
+                                    }
+                                },
+
+                                // 1) Pre-process CSS to install flexbox bug workarounds + vendor-specific prefixes for the configured browsers
+                                //    Note that the "post" in the loader name refers to http://postcss.org/ - NOT the processing order within Webpack.
+                                {
+                                    loader: 'postcss-loader',
+                                    options: {
+                                        ident: 'postcss',
+                                        plugins: () => [
+                                            require('postcss-flexbugs-fixes'),  // Inclusion of postcss-flexbugs-fixes is from CRA.
+                                            autoprefixer({
+                                                browsers: targetBrowsers,
+                                                flexbox: 'no-2009'
+                                            })
+                                        ]
+                                    }
+                                },
+
+                                // 0) Process source SASS -> CSS
+                                {loader: 'sass-loader'}
+                            ]
+                        },
+
+
+                        //------------------------
                         // Fall-through entry to process all other assets via a file-loader.
-                        // Exclude config here is from CRA source config (commented there, but didn't understand).
+                        // (Exclude config here is from CRA source config - commented there, but didn't understand).
+                        //------------------------
                         {
                             exclude: [/\.jsx?$/, /\.html$/, /\.json$/],
                             loader: 'file-loader',
@@ -208,7 +291,9 @@ function configureWebpack(env) {
 
         plugins: [
             // Clean (remove) the output directory before each run.
-            new CleanWebpackPlugin([outPath], {verbose: false}),
+            new CleanWebpackPlugin([outPath], {
+                root: basePath
+            }),
 
             // Inject global constants at compile time.
             new webpack.DefinePlugin({
@@ -220,22 +305,6 @@ function configureWebpack(env) {
                 xhBaseUrl: JSON.stringify(baseUrl),
                 xhAgGridLicenseKey: JSON.stringify(env.agGridLicenseKey),
                 xhIsDevelopmentMode: !prodBuild
-            }),
-
-            // Extract common (i.e. library, vendor) code into a dedicated chunk for re-use across app updates
-            // and multiple entry points. This is the simplest configuration of this plugin - an alternative would
-            // be for us to define explicit vendor dependencies within an entry point to break out as common.
-            // By default, if a module is called by >=2 entry points, it gets bundled into common.
-            // We should evaluate once we have a more fully built set of example apps!
-            new webpack.optimize.CommonsChunkPlugin({
-                name: ['common']
-            }),
-
-            // This second invocation of the plugin extracts the webpack runtime into its own chunk to avoid
-            // changes to our app-level code and modules modifying the common chunk hash as well and preventing caching.
-            // See https://medium.com/webpack/predictable-long-term-caching-with-webpack-d3eee1d3fa31
-            new webpack.optimize.CommonsChunkPlugin({
-                name: ['runtime']
             }),
 
             // More plugins to avoid unwanted hash changes and support better caching - uses paths to identify
@@ -268,14 +337,14 @@ function configureWebpack(env) {
 
             // Generate HTML index pages - one per app.
             ...apps.map(app => {
+                const excludeAssets = getChunkCombinations(['vendors', ...(apps.filter(innerApp => innerApp.name !== app.name).map(innerApp => innerApp.name))]);
                 return new HtmlWebpackPlugin({
                     inject: true,
                     title: appName,
                     lockout: fs.readFileSync(path.resolve(hoistPath, 'template/lockout.js'), 'utf8'),
                     template: path.resolve(hoistPath, 'template/index.html'),
                     filename: `${app.name}/index.html`,
-                    // Ensure common chunks are included!
-                    chunks: [app.name, 'common', 'runtime']
+                    excludeChunks: excludeAssets
                 });
             }),
 
@@ -287,7 +356,10 @@ function configureWebpack(env) {
             // Who wants errors? Not us.
             new webpack.NoEmitOnErrorsPlugin(),
 
-            // Environment-specific plugins
+            // Display build progress - enable profile for per-loader/file type stats.
+            new WebpackBar({profile: env.printProfileStats}),
+
+            // Environment-specific plugins.
             ...(prodBuild ? extraPluginsProd() : extraPluginsDev())
 
         ].filter(Boolean),
@@ -301,6 +373,7 @@ function configureWebpack(env) {
             overlay: true,
             compress: true,
             hot: true,
+            stats: stats,
             open: env.devServerOpenPage != null,
             openPage: env.devServerOpenPage,
             // Support HTML5 history routes for apps, with /appName/ as the base route for each
@@ -320,140 +393,27 @@ function configureWebpack(env) {
 //------------------------
 // Implementation
 //------------------------
-
-// Production builds use ExtractTextPlugin to break built styles into dedicated CSS output files (vs. tags injected
-// into DOM) for production builds. Note relies on ExtractTextPlugin being called within the prod plugins section.
-const cssConfProd = () => {
-    return {
-        test: /\.css$/,
-        loader: ExtractTextPlugin.extract(
-            {
-                fallback: {
-                    // For CSS that does not end up extracted into a dedicated file - inject inline.
-                    loader: 'style-loader',
-                    options: {hmr: false}
-                },
-                use: [
-                    cssLoader(1),
-                    postCssLoader()
-                ]
-            }
-        )
-    };
-};
-
-const sassConfProd = () => {
-    return {
-        test: /\.scss$/,
-        loader: ExtractTextPlugin.extract(
-            {
-                fallback: {
-                    loader: 'style-loader',
-                    options: {hmr: false}
-                },
-                use: [
-                    cssLoader(2),
-                    postCssLoader(),
-                    sassLoader()
-                ]
-            }
-        )
-    };
-};
-
-// Dev-time CSS/SASS configs do not extract CSS into dedicated files - keeping it inline via default style-loader.
-// This is a common dev setup, and is compatible with HMR.
-const cssConfDev = () => {
-    return {
-        test: /\.css$/,
-        use: [
-            'style-loader',
-            cssLoader(1),
-            postCssLoader()
-        ]
-    };
-};
-
-const sassConfDev = () => {
-    return {
-        test: /\.scss$/,
-        use: [
-            'style-loader',
-            cssLoader(2),
-            postCssLoader(),
-            sassLoader()
-        ]
-    };
-};
-
-// CSS loader resolves @imports within CSS, similar to module support in JS.
-const cssLoader = (importLoaders) => {
-    return {
-        loader: 'css-loader',
-        options: {
-            // Indicate how many prior loaders (postCssLoader/sassLoader) to also run on @imported resources.
-            importLoaders: importLoaders,
-            // Generate CSS sourcemaps
-            sourceMap: true
-        }
-    };
-};
-
-
-// Pre-process CSS to install flexbox bug workarounds + vendor-specific prefixes for the configured browsers
-// Note that the "post" in the loader name refers to http://postcss.org/ - NOT the processing order within Webpack.
-// (In fact this is the first loader that gets our CSS, as loaders run R-L or bottom-to-top.
-// Inclusion of postcss-flexbugs-fixes is from CRA.
-const postCssLoader = () => {
-    return {
-        loader: 'postcss-loader',
-        options: {
-            ident: 'postcss',
-            plugins: () => [
-                require('postcss-flexbugs-fixes'),
-                autoprefixer({
-                    // TODO - Can continue to tune via http://browserl.ist/
-                    browsers: [
-                        '>1%',
-                        'last 2 versions',
-                        'not ie < 11',
-                        'not opera > 0',
-                        'not op_mob > 0',
-                        'not op_mini all'
-                    ],
-                    flexbox: 'no-2009'
-                })
-            ]
-        }
-    };
-};
-
-const sassLoader =  () => {
-    return {
-        loader: 'sass-loader'
-    };
-};
-
 const extraPluginsProd = () => {
     return [
         // Extract built CSS files into sub-directories by chunk / entry point name.
-        new ExtractTextPlugin({
-            filename: '[name]/[name].[contenthash:8].css',
-            // Required by CommonsChunkPlugin to ensure we extract CSS from common chunk as well as app entry points.
-            allChunks: true
+        new MiniCssExtractPlugin({
+            filename: '[name]/[name].[contenthash:8].css'
         }),
 
         // Enable JS minification and tree-shaking.
         new UglifyJsPlugin({
             sourceMap: true,
+            cache: true,
             parallel: true,
             uglifyOptions: {
                 mangle: {
                     // In particular, avoid mangling constructor names, which may be used in error messages.
-                    keep_fnames: true,
-                    safari10: true
+                    keep_fnames: true
                 },
-                compress: {comparisons: false},
+                compress: {
+                    comparisons: false,
+                    collapse_vars: false  // https://fontawesome.com/how-to-use/with-the-api/other/tree-shaking
+                },
                 output: {comments: false}
             }
         })
@@ -472,14 +432,26 @@ const extraPluginsDev = () => {
 };
 
 const printBool = v => {
-    const oks = ['true', 'yes', 'yep', 'sure', 'ok', 'you bet', 'happy to', 'please', 'for sure', '+1', 'oui', 'agreed', 'certainly', 'aye', 'affirmative'],
-        nos = ['false', 'no', 'nope', 'nah', 'never', 'no way', 'uh-uh', 'not today', 'pass', 'nyet', 'meh', 'negative', 'nay'],
-        answers = v ? oks : nos,
+    const answers = v ?
+            ['true', 'yes', 'yep', 'sure', 'ok', 'you bet', 'happy to', 'please', 'for sure', '+1', 'oui', 'agreed', 'certainly', 'aye', 'affirmative'] :
+            ['false', 'no', 'nope', 'nah', 'never', 'no way', 'uh-uh', 'not today', 'pass', 'nyet', 'meh', 'negative', 'nay'],
         answer = ` ${answers[Math.floor(Math.random() * answers.length)]} `;
 
     return v ?
         chalk.whiteBright.bgGreen(answer) :
         chalk.whiteBright.bgRed(answer);
 };
+
+function getChunkCombinations(chunkNames) {
+    let result = [];
+    let f = function(prefix, chunkNames) {
+        for (let i = 0; i < chunkNames.length; i++) {
+            result.push(prefix + (prefix === '' ? '' : '~') + chunkNames[i]);
+            f(prefix + (prefix === '' ? '' : '~') + chunkNames[i], chunkNames.slice(i + 1));
+        }
+    };
+    f('', chunkNames);
+    return result.filter(chunk => chunk !== 'vendors');
+}
 
 module.exports = configureWebpack;
