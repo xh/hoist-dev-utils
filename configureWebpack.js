@@ -341,8 +341,7 @@ function configureWebpack(env) {
                 return new HtmlWebpackPlugin({
                     inject: true,
                     title: appName,
-                    lockout: fs.readFileSync(path.resolve(hoistPath, 'template/lockout.js'), 'utf8'),
-                    template: path.resolve(hoistPath, 'template/index.html'),
+                    template: path.resolve(hoistPath, 'static/index.html'),
                     filename: `${app.name}/index.html`,
                     excludeChunks: excludeAssets
                 });
