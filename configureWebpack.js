@@ -215,7 +215,23 @@ function configureWebpack(env) {
                                         ['@babel/plugin-proposal-decorators', {legacy: true}],
                                         ['@babel/plugin-proposal-class-properties', {loose: true}],
                                         '@babel/plugin-proposal-object-rest-spread',
-                                        '@babel/plugin-transform-regenerator'
+                                        '@babel/plugin-transform-regenerator',
+
+                                        // See https://github.com/FortAwesome/react-fontawesome/issues/70
+                                        [require('babel-plugin-transform-imports'), {
+                                            '@fortawesome/pro-light-svg-icons': {
+                                                transform: '@fortawesome/pro-light-svg-icons/${member}',
+                                                skipDefaultConversion: true
+                                            },
+                                            '@fortawesome/pro-regular-svg-icons': {
+                                                transform: '@fortawesome/pro-regular-svg-icons/${member}',
+                                                skipDefaultConversion: true
+                                            },
+                                            '@fortawesome/pro-solid-svg-icons': {
+                                                transform: '@fortawesome/pro-solid-svg-icons/${member}',
+                                                skipDefaultConversion: true
+                                            }
+                                        }]
                                     ],
                                     compact: true,
                                     cacheDirectory: !prodBuild
