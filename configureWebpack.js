@@ -12,7 +12,7 @@ const _ = require('lodash'),
     MiniCssExtractPlugin = require('mini-css-extract-plugin'),
     FaviconsWebpackPlugin = require('favicons-webpack-plugin'),
     HtmlWebpackPlugin = require('html-webpack-plugin'),
-    UglifyJsPlugin = require('uglifyjs-webpack-plugin'),
+    TerserPlugin = require('terser-webpack-plugin'),
     WebpackBar = require('webpackbar'),
     basePath = fs.realpathSync(process.cwd());
 
@@ -414,22 +414,18 @@ const extraPluginsProd = () => {
         new MiniCssExtractPlugin({
             filename: '[name]/[name].[contenthash:8].css'
         }),
-
-        // Enable JS minification and tree-shaking.
-        new UglifyJsPlugin({
-            sourceMap: true,
+        new TerserPlugin({
             cache: true,
             parallel: true,
-            uglifyOptions: {
-                mangle: {
-                    // In particular, avoid mangling constructor names, which may be used in error messages.
-                    keep_fnames: true
-                },
+            sourceMap: true,
+            terserOptions: {
+                // In particular, avoid mangling constructor names, which may be used in error messages.
+                keep_fnames: true,
+                mangle: true,
                 compress: {
                     comparisons: false,
                     collapse_vars: false  // https://fontawesome.com/how-to-use/with-the-api/other/tree-shaking
-                },
-                output: {comments: false}
+                }
             }
         })
     ];
