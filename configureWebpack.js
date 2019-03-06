@@ -307,9 +307,7 @@ function configureWebpack(env) {
 
         plugins: [
             // Clean (remove) the output directory before each run.
-            new CleanWebpackPlugin([outPath], {
-                root: basePath
-            }),
+            new CleanWebpackPlugin(),
 
             // Inject global constants at compile time.
             new webpack.DefinePlugin({
