@@ -1,5 +1,15 @@
 # Changelog
 
+## v3.7.2 - 2019-05-14
+
+### 📚 Libraries
+
+* node-sass `4.11 -> 4.12`
+* webpack `4.30 -> 4.31`
+* Other minor/patch updates
+
+[Commit Log](https://github.com/exhi/hoist-dev-utils/compare/v3.7.1...v3.7.2)
+
 ## v3.7.1 - 2019-04-23
 
 ### 📚 Libraries
