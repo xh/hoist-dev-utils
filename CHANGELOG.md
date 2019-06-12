@@ -1,5 +1,19 @@
 # Changelog
 
+## v4.0.0-SNAPSHOT
+
+### 📚 Libraries
+
+* autoprefixer `9.5 -> 9.6`
+* clean-webpack-plugin `2.0 -> 3.0`
+* css-loader `2.1 -> 3.0`
+* file-loader `3.0 -> 4.0`
+* min-css-extract-plugin `0.6 -> 0.7`
+* terser-webpack-plugin `1.2 -> 1.3`
+* url-loader `1.1 -> 2.0`
+* webpack `4.31 -> 4.33`
+* webpack-dev-server `3.3 -> 3.7`
+
 ## v3.7.2 - 2019-05-14
 
 ### 📚 Libraries
