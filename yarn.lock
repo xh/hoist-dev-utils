@@ -1008,6 +1008,11 @@
     "@webassemblyjs/wast-parser" "1.8.5"
     "@xtuc/long" "4.2.2"
 
+"@xh/browserslist-config@~0.0.1":
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/@xh/browserslist-config/-/browserslist-config-0.0.1.tgz#7348f384f8439257f2f4ba05fae3ea12ecebccd7"
+  integrity sha512-iT2cqa9O0SJkQO8l1Db3AWbLEGRaSrlueaMXR+MzuZG5R0spwwjyjLfEPPQHAaKfge592BQbbsg7r9VKd9RAaQ==
+
 "@xh/eslint-config@~1.1.0":
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/@xh/eslint-config/-/eslint-config-1.1.0.tgz#2b1f106dcf853071c22ee4ba9f0eb15d6fb583f4"

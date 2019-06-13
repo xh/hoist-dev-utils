@@ -133,16 +133,6 @@ function configureWebpack(env) {
                 };
             });
 
-    // Browserlist target list for Babel and postCSS loaders.
-    const targetBrowsers = [
-        '>1%',
-        'last 2 versions',
-        'not ie > 0',
-        'not opera > 0',
-        'not op_mob > 0',
-        'not op_mini all'
-    ];
-
     return {
         mode: prodBuild ? 'none' : 'development',
 
@@ -215,7 +205,7 @@ function configureWebpack(env) {
                                 options: {
                                     presets: [
                                         '@babel/preset-react',
-                                        ['@babel/preset-env', {targets: targetBrowsers.join(', ')}]
+                                        '@babel/preset-env'
                                     ],
                                     plugins: [
                                         ['@babel/plugin-proposal-decorators', {legacy: true}],
@@ -282,7 +272,6 @@ function configureWebpack(env) {
                                         plugins: () => [
                                             require('postcss-flexbugs-fixes'),  // Inclusion of postcss-flexbugs-fixes is from CRA.
                                             autoprefixer({
-                                                browsers: targetBrowsers,
                                                 flexbox: 'no-2009'
                                             })
                                         ]
