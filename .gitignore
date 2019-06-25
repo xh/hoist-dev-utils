@@ -3,6 +3,7 @@
 !/.idea/scopes/
 !/.idea/copyright/
 *.iml
+.history
 
 # Build / Libs
 node_modules/

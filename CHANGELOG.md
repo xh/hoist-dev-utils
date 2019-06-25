@@ -1,5 +1,25 @@
 # Changelog
 
+## v4.0.0-SNAPSHOT
+
+
+## v3.7.4 - 2019-06-25
+
+### 📚 Libraries
+
+* put back webpack-cli 3.3.2
+
+[Commit Log](https://github.com/exhi/hoist-dev-utils/compare/v3.7.3...v3.7.4)
+
+
+## v3.7.3 - 2019-06-25
+
+### 📚 Libraries
+
+* removed webpack-cli (this made v3.7.3 unusable.)
+  
+[Commit Log](https://github.com/exhi/hoist-dev-utils/compare/v3.7.2...v3.7.3)
+
 ## v3.7.2 - 2019-05-14
 
 ### 📚 Libraries
