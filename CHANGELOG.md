@@ -2,17 +2,23 @@
 
 ## v4.0.0-SNAPSHOT
 
+
+## v3.7.4 - 2019-06-25
+
 ### 📚 Libraries
 
-* autoprefixer `9.5 -> 9.6`
-* clean-webpack-plugin `2.0 -> 3.0`
-* css-loader `2.1 -> 3.0`
-* file-loader `3.0 -> 4.0`
-* min-css-extract-plugin `0.6 -> 0.7`
-* terser-webpack-plugin `1.2 -> 1.3`
-* url-loader `1.1 -> 2.0`
-* webpack `4.31 -> 4.33`
-* webpack-dev-server `3.3 -> 3.7`
+* put back webpack-cli 3.3.2
+
+[Commit Log](https://github.com/exhi/hoist-dev-utils/compare/v3.7.3...v3.7.4)
+
+
+## v3.7.3 - 2019-06-25
+
+### 📚 Libraries
+
+* removed webpack-cli (this made v3.7.3 unusable.)
+  
+[Commit Log](https://github.com/exhi/hoist-dev-utils/compare/v3.7.2...v3.7.3)
 
 ## v3.7.2 - 2019-05-14
 

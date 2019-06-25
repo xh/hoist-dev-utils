@@ -14,7 +14,7 @@ const _ = require('lodash'),
     autoprefixer = require('autoprefixer'),
     BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin,
     CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin'),
-    {CleanWebpackPlugin} = require('clean-webpack-plugin'),
+    CleanWebpackPlugin = require('clean-webpack-plugin'),
     MiniCssExtractPlugin = require('mini-css-extract-plugin'),
     FaviconsWebpackPlugin = require('favicons-webpack-plugin'),
     HtmlWebpackPlugin = require('html-webpack-plugin'),
@@ -133,6 +133,16 @@ function configureWebpack(env) {
                 };
             });
 
+    // Browserlist target list for Babel and postCSS loaders.
+    const targetBrowsers = [
+        '>1%',
+        'last 2 versions',
+        'not ie > 0',
+        'not opera > 0',
+        'not op_mob > 0',
+        'not op_mini all'
+    ];
+
     return {
         mode: prodBuild ? 'none' : 'development',
 
@@ -205,7 +215,7 @@ function configureWebpack(env) {
                                 options: {
                                     presets: [
                                         '@babel/preset-react',
-                                        '@babel/preset-env'
+                                        ['@babel/preset-env', {targets: targetBrowsers.join(', ')}]
                                     ],
                                     plugins: [
                                         ['@babel/plugin-proposal-decorators', {legacy: true}],
@@ -272,6 +282,7 @@ function configureWebpack(env) {
                                         plugins: () => [
                                             require('postcss-flexbugs-fixes'),  // Inclusion of postcss-flexbugs-fixes is from CRA.
                                             autoprefixer({
+                                                browsers: targetBrowsers,
                                                 flexbox: 'no-2009'
                                             })
                                         ]
