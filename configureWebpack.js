@@ -20,6 +20,7 @@ const _ = require('lodash'),
     HtmlWebpackPlugin = require('html-webpack-plugin'),
     TerserPlugin = require('terser-webpack-plugin'),
     WebpackBar = require('webpackbar'),
+    DuplicatePackageCheckerPlugin = require('duplicate-package-checker-webpack-plugin'),
     basePath = fs.realpathSync(process.cwd());
 
 /**
@@ -377,6 +378,9 @@ function configureWebpack(env) {
 
             // Display build progress - enable profile for per-loader/file type stats.
             new WebpackBar({profile: env.printProfileStats}),
+
+            // Warn on dupe package included in bundle due to multiple, conflicting versions.
+            new DuplicatePackageCheckerPlugin({verbose: true}),
 
             // Environment-specific plugins.
             ...(prodBuild ? extraPluginsProd() : extraPluginsDev())
