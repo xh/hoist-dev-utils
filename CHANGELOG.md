@@ -1,22 +1,32 @@
 # Changelog
 
-## v4.0.0-SNAPSHOT
+## v3.7.5 - 2019-07-23
 
+### 🎁 New Features
+
+* Added Webpack `DuplicatePackageCheckerPlugin` to warn on build if non-overlapping dependency
+  requirements force the inclusion of a package multiple times. (This was happening with lodash,
+  unexpectedly.)
+
+### 📚 Libraries
+
+* Updated lodash to latest patch release (security fixes)
+
+https://github.com/exhi/hoist-dev-utils/compare/v3.7.4...v3.7.5
 
 ## v3.7.4 - 2019-06-25
 
 ### 📚 Libraries
 
-* put back webpack-cli 3.3.2
+* Restored webpack-cli @ 3.3.2
 
 [Commit Log](https://github.com/exhi/hoist-dev-utils/compare/v3.7.3...v3.7.4)
-
 
 ## v3.7.3 - 2019-06-25
 
 ### 📚 Libraries
 
-* removed webpack-cli (this made v3.7.3 unusable.)
+* Removed webpack-cli (this made v3.7.3 unusable)
   
 [Commit Log](https://github.com/exhi/hoist-dev-utils/compare/v3.7.2...v3.7.3)
 
