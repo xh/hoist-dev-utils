@@ -19,7 +19,7 @@
     "@babel/polyfill": "~7.4.4",
     "@babel/preset-env": "~7.4.4",
     "@babel/preset-react": "~7.0.0",
-    "@xh/eslint-config": "~1.1.0",
+    "@xh/eslint-config": "~1.1.1",
     "autoprefixer": "~9.5.1",
     "babel-loader": "~8.0.6",
     "babel-plugin-transform-imports": "~1.5.1",
