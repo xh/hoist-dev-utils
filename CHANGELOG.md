@@ -6,6 +6,8 @@
 
 * @xh/eslint-config `1.1.0 -> 1.1.1` - whitelist WebSocket global.
 
+[Commit Log](https://github.com/exhi/hoist-dev-utils/compare/v3.7.5...v3.7.6)
+
 ## v3.7.5 - 2019-07-23
 
 ### 🎁 New Features
@@ -18,7 +20,7 @@
 
 * Updated lodash to latest patch release (security fixes)
 
-https://github.com/exhi/hoist-dev-utils/compare/v3.7.4...v3.7.5
+[Commit Log](https://github.com/exhi/hoist-dev-utils/compare/v3.7.4...v3.7.5)
 
 ## v3.7.4 - 2019-06-25
 
