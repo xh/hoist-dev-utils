@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.7.6 - 2019-07-25
+
+### 📚 Libraries
+
+* @xh/eslint-config `1.1.0 -> 1.1.1` - whitelist WebSocket global.
+
 ## v3.7.5 - 2019-07-23
 
 ### 🎁 New Features
