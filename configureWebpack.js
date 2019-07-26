@@ -454,7 +454,7 @@ const printBool = v => {
     const answers = v ?
             ['true', 'yes', 'yep', 'sure', 'ok', 'you bet', 'happy to', 'please', 'for sure', '+1', 'oui', 'agreed', 'certainly', 'aye', 'affirmative'] :
             ['false', 'no', 'nope', 'nah', 'never', 'no way', 'uh-uh', 'not today', 'pass', 'nyet', 'meh', 'negative', 'nay'],
-        answer = ` ${answers[Math.floor(Math.random() * answers.length)]} `;
+        answer = ` ${_.sample(answers)} `;
 
     return v ?
         chalk.whiteBright.bgGreen(answer) :
