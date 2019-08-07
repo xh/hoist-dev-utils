@@ -7,7 +7,7 @@
 * Added new `checkForDupePackages` flag, default true to mirror previous behavior added in 3.7.5.
   Set to false to disable duplicate package checking / warnings if unwanted.
 
-[Commit Log](https://github.com/exhi/hoist-dev-utils/compare/v3.7.6...v3.7.8)
+[Commit Log](https://github.com/exhi/hoist-dev-utils/compare/v3.7.6...v3.7.7)
 
 ## v3.7.6 - 2019-07-25
 
