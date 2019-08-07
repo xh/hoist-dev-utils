@@ -46,6 +46,10 @@ const _ = require('lodash'),
  *      When inlineHoist=true, a mapping between @xh/hoist and the local path will be added.
  * @param {boolean} [env.analyzeBundles=false] - true to launch an interactive bundle analyzer to
  *      review output bundles, contents, and sizes.
+ * @param {boolean} [env.checkForDupePackages=true] - true (default) to run build through
+ *      DuplicatePackageCheckerPlugin and output a build-time console warning if duplicate packages
+ *      have been resolved due to non-overlapping dependencies. Set to false to disable if dupe
+ *      warnings are not desired / distracting.
  * @param {string} [env.appVersion] - client version - baked into client as XH.appVersion
  * @param {string} [env.appBuild] - build/git tag - baked into client as XH.appBuild
  * @param {string} [env.baseUrl] - root path prepended to all relative URLs called via FetchService
@@ -79,6 +83,7 @@ function configureWebpack(env) {
         inlineHoist = !prodBuild && env.inlineHoist === true,
         resolveAliases = Object.assign({}, env.resolveAliases),
         analyzeBundles = env.analyzeBundles === true,
+        checkForDupePackages = env.checkForDupePackages !== false,
         appVersion = env.appVersion || '1.0-SNAPSHOT',
         appBuild = env.appBuild || 'UNKNOWN',
         devHost = (env.devHost ? env.devHost.toLowerCase() : 'localhost'),
@@ -373,14 +378,16 @@ function configureWebpack(env) {
                 analyzerMode: 'server'
             }) : undefined,
 
+            // Warn on dupe package included in bundle due to multiple, conflicting versions.
+            checkForDupePackages ? new DuplicatePackageCheckerPlugin({
+                verbose: true
+            }) : undefined,
+
             // Who wants errors? Not us.
             new webpack.NoEmitOnErrorsPlugin(),
 
             // Display build progress - enable profile for per-loader/file type stats.
             new WebpackBar({profile: env.printProfileStats}),
-
-            // Warn on dupe package included in bundle due to multiple, conflicting versions.
-            new DuplicatePackageCheckerPlugin({verbose: true}),
 
             // Environment-specific plugins.
             ...(prodBuild ? extraPluginsProd() : extraPluginsDev())
