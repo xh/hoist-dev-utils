@@ -1,5 +1,13 @@
 # Changelog
 
+## v3.8.0 - 2019-08-16
+
+### 📚 Libraries
+
+* @xh/eslint-config `1.1.1 -> 1.2.0` - react-hooks plugin and linting rules.
+
+[Commit Log](https://github.com/exhi/hoist-dev-utils/compare/v3.7.7...v3.8.0)
+
 ## v3.7.7 - 2019-08-07
 
 ### ⚙️ Technical
