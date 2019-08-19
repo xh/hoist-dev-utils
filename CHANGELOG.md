@@ -8,6 +8,8 @@
   (Avoids errors when attempting to call hooks that will throw if called across multiple instances
   of the library.)
 
+[Commit Log](https://github.com/exhi/hoist-dev-utils/compare/v3.8.0...v3.8.1)
+
 ## v3.8.0 - 2019-08-16
 
 ### 📚 Libraries
