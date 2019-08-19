@@ -1,5 +1,13 @@
 # Changelog
 
+## v3.8.1 - 2019-08-19
+
+### ⚙️ Technical
+
+* Ensure react is resolved to a single instance of the library when running in `inlineHoist` mode.
+  (Avoids errors when attempting to call hooks that will throw if called across multiple instances
+  of the library.)
+
 ## v3.8.0 - 2019-08-16
 
 ### 📚 Libraries
@@ -52,7 +60,7 @@
 ### 📚 Libraries
 
 * Removed webpack-cli (this made v3.7.3 unusable)
-  
+
 [Commit Log](https://github.com/exhi/hoist-dev-utils/compare/v3.7.2...v3.7.3)
 
 ## v3.7.2 - 2019-05-14
