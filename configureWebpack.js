@@ -386,7 +386,8 @@ function configureWebpack(env) {
 
             // Warn on dupe package included in bundle due to multiple, conflicting versions.
             checkForDupePackages ? new DuplicatePackageCheckerPlugin({
-                verbose: true
+                verbose: true,
+                showHelp: false
             }) : undefined,
 
             // Who wants errors? Not us.
