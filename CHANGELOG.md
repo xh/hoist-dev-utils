@@ -19,6 +19,7 @@ favor of core-js for polyfills.
 ### 📚 Libraries
 
 * @babel `7.4 -> 7.5`
+* @xh/eslint-config `1.2 -> 2.0`
 * webpack `4.31 -> 4.39`
 * Multiple other library updates for loaders, plugins, and other utils.
 
