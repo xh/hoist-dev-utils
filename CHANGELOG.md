@@ -1,5 +1,29 @@
 # Changelog
 
+## 4.0.0-SNAPSHOT - under development
+
+This release includes a number of major/minor updates for the build toolchain. Most notably, it
+updates to Babel 7.5, which removes support for the `@babel/polyfill` plugin we had been using in
+favor of core-js for polyfills.
+
+### 🎁 New Features
+
+* Support for the nullsafe operator `let foo = bar?.baz` via the
+  `@babel/plugin-proposal-optional-chaining` plugin.
+
+### 💥 Breaking Changes
+
+* Requires a runtime dependency on `core-js`. Will be added to Hoist React v28+, but can also be
+  added at the app level if needed for a prior build.
+
+### 📚 Libraries
+
+* @babel `7.4 -> 7.5`
+* webpack `4.31 -> 4.39`
+* Multiple other library updates for loaders, plugins, and other utils.
+
+[Commit Log](https://github.com/exhi/hoist-dev-utils/compare/v3.8.1...develop)
+
 ## v3.8.1 - 2019-08-19
 
 ### ⚙️ Technical
