@@ -180,10 +180,9 @@ function configureWebpack(env) {
     // Build Webpack entry config, with keys for each JS app to be bundled.
     const appEntryPoints = {};
     apps.forEach(app => {
-        // Ensure core-js and regen-runtime both imported for every app bundle.
-        // TODO - we could likely do this in XH.js and that might be more appropriate.
-        //      Unclear where this current approach comes from, or if/how an XH import would be different.
-        appEntryPoints[app.name] = ['core-js/stable', 'regenerator-runtime/runtime', app.path];
+        // Ensure core-js and regen-runtime both imported for every app bundle - they are specified
+        // as dependencies by Hoist and imported once in its polyfills.js file.
+        appEntryPoints[app.name] = [path.resolve(hoistPath, 'static/polyfills.js'), app.path];
     });
 
     logMsg('JS app entry points:');
