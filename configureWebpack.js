@@ -21,7 +21,6 @@ const _ = require('lodash'),
     WebpackBar = require('webpackbar'),
     DuplicatePackageCheckerPlugin = require('duplicate-package-checker-webpack-plugin'),
     babelCorePkg = require('@babel/core/package'),
-    coreJsPkg = require('core-js/package'),
     devUtilsPkg = require('./package'),
     hoistReactPkg = require('@xh/hoist/package'),
     reactPkg = require('react/package'),
@@ -133,7 +132,6 @@ function configureWebpack(env) {
     logSep();
     logMsg('Key Library Versions:');
     logMsg(`  ⁃ @babel/core ${babelCorePkg.version}`);
-    logMsg(`  ⁃ core-js ${coreJsPkg.version}`);
     logMsg(`  ⁃ react ${reactPkg.version}`);
     logMsg(`  ⁃ webpack ${webpack.version}`);
     logSep();
@@ -180,8 +178,8 @@ function configureWebpack(env) {
     // Build Webpack entry config, with keys for each JS app to be bundled.
     const appEntryPoints = {};
     apps.forEach(app => {
-        // Ensure core-js and regen-runtime both imported for every app bundle - they are specified
-        // as dependencies by Hoist and imported once in its polyfills.js file.
+        // Ensure core-js and regenerator-runtime both imported for every app bundle - they are
+        // specified as dependencies by Hoist and imported once in its polyfills.js file.
         appEntryPoints[app.name] = [path.resolve(hoistPath, 'static/polyfills.js'), app.path];
     });
 
@@ -353,6 +351,8 @@ function configureWebpack(env) {
                                         plugins: () => [
                                             require('postcss-flexbugs-fixes'),  // Inclusion of postcss-flexbugs-fixes is from CRA.
                                             autoprefixer({
+                                                // We still want to provide an array of target browsers
+                                                // that can be passed to / managed centrally by this script.
                                                 overrideBrowserslist: targetBrowsers,
                                                 flexbox: 'no-2009'
                                             })
