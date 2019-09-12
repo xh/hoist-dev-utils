@@ -3,18 +3,21 @@
 ## 4.0.0-SNAPSHOT - under development
 
 This release includes a number of major/minor updates for the build toolchain. Most notably, it
-updates to Babel 7.5, which removes support for the `@babel/polyfill` plugin we had been using in
-favor of core-js for polyfills.
+updates Babel and its plugins from `7.4 -> 7.6`, which removes support for the `@babel/polyfill`
+plugin we had been using in favor of `core-js@3` for polyfills (as of 7.5).
 
 ### 🎁 New Features
 
 * Support for the nullsafe operator `let foo = bar?.baz` via the
   `@babel/plugin-proposal-optional-chaining` plugin.
+* Support for `Promise.allSettled()` via the `core-js` polyfills. Hoist v28 will remove its
+  dependency on the RSVP library which previously provided this utility.
 
 ### 💥 Breaking Changes
 
-* Requires a runtime dependency on `core-js`. Will be added to Hoist React v28+, but can also be
-  added at the app level if needed for a prior build.
+* **Requires Hoist React v28+**, which adds a required runtime dependency on `core-js` for polyfills
+  as well as a new static import file referenced by `configureWebpack()` to provide a
+  once-per-entry-point import of `core-js` and `regenerator-runtime`.
 
 ### 📚 Libraries
 
