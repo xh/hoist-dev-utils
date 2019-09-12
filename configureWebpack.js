@@ -284,7 +284,7 @@ function configureWebpack(env) {
                                         // See notes @ https://babeljs.io/docs/en/babel-plugin-proposal-decorators#legacy
                                         ['@babel/plugin-proposal-decorators', {legacy: true}],
 
-                                        // Support classes level fields - must come after decorators plugin.
+                                        // Support classes level fields - must come after decorators plugin and be loose.
                                         ['@babel/plugin-proposal-class-properties', {loose: true}],
 
                                         // Support null-safe operator: `let x = foo?.bar`.
@@ -500,8 +500,6 @@ const extraPluginsProd = () => {
 
         // Minify and tree-shake via Terser
         new TerserPlugin({
-            cache: true,
-            parallel: true,
             sourceMap: true,
             terserOptions: {
                 // Don't mangle function names (notably constructors, which may be used in error messages).
@@ -511,9 +509,6 @@ const extraPluginsProd = () => {
                     comparisons: false,
                     // See https://fontawesome.com/how-to-use/with-the-api/other/tree-shaking
                     collapse_vars: false
-                },
-                output: {
-                    comments: false
                 }
             }
         })

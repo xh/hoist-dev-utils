@@ -18,10 +18,10 @@ favor of core-js for polyfills.
 
 ### 📚 Libraries
 
-* @babel `7.4 -> 7.5`
+* @babel `7.4 -> 7.6`
 * @xh/eslint-config `1.2 -> 2.0`
-* webpack `4.31 -> 4.39`
-* Multiple other library updates for loaders, plugins, and other utils.
+* webpack `4.31 -> 4.40`
+* *Multiple* other library updates for loaders, plugins, and other utils.
 
 [Commit Log](https://github.com/exhi/hoist-dev-utils/compare/v3.8.1...develop)
 
