@@ -1,6 +1,6 @@
 # Changelog
 
-## 4.0.0-SNAPSHOT - under development
+## 4.0.0 - 2019-09-12
 
 This release includes a number of major/minor updates for the build toolchain. Most notably, it
 updates Babel and its plugins from `7.4 -> 7.6`, which removes support for the `@babel/polyfill`
@@ -26,7 +26,7 @@ plugin we had been using in favor of `core-js@3` for polyfills (as of 7.5).
 * webpack `4.31 -> 4.40`
 * *Multiple* other library updates for loaders, plugins, and other utils.
 
-[Commit Log](https://github.com/exhi/hoist-dev-utils/compare/v3.8.1...develop)
+[Commit Log](https://github.com/exhi/hoist-dev-utils/compare/v3.8.1...v4.0.0)
 
 ## v3.8.1 - 2019-08-19
 
