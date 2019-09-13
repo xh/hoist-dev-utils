@@ -1225,10 +1225,10 @@
     "@webassemblyjs/wast-parser" "1.8.5"
     "@xtuc/long" "4.2.2"
 
-"@xh/eslint-config@~2.0.0":
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/@xh/eslint-config/-/eslint-config-2.0.0.tgz#42c12fc09e512bcb7903fb305991ab6bc1ffd573"
-  integrity sha512-gB1P5QUv3Mr8LJJK5UeXjvepgcJvf5YPBNJAeBVg/beSK6u+Fhgvo/E0dieoUvqV6R0L+EA0MxE8teygLUVRzA==
+"@xh/eslint-config@~2.1.0":
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/@xh/eslint-config/-/eslint-config-2.1.0.tgz#1a8df02e02485ace8c9e9640e9dbf8bae5375cc6"
+  integrity sha512-n7FqJ01/TX1MeQXJQk+n/IYyYqkixH1SHg79Uc9Ilr4Tv0jiV5QbsuU2cptUgAMMYC3MuYq5oEZRsc8MTLYCvA==
   dependencies:
     babel-eslint "~10.0.3"
     eslint "~6.3.0"
