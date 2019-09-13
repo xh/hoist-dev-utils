@@ -186,6 +186,10 @@ function configureWebpack(env) {
     logMsg('JS app entry points:');
     appNames.forEach(it => logMsg(`  ⁃ ${it}`));
     logSep();
+    logMsg('Something going wrong?');
+    logMsg('  ⁃ support@xh.io');
+    logMsg('  ⁃ https://xh.io/contact/');
+    logSep();
 
     return {
         mode: prodBuild ? 'none' : 'development',
