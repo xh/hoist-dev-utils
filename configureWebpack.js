@@ -9,18 +9,21 @@
 const _ = require('lodash'),
     path = require('path'),
     fs = require('fs'),
-    chalk = require('chalk'),
     webpack = require('webpack'),
     autoprefixer = require('autoprefixer'),
     BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin,
     CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin'),
-    CleanWebpackPlugin = require('clean-webpack-plugin'),
+    {CleanWebpackPlugin} = require('clean-webpack-plugin'),
     MiniCssExtractPlugin = require('mini-css-extract-plugin'),
     FaviconsWebpackPlugin = require('favicons-webpack-plugin'),
     HtmlWebpackPlugin = require('html-webpack-plugin'),
     TerserPlugin = require('terser-webpack-plugin'),
     WebpackBar = require('webpackbar'),
     DuplicatePackageCheckerPlugin = require('duplicate-package-checker-webpack-plugin'),
+    babelCorePkg = require('@babel/core/package'),
+    devUtilsPkg = require('./package'),
+    hoistReactPkg = require('@xh/hoist/package'),
+    reactPkg = require('react/package'),
     basePath = fs.realpathSync(process.cwd());
 
 /**
@@ -37,11 +40,14 @@ const _ = require('lodash'),
  * @param {string} [env.appName] - user-facing display name for the application - baked into client
  *      as XH.appName. Should be title cased and space-separated. If null, will be defaulted based
  *      on appCode (e.g. portfolio-manager -> Portfolio Manager).
+ * @param {string} [env.appVersion] - client version - baked into client as XH.appVersion
+ * @param {string} [env.appBuild] - build/git tag - baked into client as XH.appBuild
  * @param {boolean} [env.prodBuild=false] - true to indicate this is a build (as opposed to run of
  *      webpack-dev-server)
  * @param {boolean} [env.inlineHoist=false] - true to use a locally checked-out copy of hoist-react
  *      when running the dev server, as opposed to using the downloaded dependency. This allows
  *      hoist-react developers to test plugin changes. Dev-mode only.
+ * @param {string} env.agGridLicenseKey - client-supplied key for ag-Grid enterprise license.
  * @param {Object} [env.resolveAliases] - object mapping for custom webpack module resolution.
  *      When inlineHoist=true, a mapping between @xh/hoist and the local path will be added.
  * @param {boolean} [env.analyzeBundles=false] - true to launch an interactive bundle analyzer to
@@ -50,8 +56,6 @@ const _ = require('lodash'),
  *      DuplicatePackageCheckerPlugin and output a build-time console warning if duplicate packages
  *      have been resolved due to non-overlapping dependencies. Set to false to disable if dupe
  *      warnings are not desired / distracting.
- * @param {string} [env.appVersion] - client version - baked into client as XH.appVersion
- * @param {string} [env.appBuild] - build/git tag - baked into client as XH.appBuild
  * @param {string} [env.baseUrl] - root path prepended to all relative URLs called via FetchService
  *      (the core Hoist service for making Ajax requests). Defaults to `/api/` in production mode to
  *      work with proxy-based deployments and to `$devServerHost:$devServerGrailsPort` in dev mode.
@@ -62,7 +66,6 @@ const _ = require('lodash'),
  *      use would be a local package with a nested node_modules folder.
  * @param {string} [env.contextRoot] - root path for where the app will be served, used as the base
  *      path for static files.
- * @param {string} env.agGridLicenseKey - client-supplied key for ag-Grid enterprise license.
  * @param {string} [env.favicon] - relative path to a favicon source image to be processed.
  * @param {string} [env.stats] - stats output - see https://webpack.js.org/configuration/stats/.
  * @param {string} [env.devHost] - hostname for both local Grails and Webpack dev servers.
@@ -73,19 +76,21 @@ const _ = require('lodash'),
  * @param {number} [env.devWebpackPort] - port on which to start webpack-dev server. Dev-mode only.
  * @param {string} [env.devServerOpenPage] - path to auto-open when webpack-dev-server starts.
  *      Leave null to disable automatic page open on startup.
+ * @param {string[]} [env.targetBrowsers] - array of browserslist queries specifying target browsers
+ *      for Babel and CSS transpilation and processing.
  */
 function configureWebpack(env) {
     if (!env.appCode) throw 'Missing required "appCode" config - cannot proceed';
 
     const appCode = env.appCode,
         appName = env.appName || _.startCase(appCode),
+        appVersion = env.appVersion || '1.0-SNAPSHOT',
+        appBuild = env.appBuild || 'UNKNOWN',
         prodBuild = env.prodBuild === true,
         inlineHoist = !prodBuild && env.inlineHoist === true,
         resolveAliases = Object.assign({}, env.resolveAliases),
         analyzeBundles = env.analyzeBundles === true,
         checkForDupePackages = env.checkForDupePackages !== false,
-        appVersion = env.appVersion || '1.0-SNAPSHOT',
-        appBuild = env.appBuild || 'UNKNOWN',
         devHost = (env.devHost ? env.devHost.toLowerCase() : 'localhost'),
         devGrailsPort = env.devGrailsPort || 8080,
         devWebpackPort = env.devWebpackPort || 3000,
@@ -94,18 +99,42 @@ function configureWebpack(env) {
         babelExcludePaths = env.babelExcludePaths || [],
         contextRoot = env.contextRoot || '/',
         favicon = env.favicon || null,
-        stats = env.stats || 'errors-only';
+        stats = env.stats || 'errors-only',
+        // TODO - overridden currently in babel-env with forced addition of IE - see note there.
+        // Allowed to pass through w/o modification to autoprefixer (CSS processing).
+        targetBrowsers = [
+            'last 2 Chrome versions',
+            'last 2 Safari versions',
+            'last 2 iOS versions',
+            // TODO - when above resolved and this list has more of an effect on transpiled code,
+            //  we should review need for Edge support and particular Edge versions in use.
+            //  Edge 17 appeared to trigger the installation of numerous additional polyfills that
+            //  we otherwise might not need, hence this specification of v18+.
+            'Edge >= 18'
+        ],
+        buildDate = new Date();
 
     process.env.BABEL_ENV = prodBuild ? 'production' : 'development';
     process.env.NODE_ENV = prodBuild ? 'production' : 'development';
 
-    console.log('/-----------------------------------------------/');
-    console.log(`  Configuring ${appName} v${appVersion}`);
-    console.log('/-----------------------------------------------/');
-    console.log(`  🚀  Production build: ${printBool(prodBuild)}`);
-    console.log(`  🏗️  Inline Hoist: ${printBool(inlineHoist)}`);
-    if (analyzeBundles) console.log('🎁  Bundle analysis enabled - will launch after webpack completes.');
-    console.log('/-----------------------------------------------/');
+    logSep();
+    logMsg(`Building ${appName} v${appVersion}`);
+    logMsg(`  ${buildDate.toISOString()}`);
+    logSep();
+    if (prodBuild) logMsg('🚀  Production build enabled');
+    if (!prodBuild) logMsg('💻  Development mode enabled');
+    if (inlineHoist) logMsg('🏗️  Inline Hoist enabled');
+    if (analyzeBundles) logMsg('🎁  Bundle analysis enabled');
+    logSep();
+    logMsg('Hoist Versions:');
+    logMsg(`  ⁃ @xh/hoist ${hoistReactPkg.version}`);
+    logMsg(`  ⁃ @xh/hoist-dev-utils ${devUtilsPkg.version}`);
+    logSep();
+    logMsg('Key Library Versions:');
+    logMsg(`  ⁃ @babel/core ${babelCorePkg.version}`);
+    logMsg(`  ⁃ react ${reactPkg.version}`);
+    logMsg(`  ⁃ webpack ${webpack.version}`);
+    logSep();
 
     const srcPath = path.resolve(basePath, 'src'),
         outPath = path.resolve(basePath, 'build'),
@@ -143,28 +172,30 @@ function configureWebpack(env) {
                     name: f.replace('.js', ''),
                     path: path.resolve(appDirPath, f)
                 };
-            });
+            }),
+        appNames = apps.map(it => it.name);
 
-    // Browserlist target list for Babel and postCSS loaders.
-    const targetBrowsers = [
-        '>1%',
-        'last 2 versions',
-        'not ie > 0',
-        'not opera > 0',
-        'not op_mob > 0',
-        'not op_mini all'
-    ];
+    // Build Webpack entry config, with keys for each JS app to be bundled.
+    const appEntryPoints = {};
+    apps.forEach(app => {
+        // Ensure core-js and regenerator-runtime both imported for every app bundle - they are
+        // specified as dependencies by Hoist and imported once in its polyfills.js file.
+        appEntryPoints[app.name] = [path.resolve(hoistPath, 'static/polyfills.js'), app.path];
+    });
+
+    logMsg('JS app entry points:');
+    appNames.forEach(it => logMsg(`  ⁃ ${it}`));
+    logSep();
+    logMsg('Something going wrong?');
+    logMsg('  ⁃ support@xh.io');
+    logMsg('  ⁃ https://xh.io/contact/');
+    logSep();
 
     return {
         mode: prodBuild ? 'none' : 'development',
 
         // One named entry chunk per app, as above.
-        entry: {
-            ..._.chain(apps)
-                .keyBy('name')
-                .mapValues(app => ['@babel/polyfill', app.path])
-                .value()
-        },
+        entry: appEntryPoints,
 
         output: {
             // Output built assets in directories per entry point / chunk.
@@ -173,22 +204,29 @@ function configureWebpack(env) {
             path: outPath,
             publicPath: publicPath,
             pathinfo: !prodBuild,
-            // From CRA - related to file paths for sourcemaps, esp. on Windows - review if necessary / helpful
+            // Point sourcemap entries to original disk location (format as URL on Windows) - from CRA.
             devtoolModuleFilenameTemplate: info => path.resolve(info.absoluteResourcePath).replace(/\\/g, '/')
         },
 
         optimization: {
+            noEmitOnErrors: true,
+
+            // Aggressive chunking strategy - produces chunks for any shared imports across JS apps.
             splitChunks: {
                 chunks: 'all',
                 minSize: 0
-            }
+            },
+
+            // Improved debugging with readable module/chunk names.
+            namedChunks: true,
+            namedModules: true
         },
 
         resolve: {
             alias: resolveAliases,
             // Add JSX to support imports from .jsx source w/o needing to add the extension.
             // Include "*" to continue supporting other imports that *do* specify an extension
-            // within the import statement (i.e. `import './foo.png'`).
+            // within the import statement (i.e. `import './foo.png'`). Yes, it's confusing.
             extensions: ['*', '.js', '.jsx', '.json']
         },
 
@@ -215,7 +253,6 @@ function configureWebpack(env) {
                             }
                         },
 
-
                         //------------------------
                         // JS processing
                         // Transpile via Babel, with presets/plugins to support Hoist's use of modern / staged JS features.
@@ -227,14 +264,37 @@ function configureWebpack(env) {
                                 options: {
                                     presets: [
                                         '@babel/preset-react',
-                                        ['@babel/preset-env', {targets: targetBrowsers.join(', ')}]
+                                        [
+                                            '@babel/preset-env',
+                                            {
+                                                // Temporarily force "full transpilation" to ES5 - including transpiling out ES6 classes - by including IE11.
+                                                // This maintains the behavior we had in dev-utils 3.x and effectively works around Blueprint issue
+                                                // https://github.com/palantir/blueprint/issues/2972, which we hit when we allow classes to remain in place.
+                                                // When unwinding, we will need to re-test in client/production environments, especially with mobile browsers.
+                                                // Tracked at https://github.com/exhi/hoist-react/issues/1346
+                                                targets: targetBrowsers.concat(...['IE >= 11']).join(', '),
+
+                                                // Specify use of corejs and allow it to polyfill proposals (e.g. object rest spread).
+                                                corejs: {version: 3, proposals: true},
+
+                                                // Note that we force import of core-js and regen-runtime in the `entry` config produced by this file.
+                                                // This should be replaced by a set of polyfills based on our target browsers as per this setting.
+                                                useBuiltIns: 'entry'
+                                            }
+                                        ]
                                     ],
                                     plugins: [
+                                        // Support our current decorator syntax, for MobX and Hoist decorators.
+                                        // See notes @ https://babeljs.io/docs/en/babel-plugin-proposal-decorators#legacy
                                         ['@babel/plugin-proposal-decorators', {legacy: true}],
-                                        ['@babel/plugin-proposal-class-properties', {loose: true}],
-                                        '@babel/plugin-proposal-object-rest-spread',
-                                        '@babel/plugin-transform-regenerator',
 
+                                        // Support classes level fields - must come after decorators plugin and be loose.
+                                        ['@babel/plugin-proposal-class-properties', {loose: true}],
+
+                                        // Support null-safe operator: `let x = foo?.bar`.
+                                        ['@babel/plugin-proposal-optional-chaining'],
+
+                                        // Avoid importing every FA icon ever made.
                                         // See https://github.com/FortAwesome/react-fontawesome/issues/70
                                         [require('babel-plugin-transform-imports'), {
                                             '@fortawesome/pro-light-svg-icons': {
@@ -251,8 +311,9 @@ function configureWebpack(env) {
                                             }
                                         }]
                                     ],
-                                    compact: true,
-                                    cacheDirectory: !prodBuild
+                                    // Cache for dev builds, don't bother compressing.
+                                    cacheDirectory: !prodBuild,
+                                    cacheCompression: false
                                 }
                             },
 
@@ -294,7 +355,9 @@ function configureWebpack(env) {
                                         plugins: () => [
                                             require('postcss-flexbugs-fixes'),  // Inclusion of postcss-flexbugs-fixes is from CRA.
                                             autoprefixer({
-                                                browsers: targetBrowsers,
+                                                // We still want to provide an array of target browsers
+                                                // that can be passed to / managed centrally by this script.
+                                                overrideBrowserslist: targetBrowsers,
                                                 flexbox: 'no-2009'
                                             })
                                         ]
@@ -336,14 +399,9 @@ function configureWebpack(env) {
                 xhAppBuild: JSON.stringify(appBuild),
                 xhBaseUrl: JSON.stringify(baseUrl),
                 xhAgGridLicenseKey: JSON.stringify(env.agGridLicenseKey),
+                xhBuildTimestamp: buildDate.getTime(),
                 xhIsDevelopmentMode: !prodBuild
             }),
-
-            // More plugins to avoid unwanted hash changes and support better caching - uses paths to identify
-            // modules vs. numeric IDs, helping to keep generated chunks (specifically their hashes) stable.
-            // Also required for HMR to work.
-            new webpack.NamedChunksPlugin(),
-            new webpack.NamedModulesPlugin(),
 
             // Avoid bundling all moment.js locales and blowing up the bundle size
             // See https://github.com/jmblog/how-to-optimize-momentjs-with-webpack
@@ -367,15 +425,20 @@ function configureWebpack(env) {
                 }
             }) : undefined,
 
-            // Generate HTML index pages - one per app.
-            ...apps.map(app => {
-                const excludeAssets = getChunkCombinations(['vendors', ...(apps.filter(innerApp => innerApp.name !== app.name).map(innerApp => innerApp.name))]);
+            // Generate HTML index pages - one per JS app.
+            ...appNames.map(jsAppName => {
+                // Exclude all chunk combos not containing this app, which we currently generate as
+                // plugin doesn't have an include-by-regex feature (at least not one we have found).
+                const otherAppNames = appNames.filter(it => it !== jsAppName),
+                    excludeAssets = getChunkCombinations(otherAppNames);
+
                 return new HtmlWebpackPlugin({
-                    inject: true,
                     title: appName,
+                    // Note: HTML template is sourced from hoist-react.
                     template: path.resolve(hoistPath, 'static/index.html'),
-                    filename: `${app.name}/index.html`,
-                    excludeChunks: excludeAssets
+                    filename: `${jsAppName}/index.html`,
+                    excludeChunks: excludeAssets,
+                    minify: false  // no need to minify the HTML itself
                 });
             }),
 
@@ -387,14 +450,15 @@ function configureWebpack(env) {
             // Warn on dupe package included in bundle due to multiple, conflicting versions.
             checkForDupePackages ? new DuplicatePackageCheckerPlugin({
                 verbose: true,
-                showHelp: false
+                showHelp: false,
+                strict: false
             }) : undefined,
 
-            // Who wants errors? Not us.
-            new webpack.NoEmitOnErrorsPlugin(),
-
             // Display build progress - enable profile for per-loader/file type stats.
-            new WebpackBar({profile: env.printProfileStats}),
+            new WebpackBar({
+                color: '#ec7316',
+                profile: true
+            }),
 
             // Environment-specific plugins.
             ...(prodBuild ? extraPluginsProd() : extraPluginsDev())
@@ -410,15 +474,16 @@ function configureWebpack(env) {
             overlay: true,
             compress: true,
             hot: true,
+            noInfo: true,
             stats: stats,
             open: env.devServerOpenPage != null,
             openPage: env.devServerOpenPage,
             // Support HTML5 history routes for apps, with /appName/ as the base route for each
             historyApiFallback: {
-                rewrites: apps.map(app => {
+                rewrites: appNames.map(appName => {
                     return {
-                        from: new RegExp(`^/${app.name}`),
-                        to: `/${app.name}/index.html`
+                        from: new RegExp(`^/${appName}`),
+                        to: `/${appName}/index.html`
                     };
                 })
             }
@@ -436,17 +501,18 @@ const extraPluginsProd = () => {
         new MiniCssExtractPlugin({
             filename: '[name]/[name].[contenthash:8].css'
         }),
+
+        // Minify and tree-shake via Terser
         new TerserPlugin({
-            cache: true,
-            parallel: true,
             sourceMap: true,
             terserOptions: {
-                // In particular, avoid mangling constructor names, which may be used in error messages.
+                // Don't mangle function names (notably constructors, which may be used in error messages).
                 keep_fnames: true,
                 mangle: true,
                 compress: {
                     comparisons: false,
-                    collapse_vars: false  // https://fontawesome.com/how-to-use/with-the-api/other/tree-shaking
+                    // See https://fontawesome.com/how-to-use/with-the-api/other/tree-shaking
+                    collapse_vars: false
                 }
             }
         })
@@ -464,27 +530,33 @@ const extraPluginsDev = () => {
     ];
 };
 
-const printBool = v => {
-    const answers = v ?
-            ['true', 'yes', 'yep', 'sure', 'ok', 'you bet', 'happy to', 'please', 'for sure', '+1', 'oui', 'agreed', 'certainly', 'aye', 'affirmative'] :
-            ['false', 'no', 'nope', 'nah', 'never', 'no way', 'uh-uh', 'not today', 'pass', 'nyet', 'meh', 'negative', 'nay'],
-        answer = ` ${_.sample(answers)} `;
-
-    return v ?
-        chalk.whiteBright.bgGreen(answer) :
-        chalk.whiteBright.bgRed(answer);
-};
-
+// Generate combinations for given chunkNames so we can pass them as excludes to HtmlWebpackPlugin
+// where this is called. This will be passed the names of all the apps we *do not* want to load
+// from the HTML index page we are building and will output their possible chunk combos to exclude.
+//
+// Unclear if this is really a valid approach, but it seems to work. Relies on the fact that chunk
+// combos are named according to alpha-ordered entry points included (as well as "vendors" for
+// library dependencies). So given a list of apps such as [admin, app, mobile], possible chunk
+// combos will be of the form vendors~admin, vendors~admin~app, vendors~app~mobile, and so on...
+//
 function getChunkCombinations(chunkNames) {
+    // Add 'vendors' to also generate 'vendors~fooApp~barApp' chunk paths for exclusion.
+    chunkNames = ['vendors', ...chunkNames];
+
     let result = [];
-    let f = function(prefix, chunkNames) {
+    let f = function(path, chunkNames) {
         for (let i = 0; i < chunkNames.length; i++) {
-            result.push(prefix + (prefix === '' ? '' : '~') + chunkNames[i]);
-            f(prefix + (prefix === '' ? '' : '~') + chunkNames[i], chunkNames.slice(i + 1));
+            const sep = path === '' ? '' : '~',
+                newPath = path + sep + chunkNames[i];
+            result.push(newPath);
+            f(newPath, chunkNames.slice(i + 1));
         }
     };
     f('', chunkNames);
     return result.filter(chunk => chunk !== 'vendors');
 }
+
+function logSep() {console.log(':------------------------------------')}
+function logMsg(msg) {console.log(`: ${msg}`)}
 
 module.exports = configureWebpack;
