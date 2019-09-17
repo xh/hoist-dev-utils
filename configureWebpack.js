@@ -127,7 +127,7 @@ function configureWebpack(env) {
     if (analyzeBundles) logMsg('🎁  Bundle analysis enabled');
     logSep();
     logMsg('Hoist Versions:');
-    logMsg(`  ⁃ @xh/hoist ${hoistReactPkg.version}`);
+    logMsg(`  ⁃ @xh/hoist ${inlineHoist ? 'inline/local' : hoistReactPkg.version}`);
     logMsg(`  ⁃ @xh/hoist-dev-utils ${devUtilsPkg.version}`);
     logSep();
     logMsg('Key Library Versions:');
