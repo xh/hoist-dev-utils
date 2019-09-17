@@ -272,7 +272,7 @@ function configureWebpack(env) {
                                                 // https://github.com/palantir/blueprint/issues/2972, which we hit when we allow classes to remain in place.
                                                 // When unwinding, we will need to re-test in client/production environments, especially with mobile browsers.
                                                 // Tracked at https://github.com/exhi/hoist-react/issues/1346
-                                                targets: targetBrowsers.concat(...['IE >= 11']).join(', '),
+                                                targets: env.transpileWithTargetBrowsers ? targetBrowsers : targetBrowsers.concat(...['IE >= 11']).join(', '),
 
                                                 // Specify use of corejs and allow it to polyfill proposals (e.g. object rest spread).
                                                 corejs: {version: 3, proposals: true},
