@@ -1,10 +1,10 @@
 # Changelog
 
-## 4.1.0 - 2019-09-17
+## 4.1.1 - 2019-09-17
 
 ### 📚 Libraries
 
-* @xh/eslint-config `2.0 -> 2.1`
+* @xh/eslint-config `2.0 -> 2.1.1`
 * terser-webpack-plugin `2.0 -> 2.1`
 
 ## 4.0.0 - 2019-09-12
