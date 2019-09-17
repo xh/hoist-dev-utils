@@ -1,5 +1,12 @@
 # Changelog
 
+## 4.1.0 - 2019-09-17
+
+### 📚 Libraries
+
+* @xh/eslint-config `2.0 -> 2.1`
+* terser-webpack-plugin `2.0 -> 2.1`
+
 ## 4.0.0 - 2019-09-12
 
 This release includes a number of major/minor updates for the build toolchain. Most notably, it
