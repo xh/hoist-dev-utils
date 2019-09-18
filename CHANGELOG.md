@@ -1,11 +1,19 @@
 # Changelog
 
+## 4.1.2 - 2019-09-18
+
+* Tweak to skip logging (spurious) packaged Hoist version when running with Hoist inline.
+
+[Commit Log](https://github.com/exhi/hoist-dev-utils/compare/v4.1.1...v4.1.2)
+
 ## 4.1.1 - 2019-09-17
 
 ### 📚 Libraries
 
 * @xh/eslint-config `2.0 -> 2.1.1`
 * terser-webpack-plugin `2.0 -> 2.1`
+
+[Commit Log](https://github.com/exhi/hoist-dev-utils/compare/v4.0.0...v4.1.1)
 
 ## 4.0.0 - 2019-09-12
 
