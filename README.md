@@ -50,13 +50,13 @@ specify initial defaults (such as appVersion above, checked in as a SNAPSHOT) th
 overridden for particular builds (e.g. via `webpack --env.prodBuild --env.appVersion=1.2.3` to cut a
 versioned 1.2.3 release).
 
-See the [Hoist React readme](https://github.com/exhi/hoist-react) for step-by-step details on the
+See the [Hoist React readme](https://github.com/xh/hoist-react) for step-by-step details on the
 build process.
 
 ### ESLint Configuration
 
 ✨ This package includes a development dependency on the `@xh/eslint-config` package.
-[That package](https://github.com/exhi/eslint-config) exports an eslint configuration object with
+[That package](https://github.com/xh/eslint-config) exports an eslint configuration object with
 ExHI's coding conventions and best practices for Hoist React based development.
 
 Applications that already have `@xh/hoist-dev-utils` as a dependency can use these rules for their
@@ -72,6 +72,6 @@ If required, rules and other settings extended from this base configuration can 
 app level.
 
 ------------------------------------------
-📫☎️🌎 info@xh.io | https://xh.io/contact
+📫☎️🌎 info@xh.io | <https://xh.io/contact>
 
 Copyright © 2019 Extremely Heavy Industries Inc.

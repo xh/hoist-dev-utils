@@ -2,9 +2,9 @@
   "name": "@xh/hoist-dev-utils",
   "version": "4.1.2",
   "description": "Utilities for configuring builds of Hoist-React client applications.",
-  "repository": "github:exhi/hoist-dev-utils",
-  "homepage": "https://github.com/exhi/hoist-dev-utils",
-  "bugs": "https://github.com/exhi/hoist-dev-utils/issues",
+  "repository": "github:xh/hoist-dev-utils",
+  "homepage": "https://xh.io",
+  "bugs": "https://github.com/xh/hoist-dev-utils/issues",
   "author": "Extremely Heavy Industries, Inc.",
   "license": "UNLICENSED",
   "files": [

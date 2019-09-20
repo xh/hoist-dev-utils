@@ -271,7 +271,7 @@ function configureWebpack(env) {
                                                 // This maintains the behavior we had in dev-utils 3.x and effectively works around Blueprint issue
                                                 // https://github.com/palantir/blueprint/issues/2972, which we hit when we allow classes to remain in place.
                                                 // When unwinding, we will need to re-test in client/production environments, especially with mobile browsers.
-                                                // Tracked at https://github.com/exhi/hoist-react/issues/1346
+                                                // Tracked at https://github.com/xh/hoist-react/issues/1346
                                                 targets: env.transpileWithTargetBrowsers ? targetBrowsers : targetBrowsers.concat(...['IE >= 11']).join(', '),
 
                                                 // Specify use of corejs and allow it to polyfill proposals (e.g. object rest spread).
