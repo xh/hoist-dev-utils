@@ -291,8 +291,11 @@ function configureWebpack(env) {
                                         // Support classes level fields - must come after decorators plugin and be loose.
                                         ['@babel/plugin-proposal-class-properties', {loose: true}],
 
-                                        // Support null-safe operator: `let x = foo?.bar`.
+                                        // Support `let x = foo?.bar`.
                                         ['@babel/plugin-proposal-optional-chaining'],
+
+                                        // Support `let x = foo.bar ?? 'default'`.
+                                        ['@babel/plugin-proposal-nullish-coalescing-operator'],
 
                                         // Avoid importing every FA icon ever made.
                                         // See https://github.com/FortAwesome/react-fontawesome/issues/70
