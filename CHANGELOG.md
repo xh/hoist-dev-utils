@@ -1,5 +1,14 @@
 # Changelog
 
+## 4.2.0 - 2019-09-23
+
+### 🎁 New Features
+
+* Support for the nullish coalescing operator `let foo = bar ?? 'default'` via the
+  `@babel/plugin-proposal-nullish-coalescing-operator` plugin.
+
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v4.1.2...v4.2.0)
+
 ## 4.1.2 - 2019-09-18
 
 * Tweak to skip logging (spurious) packaged Hoist version when running with Hoist inline.
