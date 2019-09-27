@@ -100,16 +100,13 @@ function configureWebpack(env) {
         contextRoot = env.contextRoot || '/',
         favicon = env.favicon || null,
         stats = env.stats || 'errors-only',
-        // TODO - overridden currently in babel-env with forced addition of IE - see note there.
-        // Allowed to pass through w/o modification to autoprefixer (CSS processing).
-        targetBrowsers = [
+        targetBrowsers = env.targetBrowsers || [
             'last 2 Chrome versions',
             'last 2 Safari versions',
             'last 2 iOS versions',
-            // TODO - when above resolved and this list has more of an effect on transpiled code,
-            //  we should review need for Edge support and particular Edge versions in use.
-            //  Edge 17 appeared to trigger the installation of numerous additional polyfills that
-            //  we otherwise might not need, hence this specification of v18+.
+            // TODO - review the specific Edge versions we need to support.
+            //  Edge 17 triggered installation of numerous additional polyfills, hence this
+            //  specification of v18+ vs "last two versions".
             'Edge >= 18'
         ],
         buildDate = new Date();
@@ -123,17 +120,18 @@ function configureWebpack(env) {
     logSep();
     if (prodBuild) logMsg('🚀  Production build enabled');
     if (!prodBuild) logMsg('💻  Development mode enabled');
-    if (inlineHoist) logMsg('🏗️  Inline Hoist enabled');
+    if (inlineHoist) logMsg('🏗️   Inline Hoist enabled');
     if (analyzeBundles) logMsg('🎁  Bundle analysis enabled');
     logSep();
-    logMsg('Hoist Versions:');
-    logMsg(`  ⁃ @xh/hoist ${inlineHoist ? 'inline/local' : hoistReactPkg.version}`);
+    logMsg('📚  Key libraries:');
+    logMsg(`  ⁃ @xh/hoist ${inlineHoist ? 'INLINE' : hoistReactPkg.version}`);
     logMsg(`  ⁃ @xh/hoist-dev-utils ${devUtilsPkg.version}`);
-    logSep();
-    logMsg('Key Library Versions:');
     logMsg(`  ⁃ @babel/core ${babelCorePkg.version}`);
     logMsg(`  ⁃ react ${reactPkg.version}`);
     logMsg(`  ⁃ webpack ${webpack.version}`);
+    logSep();
+    logMsg('🎯  Targets:');
+    targetBrowsers.forEach(it => logMsg(`  ⁃ ${it}`));
     logSep();
 
     const srcPath = path.resolve(basePath, 'src'),
@@ -183,10 +181,10 @@ function configureWebpack(env) {
         appEntryPoints[app.name] = [path.resolve(hoistPath, 'static/polyfills.js'), app.path];
     });
 
-    logMsg('JS app entry points:');
+    logMsg('🎁  App bundle entry points:');
     appNames.forEach(it => logMsg(`  ⁃ ${it}`));
     logSep();
-    logMsg('Something going wrong?');
+    logMsg('🤕  Something going wrong?');
     logMsg('  ⁃ support@xh.io');
     logMsg('  ⁃ https://xh.io/contact/');
     logSep();
@@ -267,12 +265,7 @@ function configureWebpack(env) {
                                         [
                                             '@babel/preset-env',
                                             {
-                                                // Temporarily force "full transpilation" to ES5 - including transpiling out ES6 classes - by including IE11.
-                                                // This maintains the behavior we had in dev-utils 3.x and effectively works around Blueprint issue
-                                                // https://github.com/palantir/blueprint/issues/2972, which we hit when we allow classes to remain in place.
-                                                // When unwinding, we will need to re-test in client/production environments, especially with mobile browsers.
-                                                // Tracked at https://github.com/xh/hoist-react/issues/1346
-                                                targets: env.transpileWithTargetBrowsers ? targetBrowsers : targetBrowsers.concat(...['IE >= 11']).join(', '),
+                                                targets: targetBrowsers.join(', '),
 
                                                 // Specify use of corejs and allow it to polyfill proposals (e.g. object rest spread).
                                                 corejs: {version: 3, proposals: true},
