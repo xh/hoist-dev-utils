@@ -1,5 +1,23 @@
 # Changelog
 
+## 4.3.0 - 2019-09-27
+
+### ⚙️ Technical
+
+* Removes a previous workaround in `configureWebpack` to always transpile JS code down to ES5
+  (implemented by pushing IE11 onto the `targetBrowsers` config passed to `babel/preset-env`). Babel
+  will now actually use Hoist's default target browsers (recent versions of Chrome, Safari/iOS, and
+  Edge) resulting in a build output with significantly less transformation of the source code.
+* Apps or client environments that find they need support for less capable browsers (e.g, a secure
+  mobile browser using an older JS engine) can pass a custom `targetBrowsers` array to adjust the
+  output.
+
+### 📚 Libraries
+
+* webpack `4.40 -> 4.41`
+
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v4.2.0...v4.3.0)
+
 ## 4.2.0 - 2019-09-23
 
 ### 🎁 New Features
