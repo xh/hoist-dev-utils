@@ -1,5 +1,13 @@
 # Changelog
 
+## 4.3.1 - 2019-10-02
+
+### 📚 Libraries
+
+* @xh/eslint-config `2.1 -> 2.2`
+
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v4.3.0...v4.3.1)
+
 ## 4.3.0 - 2019-09-27
 
 ### ⚙️ Technical
