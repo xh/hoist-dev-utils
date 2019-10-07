@@ -1,6 +1,6 @@
 # Changelog
 
-## 4.3.2 - 2019-10-07
+## 4.3.3 - 2019-10-07
 
 ### ⚙️ Technical
 
@@ -12,7 +12,9 @@
 
 * url-loader `2.1 -> 2.2`
 
-[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v4.3.1...v4.3.2)
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v4.3.1...v4.3.3)
+
+(4.3.2 was an accidental no-op build 😞)
 
 ## 4.3.1 - 2019-10-02
 
