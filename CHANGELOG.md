@@ -1,5 +1,18 @@
 # Changelog
 
+## 4.3.4 - 2019-10-14
+
+### ⚙️ Technical
+
+* Bundled `@types/lodash` and `@types/react` as dev dependencies for developer convenience / better
+  hinting options from IDEs, including support for types such as `ReactNode` in jsdoc comments.
+
+### 📚 Libraries
+
+* @babel/preset-react `7.0 -> 7.6`
+
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v4.3.3...v4.3.4)
+
 ## 4.3.3 - 2019-10-07
 
 ### ⚙️ Technical
