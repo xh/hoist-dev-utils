@@ -78,6 +78,8 @@ const _ = require('lodash'),
  *      Leave null to disable automatic page open on startup.
  * @param {string[]} [env.targetBrowsers] - array of browserslist queries specifying target browsers
  *      for Babel and CSS transpilation and processing.
+ * @param {Object} [env.terserOptions] - options to spread onto / override the default options
+ *      passed to the Terser minification plugin for production builds. (Defaults should be fine.)
  */
 function configureWebpack(env) {
     if (!env.appCode) throw 'Missing required "appCode" config - cannot proceed';
@@ -109,6 +111,7 @@ function configureWebpack(env) {
             //  specification of v18+ vs "last two versions".
             'Edge >= 18'
         ],
+        terserOptions = env.terserOptions || {},
         buildDate = new Date();
 
     process.env.BABEL_ENV = prodBuild ? 'production' : 'development';
@@ -457,7 +460,7 @@ function configureWebpack(env) {
             }),
 
             // Environment-specific plugins.
-            ...(prodBuild ? extraPluginsProd() : extraPluginsDev())
+            ...(prodBuild ? extraPluginsProd(terserOptions) : extraPluginsDev())
 
         ].filter(Boolean),
 
@@ -491,7 +494,7 @@ function configureWebpack(env) {
 //------------------------
 // Implementation
 //------------------------
-const extraPluginsProd = () => {
+const extraPluginsProd = (terserOptions) => {
     return [
         // Extract built CSS files into sub-directories by chunk / entry point name.
         new MiniCssExtractPlugin({
@@ -502,14 +505,16 @@ const extraPluginsProd = () => {
         new TerserPlugin({
             sourceMap: true,
             terserOptions: {
-                // Don't mangle function names (notably constructors, which may be used in error messages).
+                // Don't mangle class or function names as they may be used in error messages.
+                keep_classnames: true,
                 keep_fnames: true,
                 mangle: true,
                 compress: {
                     comparisons: false,
                     // See https://fontawesome.com/how-to-use/with-the-api/other/tree-shaking
                     collapse_vars: false
-                }
+                },
+                ...terserOptions
             }
         })
     ];
