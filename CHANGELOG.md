@@ -1,5 +1,16 @@
 # Changelog
 
+## 5.0.0-SNAPSHOT - unreleased
+
+### 📚 Libraries
+
+* autoprefixer `9.6 -> 9.7`
+* node-sass `4.12 -> 4.13`
+* terser-webpack-plugin `2.1 -> 2.2`
+* webpack-dev-server `3.8 -> 3.9`
+
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v4.3.4...develop)
+
 ## 4.3.4 - 2019-10-14
 
 ### ⚙️ Technical
