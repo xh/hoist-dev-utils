@@ -508,7 +508,7 @@ const extraPluginsProd = (terserOptions) => {
                 // Don't mangle class or function names as they may be used in error messages.
                 keep_classnames: true,
                 keep_fnames: true,
-                mangle: true,
+                mangle: false,
                 compress: {
                     comparisons: false,
                     // See https://fontawesome.com/how-to-use/with-the-api/other/tree-shaking
