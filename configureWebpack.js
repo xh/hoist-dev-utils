@@ -127,14 +127,14 @@ function configureWebpack(env) {
     if (analyzeBundles) logMsg('🎁  Bundle analysis enabled');
     logSep();
     logMsg('📚  Key libraries:');
-    logMsg(`  ⁃ @xh/hoist ${inlineHoist ? 'INLINE' : hoistReactPkg.version}`);
-    logMsg(`  ⁃ @xh/hoist-dev-utils ${devUtilsPkg.version}`);
-    logMsg(`  ⁃ @babel/core ${babelCorePkg.version}`);
-    logMsg(`  ⁃ react ${reactPkg.version}`);
-    logMsg(`  ⁃ webpack ${webpack.version}`);
+    logMsg(`  > @xh/hoist ${inlineHoist ? 'INLINE' : hoistReactPkg.version}`);
+    logMsg(`  > @xh/hoist-dev-utils ${devUtilsPkg.version}`);
+    logMsg(`  > @babel/core ${babelCorePkg.version}`);
+    logMsg(`  > react ${reactPkg.version}`);
+    logMsg(`  > webpack ${webpack.version}`);
     logSep();
     logMsg('🎯  Targets:');
-    targetBrowsers.forEach(it => logMsg(`  ⁃ ${it}`));
+    targetBrowsers.forEach(it => logMsg(`  > ${it}`));
     logSep();
 
     const srcPath = path.resolve(basePath, 'src'),
@@ -185,11 +185,11 @@ function configureWebpack(env) {
     });
 
     logMsg('🎁  App bundle entry points:');
-    appNames.forEach(it => logMsg(`  ⁃ ${it}`));
+    appNames.forEach(it => logMsg(`  > ${it}`));
     logSep();
     logMsg('🤕  Something going wrong?');
-    logMsg('  ⁃ support@xh.io');
-    logMsg('  ⁃ https://xh.io/contact/');
+    logMsg('  > support@xh.io');
+    logMsg('  > https://xh.io/contact/');
     logSep();
 
     return {
