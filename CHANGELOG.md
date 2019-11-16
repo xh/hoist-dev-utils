@@ -1,6 +1,6 @@
 # Changelog
 
-## 5.0.0-SNAPSHOT - unreleased
+## 4.3.5 - 2019-11-15
 
 ### 📚 Libraries
 
@@ -12,7 +12,7 @@
 * webpack-dev-server `3.8 -> 3.9`
 * chalk (removed)
 
-[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v4.3.4...develop)
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v4.3.4...v4.3.5)
 
 ## 4.3.4 - 2019-10-14
 
