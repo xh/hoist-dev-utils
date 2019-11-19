@@ -47,6 +47,8 @@ const _ = require('lodash'),
  * @param {boolean} [env.inlineHoist=false] - true to use a locally checked-out copy of hoist-react
  *      when running the dev server, as opposed to using the downloaded dependency. This allows
  *      hoist-react developers to test plugin changes. Dev-mode only.
+ * @param {boolean} [env.inlineHoistOpenFin=false] - true to use a locally checked-out copy of the
+ *      hoist-openfin plugin - as with `inlineHoist` above. Dev-mode only.
  * @param {string} env.agGridLicenseKey - client-supplied key for ag-Grid enterprise license.
  * @param {Object} [env.resolveAliases] - object mapping for custom webpack module resolution.
  *      When inlineHoist=true, a mapping between @xh/hoist and the local path will be added.
@@ -90,6 +92,7 @@ function configureWebpack(env) {
         appBuild = env.appBuild || 'UNKNOWN',
         prodBuild = env.prodBuild === true,
         inlineHoist = !prodBuild && env.inlineHoist === true,
+        inlineHoistOpenFin = !prodBuild && env.inlineHoistOpenFin === true,
         resolveAliases = Object.assign({}, env.resolveAliases),
         analyzeBundles = env.analyzeBundles === true,
         checkForDupePackages = env.checkForDupePackages !== false,
@@ -124,6 +127,7 @@ function configureWebpack(env) {
     if (prodBuild) logMsg('🚀  Production build enabled');
     if (!prodBuild) logMsg('💻  Development mode enabled');
     if (inlineHoist) logMsg('🏗️   Inline Hoist enabled');
+    if (inlineHoistOpenFin) logMsg('🏗️   Inline Hoist-OpenFin enabled');
     if (analyzeBundles) logMsg('🎁  Bundle analysis enabled');
     logSep();
     logMsg('📚  Key libraries:');
@@ -501,14 +505,19 @@ const extraPluginsProd = (terserOptions) => {
             filename: '[name]/[name].[contenthash:8].css'
         }),
 
-        // Minify and tree-shake via Terser
+        // Minify and tree-shake via Terser - https://github.com/terser/terser#readme
         new TerserPlugin({
             sourceMap: true,
             terserOptions: {
-                // Don't mangle class or function names as they may be used in error messages.
-                keep_classnames: true,
+                // Mangling disabled due to intermittent / difficult to debug issues with it
+                // breaking code, especially when run on already-packaged libraries. Disabling does
+                // increase bundle size, although not by much on a relative basis.
+                mangle: false,
+                // As per docs "prevent discarding or mangling of function names" - most likely not
+                // necessary w/mangling off, but leaving here as docs are a bit vague, and in case
+                // we re-enable. We want to maintain function/class names for error messages.
                 keep_fnames: true,
-                mangle: true,
+
                 compress: {
                     comparisons: false,
                     // See https://fontawesome.com/how-to-use/with-the-api/other/tree-shaking

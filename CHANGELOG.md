@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.3.6 - 2019-11-19
+
+### 🐞 Bug Fixes
+
+* Disable Terser mangling of identifiers / variables due to intermittent and difficult to debug
+  issues with it breaking code, especially when run on already-packaged libraries. Disabling does
+  increase bundle size, although not by much on a relative basis.
+
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v4.3.5...v4.3.6)
+
 ## 4.3.5 - 2019-11-15
 
 ### 📚 Libraries
