@@ -1,5 +1,16 @@
 # Changelog
 
+## 5.0.0-SNAPSHOT - under development
+
+### 📚 Libraries
+
+* @babel/plugin-proposal-nullish-coalescing-operator `7.4 -> 7.7`
+* @babel/plugin-proposal-optional-chaining `7.6 -> 7.7`
+* file-loader `4.2 -> 5.0`
+* url-loader `2.2 -> 3.0`
+
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v4.3.6...develop)
+
 ## 4.3.6 - 2019-11-19
 
 ### 🐞 Bug Fixes
