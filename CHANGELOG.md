@@ -1,6 +1,6 @@
 # Changelog
 
-## 5.0.0-SNAPSHOT - under development
+## 4.3.7 - 2019-12-06
 
 ### 📚 Libraries
 
@@ -9,7 +9,7 @@
 * file-loader `4.2 -> 5.0`
 * url-loader `2.2 -> 3.0`
 
-[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v4.3.6...develop)
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v4.3.6...v4.3.7)
 
 ## 4.3.6 - 2019-11-19
 
