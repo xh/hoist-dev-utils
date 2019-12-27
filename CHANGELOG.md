@@ -1,5 +1,17 @@
 # Changelog
 
+## 5.0.0-SNAPSHOT - under development
+
+### 📚 Libraries
+
+* css-loader `3.2 -> 3.4`
+* mini-css-extract-plugin `0.8 -> 0.9`
+* style-loader `1.0 -> 1.1`
+* terser-webpack-plugin `2.2 -> 2.3`
+* webpack-dev-server `3.9 -> 3.10`
+
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v4.3.7...develop)
+
 ## 4.3.7 - 2019-12-06
 
 ### 📚 Libraries
