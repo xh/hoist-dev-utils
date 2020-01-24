@@ -22,9 +22,13 @@ const _ = require('lodash'),
     DuplicatePackageCheckerPlugin = require('duplicate-package-checker-webpack-plugin'),
     babelCorePkg = require('@babel/core/package'),
     devUtilsPkg = require('./package'),
-    hoistReactPkg = require('@xh/hoist/package'),
-    reactPkg = require('react/package'),
     basePath = fs.realpathSync(process.cwd());
+
+// These are not direct deps of hoist-dev-utils, so might be undefined - e.g. when running
+// this script locally to debug via `yarn link`.
+let hoistReactPkg, reactPkg;
+try {hoistReactPkg = require('@xh/hoist/package')} catch (e) {hoistReactPkg = {version: 'NOT_FOUND'}}
+try {reactPkg = require('react/package')} catch (e) {reactPkg = {version: 'NOT_FOUND'}}
 
 /**
  * Consolidated Webpack configuration for both dev-time and production builds of Hoist React web applications.
@@ -122,6 +126,7 @@ function configureWebpack(env) {
 
     logSep();
     logMsg(`Building ${appName} v${appVersion}`);
+    if (appBuild != 'UNKNOWN') logMsg(`  Build ${appBuild}`);
     logMsg(`  ${buildDate.toISOString()}`);
     logSep();
     if (prodBuild) logMsg('🚀  Production build enabled');
@@ -131,11 +136,12 @@ function configureWebpack(env) {
     if (analyzeBundles) logMsg('🎁  Bundle analysis enabled');
     logSep();
     logMsg('📚  Key libraries:');
-    logMsg(`  > @xh/hoist ${inlineHoist ? 'INLINE' : hoistReactPkg.version}`);
-    logMsg(`  > @xh/hoist-dev-utils ${devUtilsPkg.version}`);
-    logMsg(`  > @babel/core ${babelCorePkg.version}`);
-    logMsg(`  > react ${reactPkg.version}`);
-    logMsg(`  > webpack ${webpack.version}`);
+    logMsg(`  > @xh/hoist ${inlineHoist ? 'INLINE' : 'v' + hoistReactPkg.version}`);
+    logMsg(`  > @xh/hoist-dev-utils v${devUtilsPkg.version}`);
+    logMsg(`  > @babel/core v${babelCorePkg.version}`);
+    logMsg(`  > react v${reactPkg.version}`);
+    logMsg(`  > webpack v${webpack.version}`);
+    logMsg(`  > node ${process.version}`);
     logSep();
     logMsg('🎯  Targets:');
     targetBrowsers.forEach(it => logMsg(`  > ${it}`));
