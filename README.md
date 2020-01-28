@@ -72,6 +72,7 @@ If required, rules and other settings extended from this base configuration can 
 app level.
 
 ------------------------------------------
+
 📫☎️🌎 info@xh.io | <https://xh.io/contact>
 
-Copyright © 2019 Extremely Heavy Industries Inc.
+Copyright © 2020 Extremely Heavy Industries Inc.

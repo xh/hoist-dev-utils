@@ -4,6 +4,7 @@
 
 ### 📚 Libraries
 
+* @babel/core (and related) `7.7 -> 7.8`
 * css-loader `3.2 -> 3.4`
 * mini-css-extract-plugin `0.8 -> 0.9`
 * style-loader `1.0 -> 1.1`
@@ -248,3 +249,9 @@ plugin we had been using in favor of `core-js@3` for polyfills (as of 7.5).
 * webpack-cli `3.2 -> 3.3`
 
 [Commit Log](https://github.com/xh/hoist-dev-utils/compare/v3.6.0...v3.7.0)
+
+------------------------------------------
+
+📫☎️🌎 info@xh.io | <https://xh.io/contact>
+
+Copyright © 2020 Extremely Heavy Industries Inc.
