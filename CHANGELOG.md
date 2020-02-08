@@ -2,6 +2,10 @@
 
 ## 5.0.0-SNAPSHOT - under development
 
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v4.4.0...develop)
+
+## 4.4.0 - 2020-02-08
+
 ### 📚 Libraries
 
 * @babel/core (and related) `7.7 -> 7.8`
@@ -11,7 +15,7 @@
 * terser-webpack-plugin `2.2 -> 2.3`
 * webpack-dev-server `3.9 -> 3.10`
 
-[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v4.3.7...develop)
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v4.3.7...v4.4.0)
 
 ## 4.3.7 - 2019-12-06
 
