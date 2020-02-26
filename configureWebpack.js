@@ -416,24 +416,6 @@ function configureWebpack(env) {
             // See https://github.com/jmblog/how-to-optimize-momentjs-with-webpack
             new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
 
-            // Generate favicons from a single source image if provided - injected into HTML generated below
-            favicon ? new FaviconsWebpackPlugin({
-                logo: favicon,
-                prefix: 'icons-[hash:8]/',
-                icons: {
-                    android: true,
-                    appleIcon: true,
-                    favicons: true,
-                    appleStartup: false,
-                    coast: false,
-                    firefox: false,
-                    opengraph: false,
-                    twitter: false,
-                    yandex: false,
-                    windows: false
-                }
-            }) : undefined,
-
             // Generate HTML index pages - one per JS app.
             ...appNames.map(jsAppName => {
                 // Exclude all chunk combos not containing this app, which we currently generate as
@@ -450,6 +432,26 @@ function configureWebpack(env) {
                     minify: false  // no need to minify the HTML itself
                 });
             }),
+
+            // Generate favicons from source image if provided - injected into generated HTML.
+            favicon ? new FaviconsWebpackPlugin({
+                logo: favicon,
+                prefix: 'icons-[hash:8]/',
+                inject: true,
+                mode: 'webapp',
+                favicons: {
+                    icons: {
+                        android: true,
+                        appleIcon: true,
+                        appleStartup: false,
+                        coast: false,
+                        favicons: true,
+                        firefox: false,
+                        windows: true,
+                        yandex: false
+                    }
+                }
+            }) : undefined,
 
             // Support an optional post-build/run interactive treemap of output bundles and their sizes / contents.
             analyzeBundles ? new BundleAnalyzerPlugin({

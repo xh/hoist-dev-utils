@@ -1,8 +1,17 @@
 # Changelog
 
-## 5.0.0-SNAPSHOT - under development
+## 4.4.1 - 2020-02-26
 
-[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v4.4.0...develop)
+### 🐞 Bug Fixes
+
+* Fixed favicon generation with upgrade of plugin - generated HTML again includes tags for correctly
+  sized favicons across a variety of platforms.
+
+### 📚 Libraries
+
+* favicons-webpack-plugin: `1.0 -> 2.1`
+
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v4.4.0...v4.4.1)
 
 ## 4.4.0 - 2020-02-08
 
