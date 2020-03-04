@@ -14,6 +14,7 @@ const _ = require('lodash'),
     BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin,
     CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin'),
     {CleanWebpackPlugin} = require('clean-webpack-plugin'),
+    CopyWebpackPlugin = require('copy-webpack-plugin'),
     MiniCssExtractPlugin = require('mini-css-extract-plugin'),
     FaviconsWebpackPlugin = require('favicons-webpack-plugin'),
     HtmlWebpackPlugin = require('html-webpack-plugin'),
@@ -72,6 +73,10 @@ try {reactPkg = require('react/package')} catch (e) {reactPkg = {version: 'NOT_F
  *      use would be a local package with a nested node_modules folder.
  * @param {string} [env.contextRoot] - root path for where the app will be served, used as the base
  *      path for static files.
+ * @param {boolean} [env.copyPublicAssets] - true (default) to copy the /client-app/public directory
+ *      and its contents into the root of the build. Note that files within this directory will not
+ *      be otherwise processed, named with a hash, etc. Use for static assets you wish to link to
+ *      without using an import to run through the url or file-loader.
  * @param {string} [env.favicon] - relative path to a favicon source image to be processed.
  * @param {string} [env.stats] - stats output - see https://webpack.js.org/configuration/stats/.
  * @param {string} [env.devHost] - hostname for both local Grails and Webpack dev servers.
@@ -107,6 +112,7 @@ function configureWebpack(env) {
         babelIncludePaths = env.babelIncludePaths || [],
         babelExcludePaths = env.babelExcludePaths || [],
         contextRoot = env.contextRoot || '/',
+        copyPublicAssets = env.copyPublicAssets !== false,
         favicon = env.favicon || null,
         stats = env.stats || 'errors-only',
         targetBrowsers = env.targetBrowsers || [
@@ -432,6 +438,11 @@ function configureWebpack(env) {
                     minify: false  // no need to minify the HTML itself
                 });
             }),
+
+            // Copy the /client-app/public directory and any contents into the build output.
+            copyPublicAssets ? new CopyWebpackPlugin([
+                {from: path.resolve(basePath, 'public'), to: 'public'}
+            ]) : undefined,
 
             // Generate favicons from source image if provided - injected into generated HTML.
             favicon ? new FaviconsWebpackPlugin({

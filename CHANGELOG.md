@@ -1,5 +1,20 @@
 # Changelog
 
+## 4.5.0 - 2020-03-04
+
+### 🎁 New Features
+
+* The `/client-app/public` directory and its contents are now copied into the build output. Can be
+  used to include static assets you wish to link to without using an import to run through the url
+  or file-loader.
+
+### 📚 Libraries
+
+* copy-webpack-plugin: `added @ 5.1`
+* webpack: `4.41 -> 4.42`
+
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v4.4.1...v4.5.0)
+
 ## 4.4.1 - 2020-02-26
 
 ### 🐞 Bug Fixes
