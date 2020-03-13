@@ -63,6 +63,8 @@ try {reactPkg = require('react/package')} catch (e) {reactPkg = {version: 'NOT_F
  *      DuplicatePackageCheckerPlugin and output a build-time console warning if duplicate packages
  *      have been resolved due to non-overlapping dependencies. Set to false to disable if dupe
  *      warnings are not desired / distracting.
+ * @param {string[]} [env.dupePackageCheckExcludes] - optional list of string package names to
+ *      exclude from dupe package checking. Defaults to ['tslib'].
  * @param {string} [env.baseUrl] - root path prepended to all relative URLs called via FetchService
  *      (the core Hoist service for making Ajax requests). Defaults to `/api/` in production mode to
  *      work with proxy-based deployments and to `$devServerHost:$devServerGrailsPort` in dev mode.
@@ -105,6 +107,7 @@ function configureWebpack(env) {
         resolveAliases = Object.assign({}, env.resolveAliases),
         analyzeBundles = env.analyzeBundles === true,
         checkForDupePackages = env.checkForDupePackages !== false,
+        dupePackageCheckExcludes = env.dupePackageCheckExcludes || ['tslib'],
         devHost = (env.devHost ? env.devHost.toLowerCase() : 'localhost'),
         devGrailsPort = env.devGrailsPort || 8080,
         devWebpackPort = env.devWebpackPort || 3000,
@@ -473,7 +476,8 @@ function configureWebpack(env) {
             checkForDupePackages ? new DuplicatePackageCheckerPlugin({
                 verbose: true,
                 showHelp: false,
-                strict: false
+                strict: false,
+                exclude: (instance) => dupePackageCheckExcludes.includes(instance.name)
             }) : undefined,
 
             // Display build progress - enable profile for per-loader/file type stats.
