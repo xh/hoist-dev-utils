@@ -91,8 +91,10 @@ try {reactPkg = require('react/package')} catch (e) {reactPkg = {version: 'NOT_F
  *      Leave null to disable automatic page open on startup.
  * @param {string[]} [env.targetBrowsers] - array of browserslist queries specifying target browsers
  *      for Babel and CSS transpilation and processing.
- * @param {Object} [env.terserOptions] - options to spread onto / override the default options
- *      passed to the Terser minification plugin for production builds. (Defaults should be fine.)
+ * @param {Object} [env.babelPresetEnvOptions] - options to spread onto / override defaults passed
+ *      here to the Babel loader preset-env preset config.
+ * @param {Object} [env.terserOptions] - options to spread onto / override defaults passed here to
+ *      the Terser minification plugin for production builds.
  */
 function configureWebpack(env) {
     if (!env.appCode) throw 'Missing required "appCode" config - cannot proceed';
@@ -127,6 +129,7 @@ function configureWebpack(env) {
             //  specification of v18+ vs "last two versions".
             'Edge >= 18'
         ],
+        babelPresetEnvOptions = env.babelPresetEnvOptions || {},
         terserOptions = env.terserOptions || {},
         buildDate = new Date();
 
@@ -294,7 +297,14 @@ function configureWebpack(env) {
 
                                                 // Note that we force import of core-js and regen-runtime in the `entry` config produced by this file.
                                                 // This should be replaced by a set of polyfills based on our target browsers as per this setting.
-                                                useBuiltIns: 'entry'
+                                                useBuiltIns: 'entry',
+
+                                                // Recently (Mar 2020) added optimization to preset-env to further minimize transpilation to ES5 where
+                                                // not required. See https://babeljs.io/docs/en/babel-preset-env#bugfixes.
+                                                bugfixes: true,
+
+                                                // Allow direct overrides from env config.
+                                                ...babelPresetEnvOptions
                                             }
                                         ]
                                     ],

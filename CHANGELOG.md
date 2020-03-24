@@ -2,8 +2,21 @@
 
 ## 5.0.0-SNAPSHOT - unreleased
 
+### 🎁 New Features
+
+* New Babel preset-env `bugfixes` option defaulted to true. Intended to to further minimize
+  transpilation to ES5 where not required by targeted browsers. See
+  [Babel Docs](https://babeljs.io/docs/en/babel-preset-env#bugfixes).
+* New `babelPresetEnvOptions` config accepted to allow direct override / customization of options
+  passed to the babel-loader preset-env preset (including disabling the new option above if
+  problematic).
+
 ### 📚 Libraries
 
+* @babel/core `7.8 -> 7.9`
+* @babel/preset-env `7.8 -> 7.9`
+* @babel/preset-react `7.8 -> 7.9`
+* babel-loader `8.0 -> 8.1`
 * file-loader `5.0 -> 6.0`
 * url-loader `3.0 -> 4.0`
 
