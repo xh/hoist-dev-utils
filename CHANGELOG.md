@@ -1,6 +1,6 @@
 # Changelog
 
-## 5.0.0-SNAPSHOT - unreleased
+## v4.6.0 - 2020-03-29
 
 ### 🎁 New Features
 
@@ -10,6 +10,8 @@
 * New `babelPresetEnvOptions` config accepted to allow direct override / customization of options
   passed to the babel-loader preset-env preset (including disabling the new option above if
   problematic).
+* New `dupePackageCheckExcludes` config accepted to suppress duplicate package warnings by name.
+  Defaulted to exclude longstanding (but not problematic) warning for `tslib`.
 
 ### 📚 Libraries
 
@@ -20,7 +22,7 @@
 * file-loader `5.0 -> 6.0`
 * url-loader `3.0 -> 4.0`
 
-[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v4.5.0...develop)
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v4.5.0...v4.6.0)
 
 ## 4.5.0 - 2020-03-04
 
