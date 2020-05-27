@@ -6,7 +6,7 @@
   "homepage": "https://github.com/xh/hoist-dev-utils",
   "bugs": "https://github.com/xh/hoist-dev-utils/issues",
   "author": "Extremely Heavy Industries, Inc.",
-  "license": "UNLICENSED",
+  "license": "Apache-2.0",
   "files": [
     "configureWebpack.js"
   ],

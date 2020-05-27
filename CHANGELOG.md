@@ -1,5 +1,21 @@
 # Changelog
 
+## v5.0.0-SNAPSHOT
+
+### ⚖️ Licensing Change
+
+As of this release, Hoist is [now licensed](LICENSE.md) under the popular and permissive
+[Apache 2.0 open source license](https://www.apache.org/licenses/LICENSE-2.0). Previously, Hoist was
+"source available" via our public GitHub repository but still covered by a proprietary license.
+
+We are making this change to align Hoist's licensing with our ongoing commitment to openness,
+transparency and ease-of-use, and to clarify and emphasize the suitability of Hoist for use within a
+wide variety of enterprise software projects. For any questions regarding this change, please
+[contact us](https://xh.io/contact/).
+
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v4.6.0...develop)
+
+
 ## v4.6.0 - 2020-03-29
 
 ### 🎁 New Features
@@ -23,6 +39,7 @@
 * url-loader `3.0 -> 4.0`
 
 [Commit Log](https://github.com/xh/hoist-dev-utils/compare/v4.5.0...v4.6.0)
+
 
 ## 4.5.0 - 2020-03-04
 
