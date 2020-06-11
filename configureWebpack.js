@@ -54,7 +54,9 @@ try {reactPkg = require('react/package')} catch (e) {reactPkg = {version: 'NOT_F
  *      hoist-react developers to test plugin changes. Dev-mode only.
  * @param {boolean} [env.inlineHoistOpenFin=false] - true to use a locally checked-out copy of the
  *      hoist-openfin plugin - as with `inlineHoist` above. Dev-mode only.
- * @param {string} env.agGridLicenseKey - client-supplied key for ag-Grid enterprise license.
+ * @param {string} env.agGridLicenseKey - key for ag-Grid enterprise license purchased / supplied
+ *      for this application and your organization. Applicable only to Hoist React v34 and prior -
+ *      as of v35 license key management is now handled exclusively within the application codebase.
  * @param {Object} [env.resolveAliases] - object mapping for custom webpack module resolution.
  *      When inlineHoist=true, a mapping between @xh/hoist and the local path will be added.
  * @param {boolean} [env.analyzeBundles=false] - true to launch an interactive bundle analyzer to
