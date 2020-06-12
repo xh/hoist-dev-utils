@@ -37,7 +37,6 @@ module.exports = (env = {}) => {
         appCode: 'myApp',
         appName: 'My Application',
         appVersion: env.appVersion || '1.0-SNAPSHOT',
-        agGridLicenseKey: 'myOrgsAgGridLicenseKey',
         favicon: './public/favicon.png',
         devServerOpenPage: 'app/',
         ...env
