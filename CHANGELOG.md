@@ -1,6 +1,6 @@
 # Changelog
 
-## v5.0.0-SNAPSHOT
+## v5.0.0 - 2020-06-12
 
 ### ⚖️ Licensing Change
 
@@ -14,6 +14,9 @@ wide variety of enterprise software projects. For any questions regarding this c
 [contact us](https://xh.io/contact/).
 
 ### 📚 Libraries
+
+This release includes updates to a number of tooling dependencies, including some major updates.
+However no changes to application code or configs should be required.
 
 * @babel/core `7.9 -> 7.10`
 * @babel/preset-env `7.9 -> 7.10`
@@ -31,8 +34,7 @@ wide variety of enterprise software projects. For any questions regarding this c
 * webpack-bundle-analyzer `3.6 -> 3.8`
 * webpack-dev-server `3.10 -> 3.11`
 
-
-[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v4.6.0...develop)
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v4.6.0...v5.0.0)
 
 
 ## v4.6.0 - 2020-03-29
