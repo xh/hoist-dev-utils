@@ -21,6 +21,8 @@ wide variety of enterprise software projects. For any questions regarding this c
 * autoprefixer `9.7 -> 9.8`
 * copy-webpack-plugin `5.1 -> 6.0`
 * css-loader `3.4 -> 3.5`
+* favicons-webpack-plugin `2.1 -> 3.0`
+* html-webpack-plugin `3.2 -> 4.3`
 * node-sass `4.13 -> 4.14`
 * style-loader `1.1 -> 1.2`
 * terser-webpack-plugin `2.3 -> 3.0`
