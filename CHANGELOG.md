@@ -13,6 +13,23 @@ transparency and ease-of-use, and to clarify and emphasize the suitability of Ho
 wide variety of enterprise software projects. For any questions regarding this change, please
 [contact us](https://xh.io/contact/).
 
+### 📚 Libraries
+
+* @babel/core `7.9 -> 7.10`
+* @babel/preset-env `7.9 -> 7.10`
+* @babel/preset-react `7.9 -> 7.10`
+* autoprefixer `9.7 -> 9.8`
+* copy-webpack-plugin `5.1 -> 6.0`
+* css-loader `3.4 -> 3.5`
+* node-sass `4.13 -> 4.14`
+* style-loader `1.1 -> 1.2`
+* terser-webpack-plugin `2.3 -> 3.0`
+* url-loader `4.0 -> 4.1`
+* webpack `4.42 -> 4.43`
+* webpack-bundle-analyzer `3.6 -> 3.8`
+* webpack-dev-server `3.10 -> 3.11`
+
+
 [Commit Log](https://github.com/xh/hoist-dev-utils/compare/v4.6.0...develop)
 
 

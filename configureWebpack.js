@@ -455,9 +455,9 @@ function configureWebpack(env) {
             }),
 
             // Copy the /client-app/public directory and any contents into the build output.
-            copyPublicAssets ? new CopyWebpackPlugin([
-                {from: path.resolve(basePath, 'public'), to: 'public'}
-            ]) : undefined,
+            copyPublicAssets ? new CopyWebpackPlugin({
+                patterns: [{from: path.resolve(basePath, 'public'), to: 'public'}]
+            }) : undefined,
 
             // Generate favicons from source image if provided - injected into generated HTML.
             favicon ? new FaviconsWebpackPlugin({
