@@ -420,6 +420,12 @@ function configureWebpack(env) {
             // Clean (remove) the output directory before each run.
             new CleanWebpackPlugin(),
 
+            // Remove Blueprint icons since they are never used
+            new webpack.NormalModuleReplacementPlugin(
+              /.*\/generated\/iconSvgPaths.*/,
+              path.resolve(hoistPath, 'static/emptyIconSvgPaths.js'),
+            ),
+
             // Inject global constants at compile time.
             new webpack.DefinePlugin({
                 'process.env': {NODE_ENV: JSON.stringify(process.env.NODE_ENV)},
