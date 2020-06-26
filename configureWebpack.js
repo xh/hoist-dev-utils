@@ -69,7 +69,7 @@ try {reactPkg = require('react/package')} catch (e) {reactPkg = {version: 'NOT_F
  *      exclude from dupe package checking. Defaults to ['tslib'].
  * @param {string} [env.baseUrl] - root path prepended to all relative URLs called via FetchService
  *      (the core Hoist service for making Ajax requests). Defaults to `/api/` in production mode to
- *      work with proxy-based deployments and to `$devServerHost:$devServerGrailsPort` in dev mode.
+ *      work with proxy-based deployments and to `$devHost:$devGrailsPort` in dev mode.
  *      This should not typically need to be changed at the app level.
  * @param {string[]} [env.babelIncludePaths] - additional paths to pass Babel for transpiling via
  *      settings shared with app-level and @xh/hoist code. Intended for custom packages.
