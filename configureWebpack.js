@@ -97,7 +97,7 @@ try {reactPkg = require('react/package')} catch (e) {reactPkg = {version: 'NOT_F
  *      here to the Babel loader preset-env preset config.
  * @param {Object} [env.terserOptions] - options to spread onto / override defaults passed here to
  *      the Terser minification plugin for production builds.
- * @param {boolean} [env.loadAllBlueprintIcons] - false (default) to load only the several BlueprintJs
+ * @param {boolean} [env.loadAllBlueprintJsIcons] - false (default) to load only the several BlueprintJs
  *      icons the Hoist-React framework uses, and not load the ~500 icons that come with the BluePrint framework.
  *      Unlike the FontAwesome Icons that Hoist-React offers, the BluePrintJS icons, if all loaded, cannot be removed from the final build 
  *      via tree-shaking.  Sticking to the default "false" significantly reduces the size of the production build.
@@ -138,7 +138,7 @@ function configureWebpack(env) {
         babelPresetEnvOptions = env.babelPresetEnvOptions || {},
         terserOptions = env.terserOptions || {},
         buildDate = new Date(),
-        loadAllBlueprintIcons = env.loadAllBlueprintIcons === true;
+        loadAllBlueprintJsIcons = env.loadAllBlueprintJsIcons === true;
 
     process.env.BABEL_ENV = prodBuild ? 'production' : 'development';
     process.env.NODE_ENV = prodBuild ? 'production' : 'development';
@@ -426,9 +426,9 @@ function configureWebpack(env) {
             new CleanWebpackPlugin(),
 
             // Load only the several BlueprintJS icons that the Hoist-React framework uses.
-            !loadAllBlueprintIcons ? new webpack.NormalModuleReplacementPlugin(
+            !loadAllBlueprintJsIcons ? new webpack.NormalModuleReplacementPlugin(
               /.*\/generated\/iconSvgPaths.*/,
-              path.resolve(hoistPath, 'static/bluePrintIconSvgPaths.js'),
+              path.resolve(hoistPath, 'static/blueprintJsIconSvgPaths.js'),
             ) : undefined,
 
             // Inject global constants at compile time.
