@@ -2,6 +2,10 @@
 
 ## v6.0.0-SNAPSHOT - unreleased
 
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.1.0...develop)
+
+## v5.1.0 - 2020-07-02
+
 ### 📚 Libraries
 
 This version switches to the newly-recommended dart-sass library (aka the `sass` npm package) for
@@ -13,7 +17,7 @@ tooling to support building native code on developer workstations.
 * sass `added @ 1.26`
 * sass-loader `8.0 -> 9.0`
 
-[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.0.0...develop)
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.0.0...v5.1.0)
 
 ## v5.0.0 - 2020-06-12
 
