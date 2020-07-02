@@ -1,5 +1,20 @@
 # Changelog
 
+## v6.0.0-SNAPSHOT - unreleased
+
+### 📚 Libraries
+
+This version switches to the newly-recommended dart-sass library (aka the `sass` npm package) for
+SASS compilation. This replaces the often-problematic usage of node-sass, which required OS-specific
+tooling to support building native code on developer workstations.
+
+* css-loader `3.5 -> 3.6`
+* node-sass `removed`
+* sass `added @ 1.26`
+* sass-loader `8.0 -> 9.0`
+
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.0.0...develop)
+
 ## v5.0.0 - 2020-06-12
 
 ### ⚖️ Licensing Change
