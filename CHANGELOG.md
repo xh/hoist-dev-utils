@@ -2,6 +2,10 @@
 
 ## v6.0.0-SNAPSHOT - unreleased
 
+### 📚 Libraries
+
+* @xh/eslint-config `2.2 -> 2.3`
+
 [Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.1.0...develop)
 
 ## v5.1.0 - 2020-07-02
