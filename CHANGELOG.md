@@ -4,11 +4,11 @@
 
 ### 🎁 New Features
 
-* New `loadAllBlueprintJsIcons` config accepted to allow app to load all BlueprintJS icons.
-  The Hoist-React framework now defaults to only loading the several BlueprintJS icons that BlueprintJS actually uses in its components.
-  This change significantly reduces build size by omitting hundreds of unused icons from the build.
-  If you find a BlueprintJS icon is missing in your app, you can set `loadAllBlueprintJsIcons: true`
-  in the app's webpack.config.js file to bring back all BlueprintJS icons.
+* App builds now load only a handful of `@blueprintjs` icons that are actually used by components.
+  This change significantly reduces build size as BP ships a large set of generic SVG icons and
+  bundles them all by default, but Hoist already includes FontAwesome as our standard icon library.
+* If the full set of Blueprint icons are required for a special app use-case, `configureWebpack()`
+  now supports a new `loadAllBlueprintJsIcons` argument to revert to the previous behavior.
 
 ### 📚 Libraries
 
