@@ -4,12 +4,32 @@
 
 ### 🎁 New Features
 
-* New `loadAllBlueprintJsIcons` config accepted to allow app to load all BlueprintJS icons.  
-  The Hoist-React framework now defaults to only loading the several BlueprintJS icons that BlueprintJS actually uses in its components.  
+* New `loadAllBlueprintJsIcons` config accepted to allow app to load all BlueprintJS icons.
+  The Hoist-React framework now defaults to only loading the several BlueprintJS icons that BlueprintJS actually uses in its components.
   This change significantly reduces build size by omitting hundreds of unused icons from the build.
-  If you find a BlueprintJS icon is missing in your app, you can set `loadAllBlueprintJsIcons: true` 
+  If you find a BlueprintJS icon is missing in your app, you can set `loadAllBlueprintJsIcons: true`
   in the app's webpack.config.js file to bring back all BlueprintJS icons.
 
+### 📚 Libraries
+
+* @xh/eslint-config `2.2 -> 2.3`
+
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.1.0...develop)
+
+## v5.1.0 - 2020-07-02
+
+### 📚 Libraries
+
+This version switches to the newly-recommended dart-sass library (aka the `sass` npm package) for
+SASS compilation. This replaces the often-problematic usage of node-sass, which required OS-specific
+tooling to support building native code on developer workstations.
+
+* css-loader `3.5 -> 3.6`
+* node-sass `removed`
+* sass `added @ 1.26`
+* sass-loader `8.0 -> 9.0`
+
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.0.0...v5.1.0)
 
 ## v5.0.0 - 2020-06-12
 
