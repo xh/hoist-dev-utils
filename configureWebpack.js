@@ -69,7 +69,7 @@ try {reactPkg = require('react/package')} catch (e) {reactPkg = {version: 'NOT_F
  *      exclude from dupe package checking. Defaults to ['tslib'].
  * @param {string} [env.baseUrl] - root path prepended to all relative URLs called via FetchService
  *      (the core Hoist service for making Ajax requests). Defaults to `/api/` in production mode to
- *      work with proxy-based deployments and to `$devServerHost:$devServerGrailsPort` in dev mode.
+ *      work with proxy-based deployments and to `$devHost:$devGrailsPort` in dev mode.
  *      This should not typically need to be changed at the app level.
  * @param {string[]} [env.babelIncludePaths] - additional paths to pass Babel for transpiling via
  *      settings shared with app-level and @xh/hoist code. Intended for custom packages.
@@ -97,6 +97,9 @@ try {reactPkg = require('react/package')} catch (e) {reactPkg = {version: 'NOT_F
  *      here to the Babel loader preset-env preset config.
  * @param {Object} [env.terserOptions] - options to spread onto / override defaults passed here to
  *      the Terser minification plugin for production builds.
+ * @param {boolean} [env.loadAllBlueprintJsIcons] - false (default) to only load the BlueprintJs
+ *      icons required by Hoist React components, resulting in a much smaller bundle size. Set to
+ *      true if your app wishes to access all the BP icons (but consider FontAwesome instead!).
  */
 function configureWebpack(env) {
     if (!env.appCode) throw 'Missing required "appCode" config - cannot proceed';
@@ -169,6 +172,10 @@ function configureWebpack(env) {
     const hoistPath = inlineHoist ?
         path.resolve(basePath, '../../hoist-react') :
         path.resolve(basePath, 'node_modules/@xh/hoist');
+
+    // Resolve Hoist-based path to replacement Blueprint icons (if available, requires HR >= v35.2.
+    const bpIconStubs = path.resolve(hoistPath, 'static/requiredBlueprintIcons.js'),
+        loadAllBlueprintJsIcons = env.loadAllBlueprintJsIcons === true || !bpIconStubs;
 
     // Tell webpack where to look for modules when resolving imports - this is the key to getting
     // inlineHoist mode to look in within the checked-out hoist-react project at hoistPath.
@@ -419,6 +426,12 @@ function configureWebpack(env) {
         plugins: [
             // Clean (remove) the output directory before each run.
             new CleanWebpackPlugin(),
+
+            // Load only the BlueprintJS icons used by Hoist-React components.
+            !loadAllBlueprintJsIcons ? new webpack.NormalModuleReplacementPlugin(
+                /.*\/generated\/iconSvgPaths.*/,
+                bpIconStubs,
+            ) : undefined,
 
             // Inject global constants at compile time.
             new webpack.DefinePlugin({
