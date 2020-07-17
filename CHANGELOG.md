@@ -7,8 +7,11 @@
 * App builds now load only a handful of `@blueprintjs` icons that are actually used by components.
   This change significantly reduces build size as BP ships a large set of generic SVG icons and
   bundles them all by default, but Hoist already includes FontAwesome as our standard icon library.
-* If the full set of Blueprint icons are required for a special app use-case, `configureWebpack()`
-  now supports a new `loadAllBlueprintJsIcons` argument to revert to the previous behavior.
+  * If the full set of Blueprint icons are required for a special app use-case, `configureWebpack()`
+    now supports a new `loadAllBlueprintJsIcons` argument to revert to the previous behavior.
+  * Requires `hoist-react` v35.2 or higher to supply the more minimal set of icon SVGs. Older
+    versions of HR are compatible with this version of dev-utils, but the icons optimization will
+    not be activated.
 
 ### 📚 Libraries
 
