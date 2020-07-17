@@ -345,6 +345,10 @@ function configureWebpack(env) {
                                             '@fortawesome/pro-solid-svg-icons': {
                                                 transform: '@fortawesome/pro-solid-svg-icons/${member}',
                                                 skipDefaultConversion: true
+                                            },
+                                            '@fortawesome/free-brands-svg-icons': {
+                                                transform: '@fortawesome/free-brands-svg-icons/${member}',
+                                                skipDefaultConversion: true
                                             }
                                         }]
                                     ],
