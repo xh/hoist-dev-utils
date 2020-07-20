@@ -1,6 +1,6 @@
 # Changelog
 
-## v6.0.0-SNAPSHOT - unreleased
+## v5.2.0 - 2020-07-20
 
 ### 🎁 New Features
 
@@ -17,7 +17,7 @@
 
 * @xh/eslint-config `2.2 -> 2.3`
 
-[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.1.0...develop)
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.1.0...v5.2.0)
 
 ## v5.1.0 - 2020-07-02
 
