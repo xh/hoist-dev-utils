@@ -435,7 +435,7 @@ function configureWebpack(env) {
             // Load only the BlueprintJS icons used by Hoist-React components.
             !loadAllBlueprintJsIcons ? new webpack.NormalModuleReplacementPlugin(
                 /.*\/generated\/iconSvgPaths.*/,
-                bpIconStubs,
+                bpIconStubsPath,
             ) : undefined,
 
             // Inject global constants at compile time.
