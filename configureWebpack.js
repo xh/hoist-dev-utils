@@ -174,8 +174,9 @@ function configureWebpack(env) {
         path.resolve(basePath, 'node_modules/@xh/hoist');
 
     // Resolve Hoist-based path to replacement Blueprint icons (if available, requires HR >= v35.2.
-    const bpIconStubs = path.resolve(hoistPath, 'static/requiredBlueprintIcons.js'),
-        loadAllBlueprintJsIcons = env.loadAllBlueprintJsIcons === true || !bpIconStubs;
+    const bpIconStubsPath = path.resolve(hoistPath, 'static/requiredBlueprintIcons.js'),
+        bpIconStubsExist = fs.existsSync(bpIconStubsPath),
+        loadAllBlueprintJsIcons = env.loadAllBlueprintJsIcons === true || !bpIconStubsExist;
 
     // Tell webpack where to look for modules when resolving imports - this is the key to getting
     // inlineHoist mode to look in within the checked-out hoist-react project at hoistPath.
