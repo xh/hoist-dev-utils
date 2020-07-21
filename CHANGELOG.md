@@ -1,5 +1,13 @@
 # Changelog
 
+## v5.2.1 - 2020-07-21
+
+### 🐞 Bug Fixes
+
+* Fix check to detect if replacement stub file for Blueprint icons actually exists.
+
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.2.0...v5.2.1)
+
 ## v5.2.0 - 2020-07-20
 
 ### 🎁 New Features
