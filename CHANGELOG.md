@@ -1,5 +1,17 @@
 # Changelog
 
+## 6.0.0-SNAPSHOT - under development
+
+### 📚 Libraries
+
+Resolutions added for some transitive dependencies that had grown excessively stale and were
+triggering console warnings on install/upgrade. Reviewed changelogs for these projects and did not
+see any indication that they would be incompatible.
+
+* css-loader `3.6 -> 4.0`
+* favicons-webpack-plugin `3.0 -> 4.2`
+* webpack `4.43 -> 4.44`
+
 ## v5.2.2 - 2020-07-21
 
 ### 🐞 Bug Fixes
