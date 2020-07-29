@@ -1,6 +1,6 @@
 {
   "name": "@xh/hoist-dev-utils",
-  "version": "5.2.2",
+  "version": "6.0.0-SNAPSHOT",
   "description": "Utilities for configuring builds of Hoist-React client applications.",
   "repository": "github:xh/hoist-dev-utils",
   "homepage": "https://github.com/xh/hoist-dev-utils",
