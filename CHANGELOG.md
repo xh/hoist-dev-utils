@@ -8,7 +8,8 @@ Resolutions added for some transitive dependencies that had grown excessively st
 triggering console warnings on install/upgrade. Reviewed changelogs for these projects and did not
 see any indication that they would be incompatible.
 
-* css-loader `3.6 -> 4.0`
+* @babel/core `7.10 -> 7.11`
+* css-loader `3.6 -> 4.2`
 * favicons-webpack-plugin `3.0 -> 4.2`
 * webpack `4.43 -> 4.44`
 
