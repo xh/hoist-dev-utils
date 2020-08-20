@@ -25,12 +25,12 @@
     "case-sensitive-paths-webpack-plugin": "~2.3.0",
     "clean-webpack-plugin": "~3.0.0",
     "copy-webpack-plugin": "~6.0.2",
-    "css-loader": "~4.2.0",
+    "css-loader": "~4.2.1",
     "duplicate-package-checker-webpack-plugin": "^3.0.0",
     "favicons-webpack-plugin": "~4.2.0",
     "file-loader": "~6.0.0",
     "html-webpack-plugin": "~4.3.0",
-    "lodash": "~4.17.15",
+    "lodash": "~4.17.20",
     "mini-css-extract-plugin": "~0.9.0",
     "postcss-flexbugs-fixes": "~4.2.1",
     "postcss-loader": "~3.0.0",
@@ -39,7 +39,7 @@
     "sass-loader": "~9.0.3",
     "sass-material-colors": "~0.0.5",
     "style-loader": "~1.2.1",
-    "terser-webpack-plugin": "~4.0.0",
+    "terser-webpack-plugin": "~4.1.0",
     "url-loader": "~4.1.0",
     "webpack": "~4.44.1",
     "webpack-bundle-analyzer": "~3.8.0",
@@ -48,7 +48,7 @@
     "webpackbar": "~4.0.0"
   },
   "resolutions": {
-    "jimp": "^0.14.0",
+    "jimp": "^0.16.0",
     "resize-img": "^2.0.0"
   }
 }

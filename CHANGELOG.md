@@ -11,7 +11,8 @@ see any indication that they would be incompatible.
 * @babel/core `7.10 -> 7.11`
 * css-loader `3.6 -> 4.2`
 * favicons-webpack-plugin `3.0 -> 4.2`
-* terser-webpack-plugin `3.0 -> 4.0`
+* mini-css-extract-plugin `0.9 -> 0.10`
+* terser-webpack-plugin `3.0 -> 4.1`
 * webpack `4.43 -> 4.44`
 
 ## v5.2.2 - 2020-07-21
