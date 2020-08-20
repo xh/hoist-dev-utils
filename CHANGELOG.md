@@ -1,6 +1,6 @@
 # Changelog
 
-## 6.0.0-SNAPSHOT - under development
+## v5.3.0 - 2020-08-20
 
 ### 📚 Libraries
 
