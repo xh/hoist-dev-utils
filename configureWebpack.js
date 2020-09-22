@@ -213,11 +213,8 @@ function configureWebpack(env) {
     apps.forEach(app => {
         // Ensure core-js and regenerator-runtime both imported for every app bundle - they are
         // specified as dependencies by Hoist and imported once in its polyfills.js file.
-        //
-        // Also ensure each app bundle imports bootstrap.js for preflight checks.
         appEntryPoints[app.name] = [
             path.resolve(hoistPath, 'static/polyfills.js'),
-            path.resolve(hoistPath, 'static/bootstrap.js'),
             app.path
         ];
     });
