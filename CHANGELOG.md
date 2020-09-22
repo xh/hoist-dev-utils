@@ -1,5 +1,28 @@
 # Changelog
 
+## v5.4.0 - 2020-09-22
+
+### 🎁 New Features
+
+* When paired with `hoist-react >= v36.1.0`, this release of dev-utils will avoid the use of any
+  inline script tags within the `index.html` file generated for each app. Instead it will copy and
+  inject a link to an unbundled copy of the `static/preflight.js` script supplied by hoist-react.
+  * This allows for stricter Content Security Policy (CSP) headers - see Toolbox's nginx config @
+    `docker/nginx/app.conf` for an example.
+
+### 📚 Libraries
+
+* copy-webpack-plugin `6.0 -> 6.1`
+* css-loader `4.2 -> 4.3`
+* file-loader `6.0 -> 6.1`
+* html-webpack-plugin `4.3 -> 4.5`
+* html-webpack-tags-plugin `added @ 2.0`
+* mini-css-extract-plugin `0.9 -> 0.11`
+* terser-webpack-plugin `4.1 -> 4.2`
+* webpack-bundle-analyzer `3.8 -> 3.9`
+
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.3.0...v5.4.0)
+
 ## v5.3.0 - 2020-08-20
 
 ### 📚 Libraries
@@ -14,6 +37,8 @@ see any indication that they would be incompatible.
 * mini-css-extract-plugin `0.9 -> 0.10`
 * terser-webpack-plugin `3.0 -> 4.1`
 * webpack `4.43 -> 4.44`
+
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.2.2...v5.3.0)
 
 ## v5.2.2 - 2020-07-21
 

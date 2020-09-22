@@ -18,6 +18,7 @@ const _ = require('lodash'),
     MiniCssExtractPlugin = require('mini-css-extract-plugin'),
     FaviconsWebpackPlugin = require('favicons-webpack-plugin'),
     HtmlWebpackPlugin = require('html-webpack-plugin'),
+    HtmlWebpackTagsPlugin = require('html-webpack-tags-plugin'),
     TerserPlugin = require('terser-webpack-plugin'),
     WebpackBar = require('webpackbar'),
     DuplicatePackageCheckerPlugin = require('duplicate-package-checker-webpack-plugin'),
@@ -177,6 +178,12 @@ function configureWebpack(env) {
     const bpIconStubsPath = path.resolve(hoistPath, 'static/requiredBlueprintIcons.js'),
         bpIconStubsExist = fs.existsSync(bpIconStubsPath),
         loadAllBlueprintJsIcons = env.loadAllBlueprintJsIcons === true || !bpIconStubsExist;
+
+    // Resolve path to script for preflight checks. With HR >= v36.1 this routine has been broken
+    // out into a standalone JS file to avoid the use of inline script tags. Script will be left
+    // unprocessed/unbundled and injected into HTML index files prior to any bundles.
+    const preflightScriptPath = path.resolve(hoistPath, 'static/preflight.js'),
+        preflightScriptExists = fs.existsSync(preflightScriptPath);
 
     // Tell webpack where to look for modules when resolving imports - this is the key to getting
     // inlineHoist mode to look in within the checked-out hoist-react project at hoistPath.
@@ -458,26 +465,42 @@ function configureWebpack(env) {
             // See https://github.com/jmblog/how-to-optimize-momentjs-with-webpack
             new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
 
+
+            // Copy the /client-app/public directory and any contents into the build output if so
+            // configured. Also copy static preflight script if available.
+            new CopyWebpackPlugin({
+                patterns: _.compact([
+                    copyPublicAssets ? {from: path.resolve(basePath, 'public'), to: 'public'} : undefined,
+                    preflightScriptExists ? {from: preflightScriptPath, to: 'public'} : undefined
+                ])
+            }),
+
             // Generate HTML index pages - one per JS app.
             ...appNames.map(jsAppName => {
                 // Exclude all chunk combos not containing this app, which we currently generate as
                 // plugin doesn't have an include-by-regex feature (at least not one we have found).
                 const otherAppNames = appNames.filter(it => it !== jsAppName),
-                    excludeAssets = getChunkCombinations(otherAppNames);
+                    excludeAssets = getChunkCombinations(otherAppNames),
+                    // Presence of preflight script indicates we can use the index template variant
+                    // supplied by hoist-react *without* any inline scripts.
+                    templateFilename = preflightScriptExists ? 'index-no-inline.html' : 'index.html';
 
                 return new HtmlWebpackPlugin({
                     title: appName,
                     // Note: HTML template is sourced from hoist-react.
-                    template: path.resolve(hoistPath, 'static/index.html'),
+                    template: path.resolve(hoistPath, `static/${templateFilename}`),
                     filename: `${jsAppName}/index.html`,
                     excludeChunks: excludeAssets,
                     minify: false  // no need to minify the HTML itself
                 });
             }),
 
-            // Copy the /client-app/public directory and any contents into the build output.
-            copyPublicAssets ? new CopyWebpackPlugin({
-                patterns: [{from: path.resolve(basePath, 'public'), to: 'public'}]
+            // Insert a script tag for the (unbundled) preflight script, before all other scripts.
+            preflightScriptExists ? new HtmlWebpackTagsPlugin({
+                // Script available at this path via CopyWebpackPlugin above.
+                scripts: ['public/preflight.js'],
+                append: false,
+                hash: true
             }) : undefined,
 
             // Generate favicons from source image if provided - injected into generated HTML.
