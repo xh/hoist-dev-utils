@@ -1,5 +1,27 @@
 # Changelog
 
+## v6.0.0-SNAPSHOT - UNRELEASED
+
+### 📚 Libraries
+
+* @babel/core & related `7.11 -> 7.12`
+* @types/react `16.9 -> 17.0`
+* autoprefixer `9.8 -> 10.0`
+* babel-loader `8.1 -> 8.2`
+* copy-webpack-plugin `6.1 -> 6.3`
+* css-loader `4.3 -> 5.0`
+* file-loader `6.1 -> 6.2`
+* mini-css-extract-plugin `0.11 -> 1.3`
+* postcss `added @ 8.1`
+* postcss-flexbugs-fixes `4.2 -> 5.0`
+* postcss-loader `3.0 -> 4.1`
+* sass `1.26 -> 1.29`
+* sass-loader `9.0 -> 10.1`
+* style-loader `1.2 -> 2.0`
+* webpack-bundle-analyzer `3.9 -> 4.2`
+
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.4.0...develop)
+
 ## v5.4.0 - 2020-09-22
 
 ### 🎁 New Features

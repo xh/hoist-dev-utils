@@ -10,7 +10,6 @@ const _ = require('lodash'),
     path = require('path'),
     fs = require('fs'),
     webpack = require('webpack'),
-    autoprefixer = require('autoprefixer'),
     BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin,
     CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin'),
     {CleanWebpackPlugin} = require('clean-webpack-plugin'),
@@ -403,16 +402,17 @@ function configureWebpack(env) {
                                 {
                                     loader: 'postcss-loader',
                                     options: {
-                                        ident: 'postcss',
-                                        plugins: () => [
-                                            require('postcss-flexbugs-fixes'),  // Inclusion of postcss-flexbugs-fixes is from CRA.
-                                            autoprefixer({
-                                                // We still want to provide an array of target browsers
-                                                // that can be passed to / managed centrally by this script.
-                                                overrideBrowserslist: targetBrowsers,
-                                                flexbox: 'no-2009'
-                                            })
-                                        ]
+                                        postcssOptions: {
+                                            plugins: [
+                                                require('postcss-flexbugs-fixes'),  // Inclusion of postcss-flexbugs-fixes is from CRA.
+                                                ['autoprefixer', {
+                                                    // We still want to provide an array of target browsers
+                                                    // that can be passed to / managed centrally by this script.
+                                                    overrideBrowserslist: targetBrowsers,
+                                                    flexbox: 'no-2009'
+                                                }]
+                                            ]
+                                        }
                                     }
                                 },
 
