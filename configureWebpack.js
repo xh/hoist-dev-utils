@@ -201,6 +201,10 @@ function configureWebpack(env) {
         path.resolve(hoistPath, 'node_modules') :
         null;
 
+    // Also get a handle on the nested @xh/hoist-dev-utils/node_modules path - dev-utils dependencies
+    // (namely loaders) can be installed here due to the vagaries of node module version / conflict resolution.
+    const devUtilsNodeModulesPath = path.resolve(basePath, 'node_modules/@xh/hoist-dev-utils/node_modules');
+
     // Resolve app entry points - one for each file within src/apps/ - to create bundle entries below.
     const appDirPath = path.resolve(srcPath, 'apps'),
         apps = fs
@@ -270,6 +274,13 @@ function configureWebpack(env) {
             // Include "*" to continue supporting other imports that *do* specify an extension
             // within the import statement (i.e. `import './foo.png'`). Yes, it's confusing.
             extensions: ['*', '.js', '.jsx', '.json']
+        },
+
+        // Ensure Webpack can find loaders installed both within the top-level node_modules dir for
+        // an app that's building (standard case) or nested within dev-utils node_modules (in case
+        // of version conflict - triggered for us in Dec 2020 by postcss-loader version bump).
+        resolveLoader: {
+            modules: ['node_modules', devUtilsNodeModulesPath]
         },
 
         stats: stats,
