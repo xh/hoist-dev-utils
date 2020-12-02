@@ -2,6 +2,12 @@
 
 ## v6.0.0-SNAPSHOT - UNRELEASED
 
+### 🎁 New Features
+
+* New `sourceMaps` option added to `configureWebpack()` build script. Apps can now control sourceMap
+  generation, including specifying `'devOnly'` to disable maps in production (a recommended security
+  practice for untrusted environments). Default behavior is unchanged.
+
 ### 📚 Libraries
 
 * @babel/core & related `7.11 -> 7.12`

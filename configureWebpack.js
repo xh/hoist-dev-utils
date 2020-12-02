@@ -97,6 +97,10 @@ try {reactPkg = require('react/package')} catch (e) {reactPkg = {version: 'NOT_F
  *      here to the Babel loader preset-env preset config.
  * @param {Object} [env.terserOptions] - options to spread onto / override defaults passed here to
  *      the Terser minification plugin for production builds.
+ * @param {(boolean|string)} [env.sourceMaps] - control sourceMap generation. Set to `true`
+ *      (default) to enable defaults specific to dev vs. prod builds, `false` to disable source
+ *      maps entirely, special string `'devOnly'` to enable default for dev and disable in prod, or
+ *      any other valid Webpack `devtool` string to specify a mode directly.
  * @param {boolean} [env.loadAllBlueprintJsIcons] - false (default) to only load the BlueprintJs
  *      icons required by Hoist React components, resulting in a much smaller bundle size. Set to
  *      true if your app wishes to access all the BP icons (but consider FontAwesome instead!).
@@ -136,6 +140,7 @@ function configureWebpack(env) {
         ],
         babelPresetEnvOptions = env.babelPresetEnvOptions || {},
         terserOptions = env.terserOptions || {},
+        sourceMaps = env.sourceMaps === undefined ? true : env.sourceMaps,
         buildDate = new Date();
 
     process.env.BABEL_ENV = prodBuild ? 'production' : 'development';
@@ -205,6 +210,18 @@ function configureWebpack(env) {
     // (namely loaders) can be installed here due to the vagaries of node module version / conflict resolution.
     const devUtilsNodeModulesPath = path.resolve(basePath, 'node_modules/@xh/hoist-dev-utils/node_modules');
 
+    // Determine source map (devtool) mode.
+    let devtool;
+    if (!sourceMaps) {
+        devtool = false;
+    } else if (sourceMaps === true) {
+        devtool = prodBuild ? 'source-map' : 'eval-source-map';
+    } else if (sourceMaps === 'devOnly') {
+        devtool = prodBuild ? false : 'eval-source-map';
+    } else {
+        devtool = sourceMaps;
+    }
+
     // Resolve app entry points - one for each file within src/apps/ - to create bundle entries below.
     const appDirPath = path.resolve(srcPath, 'apps'),
         apps = fs
@@ -249,9 +266,7 @@ function configureWebpack(env) {
             filename: prodBuild ? '[name]/[name].[chunkhash:8].js' : '[name]/[name].[hash:8].js',
             path: outPath,
             publicPath: publicPath,
-            pathinfo: !prodBuild,
-            // Point sourcemap entries to original disk location (format as URL on Windows) - from CRA.
-            devtoolModuleFilenameTemplate: info => path.resolve(info.absoluteResourcePath).replace(/\\/g, '/')
+            pathinfo: !prodBuild
         },
 
         optimization: {
@@ -554,11 +569,11 @@ function configureWebpack(env) {
             }),
 
             // Environment-specific plugins.
-            ...(prodBuild ? extraPluginsProd(terserOptions) : extraPluginsDev())
+            ...(prodBuild ? extraPluginsProd(terserOptions, devtool) : extraPluginsDev())
 
         ].filter(Boolean),
 
-        devtool: prodBuild ? 'source-map' : 'eval-source-map',
+        devtool: devtool,
 
         // Inline dev-time configuration for webpack-dev-server.
         devServer: prodBuild ? undefined : {
@@ -588,7 +603,7 @@ function configureWebpack(env) {
 //------------------------
 // Implementation
 //------------------------
-const extraPluginsProd = (terserOptions) => {
+const extraPluginsProd = (terserOptions, devtool) => {
     return [
         // Extract built CSS files into sub-directories by chunk / entry point name.
         new MiniCssExtractPlugin({
@@ -597,7 +612,7 @@ const extraPluginsProd = (terserOptions) => {
 
         // Minify and tree-shake via Terser - https://github.com/terser/terser#readme
         new TerserPlugin({
-            sourceMap: true,
+            sourceMap: !!devtool,
             terserOptions: {
                 // Mangling disabled due to intermittent / difficult to debug issues with it
                 // breaking code, especially when run on already-packaged libraries. Disabling does
