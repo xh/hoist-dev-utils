@@ -148,7 +148,7 @@ function configureWebpack(env) {
 
     logSep();
     logMsg(`Building ${appName} v${appVersion}`);
-    if (appBuild != 'UNKNOWN') logMsg(`  Build ${appBuild}`);
+    if (appBuild !== 'UNKNOWN') logMsg(`  Build ${appBuild}`);
     logMsg(`  ${buildDate.toISOString()}`);
     logSep();
     if (prodBuild) logMsg('🚀  Production build enabled');
