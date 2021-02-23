@@ -1,5 +1,22 @@
 # Changelog
 
+## v5.6.0 - 2021-02-23
+
+* Includes updated `@xh/eslint-config@3.0` with switch to `@babel/eslint-parser` - fixes
+  auto-updates in toolchain dependencies that started to break linting.
+
+### 📚 Libraries
+
+* @babel/core & related `7.12 -> 7.13`
+* @xh/eslint-config `2.3 -> 3.0`
+* autoprefixer `10.0 -> 10.2`
+* case-sensitive-paths-webpack-plugin `2.3 -> 2.4`
+* postcss `8.1 -> 8.2`
+* sass `1.29 -> 1.32`
+* webpack-bundle-analyzer `4.2 -> 4.4`
+
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.5.0...v5.6.0)
+
 ## v5.5.0 - 2020-12-04
 
 ### 🎁 New Features
