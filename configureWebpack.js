@@ -309,6 +309,18 @@ function configureWebpack(env) {
                     oneOf: [
 
                         //------------------------
+                        // Type mapping for .mjs files, used by the stylis library distribution.
+                        // We have a transitive dep on stylis via: react-select > emotion > stylis
+                        // Without this rule in place, builds fail with errors throw from emotion
+                        // re. exports not found in stylis. Another user reported the same issue
+                        // and provided this pointer @  https://github.com/thysultan/stylis.js/issues/254
+                        //------------------------
+                        {
+                            test: /\.mjs$/,
+                            type: 'javascript/auto'
+                        },
+
+                        //------------------------
                         // Image processing
                         // Encodes `url()` references directly when small enough.
                         //------------------------

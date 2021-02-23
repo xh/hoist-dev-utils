@@ -4,6 +4,8 @@
 
 * Includes updated `@xh/eslint-config@3.0` with switch to `@babel/eslint-parser` - fixes
   auto-updates in toolchain dependencies that started to break linting.
+* Additional type mapping in `module.rules` to support `.mjs` distros out of the `stylis` library,
+  included as a transitive dep by `react-select@v4`.
 
 ### 📚 Libraries
 
