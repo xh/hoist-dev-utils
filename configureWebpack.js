@@ -80,7 +80,6 @@ try {reactPkg = require('react/package')} catch (e) {reactPkg = {version: 'NOT_F
  *      and its contents into the root of the build. Note that files within this directory will not
  *      be otherwise processed, named with a hash, etc. Use for static assets you wish to link to
  *      without using an import to run through the url or file-loader.
- * @param {string} [env.favicon] - relative path to a favicon source image to be processed.
  * @param {string} [env.stats] - stats output - see https://webpack.js.org/configuration/stats/.
  * @param {string} [env.devHost] - hostname for both local Grails and Webpack dev servers.
  *      Defaults to localhost, but may be overridden to a proper hostname for testing on alternate
@@ -126,7 +125,6 @@ function configureWebpack(env) {
         babelExcludePaths = env.babelExcludePaths || [],
         contextRoot = env.contextRoot || '/',
         copyPublicAssets = env.copyPublicAssets !== false,
-        favicon = env.favicon || null,
         stats = env.stats || 'errors-only',
         targetBrowsers = env.targetBrowsers || [
             'last 2 Chrome versions',
