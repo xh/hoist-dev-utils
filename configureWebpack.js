@@ -15,7 +15,6 @@ const _ = require('lodash'),
     {CleanWebpackPlugin} = require('clean-webpack-plugin'),
     CopyWebpackPlugin = require('copy-webpack-plugin'),
     MiniCssExtractPlugin = require('mini-css-extract-plugin'),
-    FaviconsWebpackPlugin = require('favicons-webpack-plugin'),
     HtmlWebpackPlugin = require('html-webpack-plugin'),
     HtmlWebpackTagsPlugin = require('html-webpack-tags-plugin'),
     TerserPlugin = require('terser-webpack-plugin'),
@@ -539,26 +538,6 @@ function configureWebpack(env) {
                 scripts: ['public/preflight.js'],
                 append: false,
                 hash: true
-            }) : undefined,
-
-            // Generate favicons from source image if provided - injected into generated HTML.
-            favicon ? new FaviconsWebpackPlugin({
-                logo: favicon,
-                prefix: 'icons-[hash:8]/',
-                inject: true,
-                mode: 'webapp',
-                favicons: {
-                    icons: {
-                        android: true,
-                        appleIcon: true,
-                        appleStartup: false,
-                        coast: false,
-                        favicons: true,
-                        firefox: false,
-                        windows: true,
-                        yandex: false
-                    }
-                }
             }) : undefined,
 
             // Support an optional post-build/run interactive treemap of output bundles and their sizes / contents.
