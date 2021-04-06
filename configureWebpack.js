@@ -21,6 +21,7 @@ const _ = require('lodash'),
     TerserPlugin = require('terser-webpack-plugin'),
     WebpackBar = require('webpackbar'),
     DuplicatePackageCheckerPlugin = require('duplicate-package-checker-webpack-plugin'),
+    parseChangelog = require('changelog-parser'),
     babelCorePkg = require('@babel/core/package'),
     devUtilsPkg = require('./package'),
     basePath = fs.realpathSync(process.cwd());
@@ -81,6 +82,8 @@ try {reactPkg = require('react/package')} catch (e) {reactPkg = {version: 'NOT_F
  *      and its contents into the root of the build. Note that files within this directory will not
  *      be otherwise processed, named with a hash, etc. Use for static assets you wish to link to
  *      without using an import to run through the url or file-loader.
+ * @param {boolean} [env.parseChangelog] - true to parse a `CHANGELOG.md` file in the project root
+ *      directory into JSON and make available for import by `XH.changelogService`.
  * @param {string} [env.favicon] - relative path to a favicon source image to be processed.
  * @param {string} [env.stats] - stats output - see https://webpack.js.org/configuration/stats/.
  * @param {string} [env.devHost] - hostname for both local Grails and Webpack dev servers.
@@ -105,7 +108,7 @@ try {reactPkg = require('react/package')} catch (e) {reactPkg = {version: 'NOT_F
  *      icons required by Hoist React components, resulting in a much smaller bundle size. Set to
  *      true if your app wishes to access all the BP icons (but consider FontAwesome instead!).
  */
-function configureWebpack(env) {
+async function configureWebpack(env) {
     if (!env.appCode) throw 'Missing required "appCode" config - cannot proceed';
 
     const appCode = env.appCode,
@@ -127,6 +130,7 @@ function configureWebpack(env) {
         babelExcludePaths = env.babelExcludePaths || [],
         contextRoot = env.contextRoot || '/',
         copyPublicAssets = env.copyPublicAssets !== false,
+        doParseChangelog = env.parseChangelog === true,
         favicon = env.favicon || null,
         stats = env.stats || 'errors-only',
         targetBrowsers = env.targetBrowsers || [
@@ -221,6 +225,38 @@ function configureWebpack(env) {
     } else {
         devtool = sourceMaps;
     }
+
+    // Parse CHANGELOG.md and write to tmp .json file, if requested. Write fallback file if disabled
+    // or parsing fails, then install a resolver alias to support import from XH.changelogService.
+    const tmpPath = path.resolve(basePath, '.xhtmp'),
+        clDestPath = path.resolve(tmpPath, 'changelog.json');
+    if (!fs.existsSync(tmpPath)) fs.mkdirSync(tmpPath);
+    let clDestUpdated = false;
+    if (doParseChangelog) {
+        logMsg('📜  Changelog:');
+        const clSrcPath = path.resolve(basePath, '..', 'CHANGELOG.md');
+        if (!fs.existsSync(clSrcPath)) {
+            logMsg('  > ERROR - unable to locate CHANGELOG.md at project root');
+        } else {
+            try {
+                const clJson = await parseChangelog(clSrcPath),
+                    versions = clJson.versions,
+                    latestVer = versions.length > 0 ? versions[0].version : null;
+                fs.writeFileSync(clDestPath, JSON.stringify(clJson));
+                clDestUpdated = true;
+                logMsg(`  > Parsed ${versions.length} versions from log`);
+                logMsg(`  > Latest version: ${latestVer || '???'}`);
+            } catch (e) {
+                logMsg(`  > ERROR - error parsing CHANGELOG.md: ${e}`);
+            }
+        }
+        logSep();
+    }
+    // Write dummy file if CL disabled or has failed to parse/write changelog.json.
+    // Ensures we always have a file with either updated or appropriately empty JSON to alias.
+    if (!clDestUpdated) fs.writeFileSync(clDestPath, '{}');
+    // Setup resolver alias to synthetic import path used by XH.changelogService.
+    resolveAliases['@xh/app-changelog.json'] = clDestPath;
 
     // Resolve app entry points - one for each file within src/apps/ - to create bundle entries below.
     const appDirPath = path.resolve(srcPath, 'apps'),

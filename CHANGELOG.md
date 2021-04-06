@@ -1,5 +1,26 @@
 # Changelog
 
+## v6.0.0-SNAPSHOT - unreleased
+
+### 🎁 New Features
+
+* New `parseChangelog` option added to `configureWebpack()` build script. Set to `true` to parse an
+  application `CHANGELOG.md` file at the root of your project directory into JSON for import by
+  Hoist React's `XH.changelogService` and make available to end users (available in HR v39.1+).
+
+### ⚙️ Technical
+
+* The `configureWebpack()` build script function is now async, to support internal async calls. This
+  is supported out-of-the-box by Webpack, and should not require any application-level changes.
+
+### 📚 Libraries
+
+* changelog-parser `added @ 2.8`
+* css-loader `5.0 -> 5.2`
+* mini-css-extract-plugin `1.3 -> 1.4`
+
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.6.0...develop)
+
 ## v5.6.0 - 2021-02-23
 
 * Includes updated `@xh/eslint-config@3.0` with switch to `@babel/eslint-parser` - fixes
