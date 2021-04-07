@@ -228,9 +228,9 @@ async function configureWebpack(env) {
 
     // Parse CHANGELOG.md and write to tmp .json file, if requested. Write fallback file if disabled
     // or parsing fails, then install a resolver alias to support import from XH.changelogService.
-    const tmpPath = path.resolve(outPath, '.xhtmp'),
+    const tmpPath = path.resolve(basePath, 'node_modules', '.xhtmp'),
         clDestPath = path.resolve(tmpPath, 'changelog.json');
-    if (!fs.existsSync(tmpPath)) fs.mkdirSync(tmpPath, {recursive: true});
+    if (!fs.existsSync(tmpPath)) fs.mkdirSync(tmpPath);
     let clDestUpdated = false;
     if (parseChangelog) {
         logMsg('📜  Changelog:');
