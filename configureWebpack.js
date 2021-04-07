@@ -21,7 +21,7 @@ const _ = require('lodash'),
     TerserPlugin = require('terser-webpack-plugin'),
     WebpackBar = require('webpackbar'),
     DuplicatePackageCheckerPlugin = require('duplicate-package-checker-webpack-plugin'),
-    parseChangelog = require('changelog-parser'),
+    parseChangelogMarkdown = require('changelog-parser'),
     babelCorePkg = require('@babel/core/package'),
     devUtilsPkg = require('./package'),
     basePath = fs.realpathSync(process.cwd());
@@ -82,8 +82,8 @@ try {reactPkg = require('react/package')} catch (e) {reactPkg = {version: 'NOT_F
  *      and its contents into the root of the build. Note that files within this directory will not
  *      be otherwise processed, named with a hash, etc. Use for static assets you wish to link to
  *      without using an import to run through the url or file-loader.
- * @param {boolean} [env.parseChangelog] - true to parse a `CHANGELOG.md` file in the project root
- *      directory into JSON and make available for import by `XH.changelogService`.
+ * @param {boolean} [env.parseChangelog] - true (default) to parse a `CHANGELOG.md` file in the
+ *      project root directory into JSON and make available for import by `XH.changelogService`.
  * @param {string} [env.favicon] - relative path to a favicon source image to be processed.
  * @param {string} [env.stats] - stats output - see https://webpack.js.org/configuration/stats/.
  * @param {string} [env.devHost] - hostname for both local Grails and Webpack dev servers.
@@ -130,7 +130,7 @@ async function configureWebpack(env) {
         babelExcludePaths = env.babelExcludePaths || [],
         contextRoot = env.contextRoot || '/',
         copyPublicAssets = env.copyPublicAssets !== false,
-        doParseChangelog = env.parseChangelog === true,
+        parseChangelog = env.parseChangelog !== false,
         favicon = env.favicon || null,
         stats = env.stats || 'errors-only',
         targetBrowsers = env.targetBrowsers || [
@@ -230,24 +230,24 @@ async function configureWebpack(env) {
     // or parsing fails, then install a resolver alias to support import from XH.changelogService.
     const tmpPath = path.resolve(outPath, '.xhtmp'),
         clDestPath = path.resolve(tmpPath, 'changelog.json');
-    if (!fs.existsSync(tmpPath)) fs.mkdirSync(tmpPath);
+    if (!fs.existsSync(tmpPath)) fs.mkdirSync(tmpPath, {recursive: true});
     let clDestUpdated = false;
-    if (doParseChangelog) {
+    if (parseChangelog) {
         logMsg('📜  Changelog:');
         const clSrcPath = path.resolve(basePath, '..', 'CHANGELOG.md');
         if (!fs.existsSync(clSrcPath)) {
-            logMsg('  > ERROR - unable to locate CHANGELOG.md at project root');
+            logMsg('  > CHANGELOG.md not found');
         } else {
             try {
-                const clJson = await parseChangelog(clSrcPath),
+                const clJson = await parseChangelogMarkdown(clSrcPath),
                     versions = clJson.versions,
                     latestVer = versions.length > 0 ? versions[0].version : null;
                 fs.writeFileSync(clDestPath, JSON.stringify(clJson));
                 clDestUpdated = true;
-                logMsg(`  > Parsed ${versions.length} versions from log`);
-                logMsg(`  > Latest version: ${latestVer || '???'}`);
+                logMsg(`  > Parsed: ${versions.length} versions`);
+                logMsg(`  > Latest: ${latestVer || '???'}`);
             } catch (e) {
-                logMsg(`  > ERROR - error parsing CHANGELOG.md: ${e}`);
+                logMsg(`  > ERROR - exception parsing CHANGELOG.md: ${e}`);
             }
         }
         logSep();
