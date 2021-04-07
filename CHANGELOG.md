@@ -4,9 +4,10 @@
 
 ### 🎁 New Features
 
-* New `parseChangelog` option added to `configureWebpack()` build script. Set to `true` to parse an
-  application `CHANGELOG.md` file at the root of your project directory into JSON for import by
-  Hoist React's `XH.changelogService` and make available to end users (available in HR v39.1+).
+* New `parseChangelog` option added to `configureWebpack()` build script. Set to `true` (default) to
+  parse an application `CHANGELOG.md` file at the root of your project directory for import by Hoist
+  React's `XH.changelogService`, which will make its contents available to app users. (Changelog UI
+  features require @xh/hoist v39.1+.)
 
 ### ⚙️ Technical
 
