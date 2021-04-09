@@ -1,6 +1,6 @@
 # Changelog
 
-## v6.0.0-SNAPSHOT - unreleased
+## v5.7.0 - 2021-04-09
 
 ### 🎁 New Features
 
