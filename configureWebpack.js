@@ -584,6 +584,10 @@ async function configureWebpack(env) {
                 inject: true,
                 mode: 'webapp',
                 favicons: {
+                    appName: appName,
+                    theme_color: '#000',
+                    appleStatusBarStyle: 'black',
+                    start_url: '/mobile',
                     icons: {
                         android: true,
                         appleIcon: true,
