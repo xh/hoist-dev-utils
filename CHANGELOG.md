@@ -1,5 +1,18 @@
 # Changelog
 
+## v5.8.0 - 2021-04-22
+
+### 🎁 New Features
+
+* New `faviconManifestConfig` option added to `configureWebpack()` build script. Allows
+  customization of certain options related to adding a mobile app to a device home screen, as well
+  as "installing" an app via Chrome's "create shortcut" option.
+  * Default options also improved to properly set application name, version, and non-empty
+    description (defaults to appName, but squelches console warning).
+  * See https://github.com/itgalaxy/favicons#usage for supported options.
+
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.7.0...5.8.0)
+
 ## v5.7.0 - 2021-04-09
 
 ### 🎁 New Features
@@ -20,7 +33,7 @@
 * css-loader `5.0 -> 5.2`
 * mini-css-extract-plugin `1.3 -> 1.4`
 
-[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.6.0...develop)
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.6.0...5.7.0)
 
 ## v5.6.0 - 2021-02-23
 
