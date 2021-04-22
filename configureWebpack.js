@@ -85,6 +85,12 @@ try {reactPkg = require('react/package')} catch (e) {reactPkg = {version: 'NOT_F
  * @param {boolean} [env.parseChangelog] - true (default) to parse a `CHANGELOG.md` file in the
  *      project root directory into JSON and make available for import by `XH.changelogService`.
  * @param {string} [env.favicon] - relative path to a favicon source image to be processed.
+ * @param {Object} [env.faviconManifestConfig] - override values for config passed to favicons-
+ *      webpack-plugin, which not only generates favicon variations but ALSO creates and injects a
+ *      manifest.json file into the HTML source. This controls certain options related to adding a
+ *      mobile app to a device home screen, as well as "installing" an app via Chrome's "create
+ *      shortcut" option. See https://github.com/itgalaxy/favicons#usage for options. Note `favicon`
+ *      must also specified for these options to have any effect.
  * @param {string} [env.stats] - stats output - see https://webpack.js.org/configuration/stats/.
  * @param {string} [env.devHost] - hostname for both local Grails and Webpack dev servers.
  *      Defaults to localhost, but may be overridden to a proper hostname for testing on alternate
@@ -132,6 +138,7 @@ async function configureWebpack(env) {
         copyPublicAssets = env.copyPublicAssets !== false,
         parseChangelog = env.parseChangelog !== false,
         favicon = env.favicon || null,
+        faviconManifestConfig = env.faviconManifestConfig || {},
         stats = env.stats || 'errors-only',
         targetBrowsers = env.targetBrowsers || [
             'last 2 Chrome versions',
@@ -583,13 +590,14 @@ async function configureWebpack(env) {
                 prefix: 'icons-[hash:8]/',
                 inject: true,
                 mode: 'webapp',
+                // Available options @ https://github.com/itgalaxy/favicons#usage
                 favicons: {
                     appName: appName,
                     appDescription: appName,
                     version: appVersion,
-                    theme_color: '#000',
+                    theme_color: '#212121', // off-black from default `--xh-black` CSS var
                     appleStatusBarStyle: 'black',
-                    start_url: '/mobile',
+                    start_url: '/',
                     icons: {
                         android: true,
                         appleIcon: true,
@@ -599,7 +607,8 @@ async function configureWebpack(env) {
                         firefox: false,
                         windows: true,
                         yandex: false
-                    }
+                    },
+                    ...faviconManifestConfig
                 }
             }) : undefined,
 
