@@ -144,10 +144,7 @@ async function configureWebpack(env) {
             'last 2 Chrome versions',
             'last 2 Safari versions',
             'last 2 iOS versions',
-            // TODO - review the specific Edge versions we need to support.
-            //  Edge 17 triggered installation of numerous additional polyfills, hence this
-            //  specification of v18+ vs "last two versions".
-            'Edge >= 18'
+            'last 2 Edge versions'
         ],
         babelPresetEnvOptions = env.babelPresetEnvOptions || {},
         terserOptions = env.terserOptions || {},
