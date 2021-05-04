@@ -1,5 +1,19 @@
 # Changelog
 
+## v5.9.0 - 2021-05-04
+
+### ⚙️ Technical
+
+* Updated default `targetBrowsers` config for Babel-based transpiling to replace `Edge >= 18` with
+  `last 2 Edge versions` (v89-90 as of this release). This removes a certain amount of transpiled
+  code generated to support Edge 18.
+  * Edge 18 was the last version released before that browser's switch to the Chromium engine in
+    January 2020.
+  * ⚠ Any apps that require Edge 18 support and observe issues with this change can specify an
+    appropriate set of targets within their `webpack.config.js` file.
+
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.8.0...5.9.0)
+
 ## v5.8.0 - 2021-04-22
 
 ### 🎁 New Features
