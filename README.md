@@ -1,7 +1,8 @@
-# Hoist Dev Utils
+# 🛠️ Hoist Dev Utils
 
 Tooling for building and deploying web applications built on the Hoist React platform. This
-repository is made available as the `@xh/hoist-dev-utils` package on npm for import and use by
+repository is made available as the `@xh/hoist-dev-utils`
+[package on npm](https://www.npmjs.com/package/@xh/hoist-dev-utils) for import and use by
 applications.
 
 ### Shared development dependencies
@@ -11,16 +12,19 @@ building Hoist React applications. Those applications can specify `@xh/hoist-dev
 dependency and transitively bring in libs for Webpack and all associated plugins used in app builds,
 including Webpack Dev Server, Babel, and other essential loaders.
 
-In most cases it is expected that this can be the _only_ dev dependency required by Hoist React
-apps.
+In most cases this package could be the _only_ dev dependency required by Hoist React apps, although
+apps might wish to configure additional tooling such as stylelint (for linting SASS files) or
+lint-staged (for running linters as a pre-commit git hook). See the
+[Toolbox package.json](https://github.com/xh/toolbox/blob/develop/client-app/package.json) for
+examples of both of these libraries in action.
 
 ### Webpack configuration
 
 The configureWebpack.js module exports a single `configureWebpack()` method that can be used to
 output a complete Webpack configuration. This includes support for transpiling and bundling multiple
 client application entry points with preconfigured loaders for JS code (Babel), styles
-(CSS/SASS/PostCSS) and HTML index file generation. See the docs within that file for further
-details.
+(CSS/SASS/PostCSS) and HTML index file generation. See the docs within that file for supported
+arguments and additional details.
 
 The generated Webpack configuration also sets the value of several XH globals within the built JS
 code, via the Webpack DefinePlugin. These include `XH.appCode` and `XH.appName` (both required),
@@ -49,8 +53,8 @@ specify initial defaults (such as appVersion above, checked in as a SNAPSHOT) th
 overridden for particular builds (e.g. via `webpack --env.prodBuild --env.appVersion=1.2.3` to cut a
 versioned 1.2.3 release).
 
-See the [Hoist React readme](https://github.com/xh/hoist-react) for step-by-step details on the
-build process.
+See the [Hoist React docs](https://github.com/xh/hoist-react/blob/develop/docs/build-and-deploy.md)
+for step-by-step details on the build process.
 
 ### ESLint Configuration
 
@@ -72,6 +76,6 @@ app level.
 
 ------------------------------------------
 
-📫☎️🌎 info@xh.io | <https://xh.io/contact>
+☎️ info@xh.io | <https://xh.io>
 
 Copyright © 2021 Extremely Heavy Industries Inc.

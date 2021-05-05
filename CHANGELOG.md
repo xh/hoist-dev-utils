@@ -1,5 +1,14 @@
 # Changelog
 
+## v6.0.0-SNAPSHOT - unreleased
+
+### 📚 Libraries
+
+* @babel/core & related `7.13 -> 7.14`
+* mini-css-extract-plugin `1.4 -> 1.6`
+
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.9.0...develop)
+
 ## v5.9.0 - 2021-05-04
 
 ### ⚙️ Technical
