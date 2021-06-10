@@ -6,6 +6,8 @@
 
 * @babel/core & related `7.13 -> 7.14`
 * mini-css-extract-plugin `1.4 -> 1.6`
+* post-css `8.2 -> 8.3`
+* sass `1.32 -> 1.34`
 
 [Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.9.0...develop)
 
