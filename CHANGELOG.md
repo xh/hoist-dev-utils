@@ -1,6 +1,6 @@
 # Changelog
 
-## v6.0.0-SNAPSHOT - unreleased
+## v5.9.1 - 2021-06-24
 
 ### 📚 Libraries
 
@@ -9,7 +9,7 @@
 * post-css `8.2 -> 8.3`
 * sass `1.32 -> 1.35`
 
-[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.9.0...develop)
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.9.0...5.9.1)
 
 ## v5.9.0 - 2021-05-04
 
