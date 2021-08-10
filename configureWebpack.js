@@ -412,9 +412,10 @@ async function configureWebpack(env) {
 
                                         // Support classes level fields - must come after decorators plugin and be loose.
                                         ['@babel/plugin-proposal-class-properties', {loose: true}],
-                                        // Must also configure private-methods plugin, even if we are not currently using,
-                                        // to config the "loose" setting to match plugin-proposal-class-properties.
+                                        // Must also configure private-* plugins below to config the "loose" setting
+                                        // to match plugin-proposal-class-properties.
                                         ["@babel/plugin-proposal-private-methods", {loose: true}],
+                                        ["@babel/plugin-proposal-private-property-in-object", {loose: true}],
 
                                         // Support `let x = foo?.bar`.
                                         ['@babel/plugin-proposal-optional-chaining'],
