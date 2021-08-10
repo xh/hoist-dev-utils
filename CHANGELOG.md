@@ -1,10 +1,20 @@
 # Changelog
 
+## v5.9.2 - 2021-08-10
+
+### 📚 Libraries
+
+* @babel/* `7.14 -> 7.15`
+* autoprefixer `10.2 -> 10.3`
+* sass `1.35 -> 1.37`
+
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.9.1...5.9.2)
+
 ## v5.9.1 - 2021-06-24
 
 ### 📚 Libraries
 
-* @babel/core & related `7.13 -> 7.14`
+* @babel/* `7.13 -> 7.14`
 * mini-css-extract-plugin `1.4 -> 1.6`
 * post-css `8.2 -> 8.3`
 * sass `1.32 -> 1.35`
@@ -69,7 +79,7 @@
 
 ### 📚 Libraries
 
-* @babel/core & related `7.12 -> 7.13`
+* @babel/* `7.12 -> 7.13`
 * @xh/eslint-config `2.3 -> 3.0`
 * autoprefixer `10.0 -> 10.2`
 * case-sensitive-paths-webpack-plugin `2.3 -> 2.4`
@@ -89,7 +99,7 @@
 
 ### 📚 Libraries
 
-* @babel/core & related `7.11 -> 7.12`
+* @babel/* `7.11 -> 7.12`
 * @types/react `16.9 -> 17.0`
 * autoprefixer `9.8 -> 10.0`
 * babel-loader `8.1 -> 8.2`
