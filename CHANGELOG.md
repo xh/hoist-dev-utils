@@ -1,5 +1,11 @@
 # Changelog
 
+## v5.9.3 - 2021-08-10
+
+* Add newly required babel plugin config to avoid console warnings during compilation.
+
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.9.2...5.9.3)
+
 ## v5.9.2 - 2021-08-10
 
 ### 📚 Libraries
