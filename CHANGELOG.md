@@ -1,8 +1,8 @@
 # Changelog
 
-## v5.9.4 - 2021-09-27
+## v5.9.4 - 2021-09-28
 
-* Add support for running the development environment on SSL.
+* Add support for running the development environment on an https address.
 
 [Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.9.3...5.9.4)
 
