@@ -113,9 +113,10 @@ try {reactPkg = require('react/package')} catch (e) {reactPkg = {version: 'NOT_F
  * @param {boolean} [env.loadAllBlueprintJsIcons] - false (default) to only load the BlueprintJs
  *      icons required by Hoist React components, resulting in a much smaller bundle size. Set to
  *      true if your app wishes to access all the BP icons (but consider FontAwesome instead!).
- * @param {Object} [env.devSsl] - object with 2 properties: `cert` and `key`: The path strings
- *      to the cert and key files needed to allow webpack to serve the wep app in development using SSL.
- *      By default in development the web app is served on http.  Use this serve it on https.
+ * @param {Object|boolean} [env.devHttps] - Boolean `true`, or Object with 3 required properties: `ca`, `cert`, and `key`: The path strings
+ *      to the ca, cert, and key files needed to allow webpack to serve the wep app in development using SSL.
+ *      By default in development the web app is served on http.  Use this serve it on https.  
+ *      This param is only effective in development mode.
  */
 async function configureWebpack(env) {
     if (!env.appCode) throw 'Missing required "appCode" config - cannot proceed';
@@ -132,9 +133,12 @@ async function configureWebpack(env) {
         checkForDupePackages = env.checkForDupePackages !== false,
         dupePackageCheckExcludes = env.dupePackageCheckExcludes || ['tslib'],
         devHost = (env.devHost ? env.devHost.toLowerCase() : 'localhost'),
-        devHttps = !!(env.devSsl && env.devSsl.key && env.devSsl.cert),
-        devHttpsCert = devHttps ? fs.readFileSync(env.devSsl.cert) : undefined,
-        devHttpsKey = devHttps ? fs.readFileSync(env.devSsl.key) : undefined,
+        devHttps = (!prodBuild && env.devHttps && env.devHttps.ca && env.devHttps.cert && env.devHttps.key) ? 
+            {
+                ca: fs.readFileSync(env.devHttps.ca),
+                cert: fs.readFileSync(env.devHttps.cert),
+                key: fs.readFileSync(env.devHttps.key)
+            } : !!env.devHttps,
         devGrailsPort = env.devGrailsPort || 8080,
         devWebpackPort = env.devWebpackPort || 3000,
         baseUrl = env.baseUrl || (prodBuild ? '/api/' : `http://${devHost}:${devGrailsPort}/`),
@@ -648,8 +652,6 @@ async function configureWebpack(env) {
         // Inline dev-time configuration for webpack-dev-server.
         devServer: prodBuild ? undefined : {
             https: devHttps,
-            cert: devHttpsCert,
-            key: devHttpsKey,
             host: devHost,
             port: devWebpackPort,
             overlay: true,
