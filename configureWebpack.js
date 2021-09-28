@@ -113,6 +113,10 @@ try {reactPkg = require('react/package')} catch (e) {reactPkg = {version: 'NOT_F
  * @param {boolean} [env.loadAllBlueprintJsIcons] - false (default) to only load the BlueprintJs
  *      icons required by Hoist React components, resulting in a much smaller bundle size. Set to
  *      true if your app wishes to access all the BP icons (but consider FontAwesome instead!).
+ * @param {(Object|boolean)} [env.devHttps] - Object of the form `{ca, cert, key}`, with each
+ *      key pointing to the required resource for a full SSL config. Pass `true` to serve locally
+ *      over SSL w/o providing a cert (browser will warn). Applies to local dev only, no effect on
+ *      production builds.
  */
 async function configureWebpack(env) {
     if (!env.appCode) throw 'Missing required "appCode" config - cannot proceed';
@@ -129,6 +133,14 @@ async function configureWebpack(env) {
         checkForDupePackages = env.checkForDupePackages !== false,
         dupePackageCheckExcludes = env.dupePackageCheckExcludes || ['tslib'],
         devHost = (env.devHost ? env.devHost.toLowerCase() : 'localhost'),
+        devHttps = prodBuild ?
+            null :
+            _.isPlainObject(env.devHttps) ?
+            {
+                ca: fs.readFileSync(env.devHttps.ca),
+                cert: fs.readFileSync(env.devHttps.cert),
+                key: fs.readFileSync(env.devHttps.key)
+            } : !!env.devHttps,
         devGrailsPort = env.devGrailsPort || 8080,
         devWebpackPort = env.devWebpackPort || 3000,
         baseUrl = env.baseUrl || (prodBuild ? '/api/' : `http://${devHost}:${devGrailsPort}/`),
@@ -641,6 +653,7 @@ async function configureWebpack(env) {
 
         // Inline dev-time configuration for webpack-dev-server.
         devServer: prodBuild ? undefined : {
+            https: devHttps,
             host: devHost,
             port: devWebpackPort,
             overlay: true,

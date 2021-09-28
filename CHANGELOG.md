@@ -1,5 +1,11 @@
 # Changelog
 
+## v5.10.0 - 2021-09-28
+
+* New `devHttps` config adds support for running the local webpack-dev-server over SSL.
+
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.9.3...5.10.0)
+
 ## v5.9.3 - 2021-08-10
 
 * Add newly required babel plugin config to avoid console warnings during compilation.
