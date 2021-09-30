@@ -1,6 +1,17 @@
 # Changelog
 
+## v5.11.0 - 2021-09-30
+
+### 🎁 New Features
+
+* Support for copying the animated png used by Hoist React v43+ as a preload spinner into /public,
+  so it can be loaded and shown while the JS app downloads and prepares to render.
+
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.10.0...5.11.0)
+
 ## v5.10.0 - 2021-09-28
+
+### 🎁 New Features
 
 * New `devHttps` config adds support for running the local webpack-dev-server over SSL.
 
