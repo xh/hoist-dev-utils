@@ -209,6 +209,11 @@ async function configureWebpack(env) {
     const preflightScriptPath = path.resolve(hoistPath, 'static/preflight.js'),
         preflightScriptExists = fs.existsSync(preflightScriptPath);
 
+    // Resolve path to spinner image included in HR >= 43 to prep for copy into public assets.
+    // Displayed by generated HTML index page while JS app downloads and starts.
+    const preloadSpinnerPath = path.resolve(hoistPath, 'static/spinner.png'),
+        preloadSpinnerExists = fs.existsSync(preloadSpinnerPath);
+
     // Tell webpack where to look for modules when resolving imports - this is the key to getting
     // inlineHoist mode to look in within the checked-out hoist-react project at hoistPath.
     if (inlineHoist) {
@@ -565,7 +570,8 @@ async function configureWebpack(env) {
             new CopyWebpackPlugin({
                 patterns: _.compact([
                     copyPublicAssets ? {from: path.resolve(basePath, 'public'), to: 'public'} : undefined,
-                    preflightScriptExists ? {from: preflightScriptPath, to: 'public'} : undefined
+                    preflightScriptExists ? {from: preflightScriptPath, to: 'public'} : undefined,
+                    preloadSpinnerExists ? {from: preloadSpinnerPath, to: 'public'} : undefined
                 ])
             }),
 
