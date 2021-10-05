@@ -591,7 +591,10 @@ async function configureWebpack(env) {
                     template: path.resolve(hoistPath, `static/${templateFilename}`),
                     filename: `${jsAppName}/index.html`,
                     excludeChunks: excludeAssets,
-                    minify: false  // no need to minify the HTML itself
+                    // No need to minify the HTML itself
+                    minify: false,
+                    // Flag read within template file to conditionally render spinner img tag.
+                    enablePreloadSpinner: preloadSpinnerExists
                 });
             }),
 

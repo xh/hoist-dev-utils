@@ -1,5 +1,12 @@
 # Changelog
 
+## v5.11.1 - 2021-10-04
+
+* Pass flag to HTML template to indicate if preload spinner is present and should be rendered.
+  * Respected by `hoist-react >= v43.0.2`.
+
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.11.0...5.11.1)
+
 ## v5.11.0 - 2021-09-30
 
 ### 🎁 New Features
