@@ -1,5 +1,15 @@
 # Changelog
 
+## v5.12.0 - 2021-12-15
+
+### 📚 Libraries
+
+* @babel/* `7.15 -> 7.16`
+* autoprefixer `10.3 -> 10.4`
+* webpack-bundle-analyzer `4.4 -> 4.5`
+
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.11.1...5.12.0)
+
 ## v5.11.1 - 2021-10-04
 
 * Pass flag to HTML template to indicate if preload spinner is present and should be rendered.
