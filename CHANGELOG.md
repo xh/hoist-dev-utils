@@ -1,9 +1,15 @@
 # Changelog
 
+## v5.13.0 - 2021-12-17
+
+### 📚 Libraries
+* @xh/eslint-config `3.0 -> 3.1`
+
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.12.0...5.13.0)
+
 ## v5.12.0 - 2021-12-15
 
 ### 📚 Libraries
-
 * @babel/* `7.15 -> 7.16`
 * autoprefixer `10.3 -> 10.4`
 * webpack-bundle-analyzer `4.4 -> 4.5`
