@@ -320,7 +320,7 @@ async function configureWebpack(env) {
         output: {
             // Output built assets in directories per entry point / chunk.
             // Use chunkhash in prod to get distinct hashes for app vs. common chunks (throws error in dev - investigate)
-            filename: prodBuild ? '[name]/[name].[chunkhash:8].js' : '[name]/[name].[hash:8].js',
+            filename: prodBuild ? '[name]/[name].[chunkhash:8].js' : '[name]/[name].[fullhash:8].js',
             path: outPath,
             publicPath: publicPath,
             pathinfo: !prodBuild
