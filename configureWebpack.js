@@ -15,7 +15,6 @@ const _ = require('lodash'),
     {CleanWebpackPlugin} = require('clean-webpack-plugin'),
     CopyWebpackPlugin = require('copy-webpack-plugin'),
     MiniCssExtractPlugin = require('mini-css-extract-plugin'),
-    FaviconsWebpackPlugin = require('favicons-webpack-plugin'),
     HtmlWebpackPlugin = require('html-webpack-plugin'),
     HtmlWebpackTagsPlugin = require('html-webpack-tags-plugin'),
     TerserPlugin = require('terser-webpack-plugin'),
@@ -84,13 +83,13 @@ try {reactPkg = require('react/package')} catch (e) {reactPkg = {version: 'NOT_F
  *      without using an import to run through the url or file-loader.
  * @param {boolean} [env.parseChangelog] - true (default) to parse a `CHANGELOG.md` file in the
  *      project root directory into JSON and make available for import by `XH.changelogService`.
- * @param {string} [env.favicon] - relative path to a favicon source image to be processed.
- * @param {Object} [env.faviconManifestConfig] - override values for config passed to favicons-
- *      webpack-plugin, which not only generates favicon variations but ALSO creates and injects a
- *      manifest.json file into the HTML source. This controls certain options related to adding a
- *      mobile app to a device home screen, as well as "installing" an app via Chrome's "create
- *      shortcut" option. See https://github.com/itgalaxy/favicons#usage for options. Note `favicon`
- *      must also specified for these options to have any effect.
+ * @param {string} [env.favicon] - relative path to a favicon source image to be included in the html.
+ * @param {(boolean|Object[])} [env.manifestIcons] - true to declare you have included the standard
+ *      `favicon-192.png` & `favicon-512.png` icons in your /public folder, and would like them to be included in
+ *      your manifest.json file. Alternatively, an array suitable for insertion under the `icons` key.
+ * @param {Object} [env.manifestConfig] - override values for manifest.json file. This controls certain
+ *      options related to adding a mobile app to a device home screen, as well as "installing" an app via
+ *      Chrome's "create shortcut" option. See https://developer.mozilla.org/en-US/docs/Web/Manifest for options.
  * @param {string} [env.stats] - stats output - see https://webpack.js.org/configuration/stats/.
  * @param {string} [env.devHost] - hostname for both local Grails and Webpack dev servers.
  *      Defaults to localhost, but may be overridden to a proper hostname for testing on alternate
@@ -150,7 +149,8 @@ async function configureWebpack(env) {
         copyPublicAssets = env.copyPublicAssets !== false,
         parseChangelog = env.parseChangelog !== false,
         favicon = env.favicon || null,
-        faviconManifestConfig = env.faviconManifestConfig || {},
+        manifestIcons = env.manifestIcons || false,
+        manifestConfig = env.manifestConfig || {},
         stats = env.stats || 'errors-only',
         targetBrowsers = env.targetBrowsers || [
             'last 2 Chrome versions',
@@ -327,7 +327,11 @@ async function configureWebpack(env) {
         },
 
         optimization: {
-            noEmitOnErrors: true,
+            emitOnErrors: false,
+
+            // Disable package.json `sideEffects` based tree-shaking - was getting inconsistent
+            // results, with imports being dropped seemingly at random.
+            sideEffects: false,
 
             // Aggressive chunking strategy - produces chunks for any shared imports across JS apps.
             splitChunks: {
@@ -336,8 +340,8 @@ async function configureWebpack(env) {
             },
 
             // Improved debugging with readable module/chunk names.
-            namedChunks: true,
-            namedModules: true
+            chunkIds: 'named',
+            moduleIds: 'named'
         },
 
         resolve: {
@@ -431,8 +435,8 @@ async function configureWebpack(env) {
                                         ['@babel/plugin-proposal-class-properties', {loose: true}],
                                         // Must also configure private-* plugins below to config the "loose" setting
                                         // to match plugin-proposal-class-properties.
-                                        ["@babel/plugin-proposal-private-methods", {loose: true}],
-                                        ["@babel/plugin-proposal-private-property-in-object", {loose: true}],
+                                        ['@babel/plugin-proposal-private-methods', {loose: true}],
+                                        ['@babel/plugin-proposal-private-property-in-object', {loose: true}],
 
                                         // Support `let x = foo?.bar`.
                                         ['@babel/plugin-proposal-optional-chaining'],
@@ -473,7 +477,6 @@ async function configureWebpack(env) {
                             // In inline mode also *avoid* transpiling inline hoist's own node_modules libraries.
                             exclude: inlineHoist ? [hoistNodeModulesPath, ...babelExcludePaths] : babelExcludePaths
                         },
-
 
                         //------------------------
                         // SASS/CSS processing
@@ -539,12 +542,15 @@ async function configureWebpack(env) {
 
         plugins: [
             // Clean (remove) the output directory before each run.
-            new CleanWebpackPlugin(),
+            new CleanWebpackPlugin({
+                // Important otherwise manifest.json is deleted when running webpack-dev-server
+                cleanOnceBeforeBuildPatterns: ['**/*', '!manifest.json']
+            }),
 
             // Load only the BlueprintJS icons used by Hoist-React components.
             !loadAllBlueprintJsIcons ? new webpack.NormalModuleReplacementPlugin(
                 /.*\/generated\/iconSvgPaths.*/,
-                bpIconStubsPath,
+                bpIconStubsPath
             ) : undefined,
 
             // Inject global constants at compile time.
@@ -562,8 +568,10 @@ async function configureWebpack(env) {
 
             // Avoid bundling all moment.js locales and blowing up the bundle size
             // See https://github.com/jmblog/how-to-optimize-momentjs-with-webpack
-            new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
-
+            new webpack.IgnorePlugin({
+                resourceRegExp: /^\.\/locale$/,
+                contextRegExp: /moment$/
+            }),
 
             // Copy the /client-app/public directory and any contents into the build output if so
             // configured. Also copy static preflight script if available.
@@ -587,6 +595,7 @@ async function configureWebpack(env) {
 
                 return new HtmlWebpackPlugin({
                     title: appName,
+                    favicon: favicon,
                     // Note: HTML template is sourced from hoist-react.
                     template: path.resolve(hoistPath, `static/${templateFilename}`),
                     filename: `${jsAppName}/index.html`,
@@ -594,8 +603,29 @@ async function configureWebpack(env) {
                     // No need to minify the HTML itself
                     minify: false,
                     // Flag read within template file to conditionally render spinner img tag.
-                    enablePreloadSpinner: preloadSpinnerExists
+                    enablePreloadSpinner: preloadSpinnerExists,
+                    // Flag read within template file to include apple icon.
+                    includeAppleIcon: manifestIcons
                 });
+            }),
+
+            // Create a manifest.json. The icon choices here work with the favicon provided
+            // to HtmlWebpackPlugin above to match the spec here:
+            // https://evilmartians.com/chronicles/how-to-favicon-in-2021-six-files-that-fit-most-needs
+            new HoistManifestPlugin({
+                name: appName,
+                short_name: appName,
+                description: `${appName} - ${appVersion}`,
+                display: 'standalone',
+                orientation: 'any',
+                start_url: '/',
+                background_color: '#ffffff',
+                theme_color: '#212121', // off-black from default `--xh-black` CSS var
+                icons: _.isArray(manifestIcons) ? manifestIcons : manifestIcons ? [
+                    {src: '/public/favicon-192.png', sizes: '192x192', type: 'image/png'},
+                    {src: '/public/favicon-512.png', sizes: '512x512', type: 'image/png'}
+                ] : [],
+                ...manifestConfig
             }),
 
             // Insert a script tag for the (unbundled) preflight script, before all other scripts.
@@ -606,40 +636,14 @@ async function configureWebpack(env) {
                 hash: true
             }) : undefined,
 
-            // Generate favicons from source image if provided - injected into generated HTML.
-            favicon ? new FaviconsWebpackPlugin({
-                logo: favicon,
-                prefix: 'icons-[hash:8]/',
-                inject: true,
-                mode: 'webapp',
-                // Available options @ https://github.com/itgalaxy/favicons#usage
-                favicons: {
-                    appName: appName,
-                    appDescription: appName,
-                    version: appVersion,
-                    theme_color: '#212121', // off-black from default `--xh-black` CSS var
-                    appleStatusBarStyle: 'black',
-                    start_url: '/',
-                    icons: {
-                        android: true,
-                        appleIcon: true,
-                        appleStartup: false,
-                        coast: false,
-                        favicons: true,
-                        firefox: false,
-                        windows: true,
-                        yandex: false
-                    },
-                    ...faviconManifestConfig
-                }
-            }) : undefined,
-
             // Support an optional post-build/run interactive treemap of output bundles and their sizes / contents.
             analyzeBundles ? new BundleAnalyzerPlugin({
                 analyzerMode: 'server'
             }) : undefined,
 
             // Warn on dupe package included in bundle due to multiple, conflicting versions.
+            // Note that this plugin outputs a deprecation warning about 'Module.issuer'
+            // See: https://github.com/darrenscerri/duplicate-package-checker-webpack-plugin/issues/42
             checkForDupePackages ? new DuplicatePackageCheckerPlugin({
                 verbose: true,
                 showHelp: false,
@@ -665,13 +669,10 @@ async function configureWebpack(env) {
             https: devHttps,
             host: devHost,
             port: devWebpackPort,
-            overlay: true,
             compress: true,
             hot: true,
-            noInfo: true,
-            stats: stats,
-            open: env.devServerOpenPage != null,
-            openPage: env.devServerOpenPage,
+            client: {overlay: true},
+            open: env.devServerOpenPage ? [env.devServerOpenPage] : false,
             // Support HTML5 history routes for apps, with /appName/ as the base route for each
             historyApiFallback: {
                 rewrites: appNames.map(appName => {
@@ -689,6 +690,33 @@ async function configureWebpack(env) {
 //------------------------
 // Implementation
 //------------------------
+class HoistManifestPlugin {
+
+    constructor(content = {}) {
+        this.content = content;
+    }
+
+    apply(compiler) {
+        const pluginName = HoistManifestPlugin.name,
+            {Compilation} = compiler.webpack,
+            {RawSource} = compiler.webpack.sources;
+
+        // Tap into compilation hook which gives compilation as argument to the callback function
+        compiler.hooks.compilation.tap(pluginName, (compilation) => {
+            compilation.hooks.processAssets.tap({
+                name: pluginName,
+                stage: Compilation.PROCESS_ASSETS_STAGE_SUMMARIZE
+            }, () => {
+                compilation.emitAsset(
+                    '/public/manifest.json',
+                    new RawSource(JSON.stringify(this.content))
+                );
+            });
+        });
+    }
+}
+
+
 const extraPluginsProd = (terserOptions, devtool) => {
     return [
         // Extract built CSS files into sub-directories by chunk / entry point name.
@@ -724,10 +752,7 @@ const extraPluginsDev = () => {
     return [
         // Avoid dev-time errors with mis-matched casing in imports (where a less case sensitive OS
         // will resolve OK, but import could fail at build time with strict case sensitivity).
-        new CaseSensitivePathsPlugin(),
-
-        // For HMR
-        new webpack.HotModuleReplacementPlugin()
+        new CaseSensitivePathsPlugin()
     ];
 };
 
@@ -739,7 +764,6 @@ const extraPluginsDev = () => {
 // combos are named according to alpha-ordered entry points included (as well as "vendors" for
 // library dependencies). So given a list of apps such as [admin, app, mobile], possible chunk
 // combos will be of the form vendors~admin, vendors~admin~app, vendors~app~mobile, and so on...
-//
 function getChunkCombinations(chunkNames) {
     // Add 'vendors' to also generate 'vendors~fooApp~barApp' chunk paths for exclusion.
     chunkNames = ['vendors', ...chunkNames];

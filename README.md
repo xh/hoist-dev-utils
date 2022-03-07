@@ -41,7 +41,7 @@ module.exports = (env = {}) => {
         appCode: 'myApp',
         appName: 'My Application',
         appVersion: env.appVersion || '1.0-SNAPSHOT',
-        favicon: './public/favicon.png',
+        favicon: './public/favicon.svg',
         devServerOpenPage: 'app/',
         ...env
     });
@@ -50,11 +50,43 @@ module.exports = (env = {}) => {
 
 Note that additional env variables can be provided at build time, so the application file can
 specify initial defaults (such as appVersion above, checked in as a SNAPSHOT) that are then
-overridden for particular builds (e.g. via `webpack --env.prodBuild --env.appVersion=1.2.3` to cut a
+overridden for particular builds (e.g. via `webpack --env prodBuild --env appVersion=1.2.3` to cut a
 versioned 1.2.3 release).
 
 See the [Hoist React docs](https://github.com/xh/hoist-react/blob/develop/docs/build-and-deploy.md)
 for step-by-step details on the build process.
+
+
+### Favicons
+
+To include a favicon with your app, provide the `favicon` option to `configureWebpack()`. This can be either
+a `png` or an `svg` file:
+
+```javascript
+return configureWebpack({
+    ...,
+    favicon: './public/favicon.svg',
+    ...
+});
+```
+
+If your app is intended to be used on mobile devices, you may want to also include the `manifestIcons` option:
+
+```javascript
+return configureWebpack({
+    ...,
+    favicon: './public/favicon.svg',
+    manifestIcons: true,
+    ...
+});
+```
+
+This will include paths to a wider variety of favicons in your apps manifest.json. Note that in order to support this,
+you will need to include the following files in your `/public` folder:
++ `favicon-192.png` (192px x 192px)
++ `favicon-512.png` (512px x 512px)
++ `apple-touch-icon.png` (180px x 180px)
+
 
 ### ESLint Configuration
 
