@@ -495,7 +495,8 @@ async function configureWebpack(env) {
                                     loader: 'css-loader',
                                     options: {
                                         importLoaders: 2, // Indicate how many prior loaders (postCssLoader/sassLoader) to also run on @imported resources.
-                                        sourceMap: true
+                                        sourceMap: true,
+                                        esModule: false
                                     }
                                 },
 
