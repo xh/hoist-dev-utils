@@ -47,9 +47,5 @@
     "webpack-cli": "~4.9.2",
     "webpack-dev-server": "~4.7.4",
     "webpackbar": "~5.0.2"
-  },
-  "resolutions": {
-    "jimp": "^0.16.1",
-    "resize-img": "^2.0.0"
   }
 }
