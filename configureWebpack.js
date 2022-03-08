@@ -543,10 +543,7 @@ async function configureWebpack(env) {
 
         plugins: [
             // Clean (remove) the output directory before each run.
-            new CleanWebpackPlugin({
-                // Important otherwise manifest.json is deleted when running webpack-dev-server
-                cleanOnceBeforeBuildPatterns: ['**/*', '!manifest.json']
-            }),
+            new CleanWebpackPlugin(),
 
             // Load only the BlueprintJS icons used by Hoist-React components.
             !loadAllBlueprintJsIcons ? new webpack.NormalModuleReplacementPlugin(
