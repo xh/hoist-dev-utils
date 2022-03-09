@@ -656,7 +656,7 @@ async function configureWebpack(env) {
             }),
 
             // Environment-specific plugins.
-            ...(prodBuild ? extraPluginsProd(terserOptions, devtool) : extraPluginsDev())
+            ...(prodBuild ? extraPluginsProd(terserOptions) : extraPluginsDev())
 
         ].filter(Boolean),
 
@@ -715,7 +715,7 @@ class HoistManifestPlugin {
 }
 
 
-const extraPluginsProd = (terserOptions, devtool) => {
+const extraPluginsProd = (terserOptions) => {
     return [
         // Extract built CSS files into sub-directories by chunk / entry point name.
         new MiniCssExtractPlugin({
@@ -724,7 +724,6 @@ const extraPluginsProd = (terserOptions, devtool) => {
 
         // Minify and tree-shake via Terser - https://github.com/terser/terser#readme
         new TerserPlugin({
-            sourceMap: !!devtool,
             terserOptions: {
                 // Mangling disabled due to intermittent / difficult to debug issues with it
                 // breaking code, especially when run on already-packaged libraries. Disabling does
