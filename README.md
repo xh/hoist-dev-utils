@@ -87,6 +87,22 @@ you will need to include the following files in your `/public` folder:
 + `favicon-512.png` (512px x 512px)
 + `apple-touch-icon.png` (180px x 180px)
 
+You can use the `svg-favicon.sh` script to automatically create these favicons from a square SVG. Note that this script
+requires inkscape to be installed. Download the latest version from [https://inkscape.org/](https://inkscape.org/)
+
+Inkscape includes a command-line interface which is leveraged by the script. In order for the script to be able to use it,
+you must first symlink Inkscape to `/usr/local/bin`:
+
+```shell
+ln -s /Applications/Inkscape.app/Contents/MacOS/inkscape \
+/usr/local/bin/inkscape
+```
+
+Then run the script, passing a path to the SVG file as the argument:
+
+```shell
+sh svg-favicon.sh ./favicon.svg
+```
 
 ### ESLint Configuration
 
