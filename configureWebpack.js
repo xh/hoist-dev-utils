@@ -194,6 +194,9 @@ async function configureWebpack(env) {
     if (copyPublicAssets) {
         logSep();
         logMsg('🎨  Icons:');
+        if (fs.existsSync(favicon)) {
+            logMsg(`  > ${path.basename(favicon)}`);
+        }
         if (fs.existsSync(path.resolve(publicAssetsPath, 'favicon-192.png'))) {
             manifestIcons.push({src: '/public/favicon-192.png', sizes: '192x192', type: 'image/png'});
             logMsg(`  > favicon-192.png`);
