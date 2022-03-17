@@ -70,19 +70,9 @@ return configureWebpack({
 });
 ```
 
-If your app is intended to be used on mobile devices, you may want to also include the `manifestIcons` option:
+If your app is intended to be used on mobile devices, you may want to also include a wider variety of favicons.
+The following files will be automatically bundled in your app's manifest.json if they are found your `/public` folder:
 
-```javascript
-return configureWebpack({
-    ...,
-    favicon: './public/favicon.svg',
-    manifestIcons: true,
-    ...
-});
-```
-
-This will include paths to a wider variety of favicons in your apps manifest.json. Note that in order to support this,
-you will need to include the following files in your `/public` folder:
 + `favicon-192.png` (192px x 192px)
 + `favicon-512.png` (512px x 512px)
 + `apple-touch-icon.png` (180px x 180px)
