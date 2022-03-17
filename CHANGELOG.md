@@ -17,6 +17,7 @@ This release features an update to Webpack v5, along with updates to all support
 ### 📚 Libraries
 
 * @babel/* `7.16 -> 7.17`
+* @cerner/duplicate-package-checker-webpack-plugin `added @ 2.3` (fork w/WP5 support)
 * @xh/eslint-config `3.1 -> 4.0` (includes eslint v8)
 * clean-webpack-plugin `3.0 -> 4.0`
 * copy-webpack-plugin `6.3 -> 10.2`

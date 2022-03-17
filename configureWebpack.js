@@ -19,7 +19,7 @@ const _ = require('lodash'),
     HtmlWebpackTagsPlugin = require('html-webpack-tags-plugin'),
     TerserPlugin = require('terser-webpack-plugin'),
     WebpackBar = require('webpackbar'),
-    DuplicatePackageCheckerPlugin = require('duplicate-package-checker-webpack-plugin'),
+    DuplicatePackageCheckerPlugin = require('@cerner/duplicate-package-checker-webpack-plugin'),
     parseChangelogMarkdown = require('changelog-parser'),
     babelCorePkg = require('@babel/core/package'),
     devUtilsPkg = require('./package'),
@@ -32,11 +32,12 @@ try {hoistReactPkg = require('@xh/hoist/package')} catch (e) {hoistReactPkg = {v
 try {reactPkg = require('react/package')} catch (e) {reactPkg = {version: 'NOT_FOUND'}}
 
 /**
- * Consolidated Webpack configuration for both dev-time and production builds of Hoist React web applications.
+ * Consolidated Webpack configuration for both dev-time and production builds of Hoist React web
+ * applications.
  *
  * Sample commands to run configurations produced by this method include:
- *      `webpack --env.prodBuild --env.appVersion=1.2.3` to trigger a build at version 1.2.3
- *      `webpack-dev-server --env.inlineHoist` to run webpack dev server w/hoist-react in inline mode
+ *      `webpack --env.prodBuild --env appVersion=1.2.3` to trigger a build at version 1.2.3
+ *      `webpack-dev-server --env inlineHoist` to run dev server w/hoist-react in inline mode
  *
  * @param {Object} env - config passed in from app webpack config or the CLI via --env flags.
  * @param {string} env.appCode - short, internal code for the application - baked into client as
@@ -52,45 +53,38 @@ try {reactPkg = require('react/package')} catch (e) {reactPkg = {version: 'NOT_F
  * @param {boolean} [env.inlineHoist=false] - true to use a locally checked-out copy of hoist-react
  *      when running the dev server, as opposed to using the downloaded dependency. This allows
  *      hoist-react developers to test plugin changes. Dev-mode only.
- * @param {boolean} [env.inlineHoistOpenFin=false] - true to use a locally checked-out copy of the
- *      hoist-openfin plugin - as with `inlineHoist` above. Dev-mode only.
- * @param {string} env.agGridLicenseKey - key for ag-Grid enterprise license purchased / supplied
- *      for this application and your organization. Applicable only to Hoist React v34 and prior -
- *      as of v35 license key management is now handled exclusively within the application codebase.
  * @param {Object} [env.resolveAliases] - object mapping for custom webpack module resolution.
  *      When inlineHoist=true, a mapping between @xh/hoist and the local path will be added.
- * @param {boolean} [env.analyzeBundles=false] - true to launch an interactive bundle analyzer to
+ * @param {boolean} [env.analyzeBundles] - true to launch an interactive bundle analyzer to
  *      review output bundles, contents, and sizes.
- * @param {boolean} [env.checkForDupePackages=true] - true (default) to run build through
+ * @param {boolean} [env.checkForDupePackages] - true (default) to run build through
  *      DuplicatePackageCheckerPlugin and output a build-time console warning if duplicate packages
  *      have been resolved due to non-overlapping dependencies. Set to false to disable if dupe
  *      warnings are not desired / distracting.
  * @param {string[]} [env.dupePackageCheckExcludes] - optional list of string package names to
  *      exclude from dupe package checking. Defaults to ['tslib'].
- * @param {string} [env.baseUrl] - root path prepended to all relative URLs called via FetchService
- *      (the core Hoist service for making Ajax requests). Defaults to `/api/` in production mode to
- *      work with proxy-based deployments and to `$devHost:$devGrailsPort` in dev mode.
- *      This should not typically need to be changed at the app level.
+ * @param {string} [env.baseUrl] - root path prepended to all relative URLs called via FetchService.
+ *      Defaults to `/api/` in production mode to work with proxy-based deployments and to
+ *      `$devHost:$devGrailsPort` in dev mode.
  * @param {string[]} [env.babelIncludePaths] - additional paths to pass Babel for transpiling via
  *      settings shared with app-level and @xh/hoist code. Intended for custom packages.
- * @param {string[]} [env.babelExcludePaths] - paths to exclude from Babel transpilation. An example
- *      use would be a local package with a nested node_modules folder.
+ * @param {string[]} [env.babelExcludePaths] - paths to exclude from Babel transpilation. An
+ *      example use would be a local package with a nested node_modules folder.
  * @param {string} [env.contextRoot] - root path for where the app will be served, used as the base
  *      path for static files.
- * @param {boolean} [env.copyPublicAssets] - true (default) to copy the /client-app/public directory
- *      and its contents into the root of the build. Note that files within this directory will not
- *      be otherwise processed, named with a hash, etc. Use for static assets you wish to link to
- *      without using an import to run through the url or file-loader.
+ * @param {boolean} [env.copyPublicAssets] - true (default) to copy the /client-app/public
+ *      contents into the root of the build. Note that files within this directory will not be
+ *      processed, named with a hash, etc. Use for static assets you wish to link to without using
+ *      an import to run through the url or file-loader. Required for favicons.
  * @param {boolean} [env.parseChangelog] - true (default) to parse a `CHANGELOG.md` file in the
  *      project root directory into JSON and make available for import by `XH.changelogService`.
- * @param {string} [env.favicon] - relative path to a favicon source image to be included in the html.
- * @param {(boolean|Object[])} [env.manifestIcons] - true to declare you have included the standard
- *      `favicon-192.png` & `favicon-512.png` icons in your /public folder, and would like them to be included in
- *      your manifest.json file. Alternatively, an array suitable for insertion under the `icons` key.
- * @param {Object} [env.manifestConfig] - override values for manifest.json file. This controls certain
- *      options related to adding a mobile app to a device home screen, as well as "installing" an app via
- *      Chrome's "create shortcut" option. See https://developer.mozilla.org/en-US/docs/Web/Manifest for options.
+ * @param {string} [env.favicon] - relative path to a primary favicon source image.
+ * @param {Object} [env.manifestConfig] - override values for manifest.json file. This controls
+ *     certain options related to adding a mobile app to a device home screen, as well as
+ *     "installing" an app via Chrome's "create shortcut" option. See
+ *     https://developer.mozilla.org/en-US/docs/Web/Manifest for options.
  * @param {string} [env.stats] - stats output - see https://webpack.js.org/configuration/stats/.
+ * @param {string} [env.infrastructureLoggingLevel] - default 'error' to quiet chatty devServer.
  * @param {string} [env.devHost] - hostname for both local Grails and Webpack dev servers.
  *      Defaults to localhost, but may be overridden to a proper hostname for testing on alternate
  *      workstations or devices. Will be automatically set to lowercase to comply with
@@ -99,8 +93,8 @@ try {reactPkg = require('react/package')} catch (e) {reactPkg = {version: 'NOT_F
  * @param {number} [env.devWebpackPort] - port on which to start webpack-dev server. Dev-mode only.
  * @param {string} [env.devServerOpenPage] - path to auto-open when webpack-dev-server starts.
  *      Leave null to disable automatic page open on startup.
- * @param {string[]} [env.targetBrowsers] - array of browserslist queries specifying target browsers
- *      for Babel and CSS transpilation and processing.
+ * @param {string[]} [env.targetBrowsers] - array of browserslist queries specifying target
+ *      browsers for Babel and CSS transpilation and processing.
  * @param {Object} [env.babelPresetEnvOptions] - options to spread onto / override defaults passed
  *      here to the Babel loader preset-env preset config.
  * @param {Object} [env.terserOptions] - options to spread onto / override defaults passed here to
@@ -126,7 +120,6 @@ async function configureWebpack(env) {
         appBuild = env.appBuild || 'UNKNOWN',
         prodBuild = env.prodBuild === true,
         inlineHoist = !prodBuild && env.inlineHoist === true,
-        inlineHoistOpenFin = !prodBuild && env.inlineHoistOpenFin === true,
         resolveAliases = Object.assign({}, env.resolveAliases),
         analyzeBundles = env.analyzeBundles === true,
         checkForDupePackages = env.checkForDupePackages !== false,
@@ -135,11 +128,11 @@ async function configureWebpack(env) {
         devHttps = prodBuild ?
             null :
             _.isPlainObject(env.devHttps) ?
-            {
-                ca: fs.readFileSync(env.devHttps.ca),
-                cert: fs.readFileSync(env.devHttps.cert),
-                key: fs.readFileSync(env.devHttps.key)
-            } : !!env.devHttps,
+                {
+                    ca: fs.readFileSync(env.devHttps.ca),
+                    cert: fs.readFileSync(env.devHttps.cert),
+                    key: fs.readFileSync(env.devHttps.key)
+                } : !!env.devHttps,
         devGrailsPort = env.devGrailsPort || 8080,
         devWebpackPort = env.devWebpackPort || 3000,
         baseUrl = env.baseUrl || (prodBuild ? '/api/' : `http://${devHost}:${devGrailsPort}/`),
@@ -149,9 +142,9 @@ async function configureWebpack(env) {
         copyPublicAssets = env.copyPublicAssets !== false,
         parseChangelog = env.parseChangelog !== false,
         favicon = env.favicon || null,
-        manifestIcons = env.manifestIcons || false,
         manifestConfig = env.manifestConfig || {},
         stats = env.stats || 'errors-only',
+        infrastructureLoggingLevel = env.infrastructureLoggingLevel || 'error',
         targetBrowsers = env.targetBrowsers || [
             'last 2 Chrome versions',
             'last 2 Safari versions',
@@ -174,7 +167,6 @@ async function configureWebpack(env) {
     if (prodBuild) logMsg('🚀  Production build enabled');
     if (!prodBuild) logMsg('💻  Development mode enabled');
     if (inlineHoist) logMsg('🏗️   Inline Hoist enabled');
-    if (inlineHoistOpenFin) logMsg('🏗️   Inline Hoist-OpenFin enabled');
     if (analyzeBundles) logMsg('🎁  Bundle analysis enabled');
     logSep();
     logMsg('📚  Key libraries:');
@@ -187,16 +179,33 @@ async function configureWebpack(env) {
     logSep();
     logMsg('🎯  Targets:');
     targetBrowsers.forEach(it => logMsg(`  > ${it}`));
-    logSep();
 
     const srcPath = path.resolve(basePath, 'src'),
         outPath = path.resolve(basePath, 'build'),
-        publicPath = contextRoot;  // Path on which fully built app is served - i.e. root context
+        publicAssetsPath = path.resolve(basePath, 'public');
 
-    // Resolve Hoist as either a sibling (inline, checked-out) project or a downloaded package dependency
+    // Resolve Hoist as either a sibling (inline, checked-out) project or a downloaded package
     const hoistPath = inlineHoist ?
         path.resolve(basePath, '../../hoist-react') :
         path.resolve(basePath, 'node_modules/@xh/hoist');
+
+    // Check for and resolve standard/expected favicons.
+    const manifestIcons = [];
+    if (copyPublicAssets) {
+        logSep();
+        logMsg('🎨  Icons:');
+        if (fs.existsSync(path.resolve(publicAssetsPath, 'favicon-192.png'))) {
+            manifestIcons.push({src: '/public/favicon-192.png', sizes: '192x192', type: 'image/png'});
+            logMsg(`  > favicon-192.png`);
+        }
+        if (fs.existsSync(path.resolve(publicAssetsPath, 'favicon-512.png'))) {
+            manifestIcons.push({src: '/public/favicon-512.png', sizes: '512x512', type: 'image/png'});
+            logMsg(`  > favicon-512.png`);
+        }
+    }
+    const appleTouchIconExists = copyPublicAssets && fs.existsSync(path.resolve(publicAssetsPath, 'apple-touch-icon.png'));
+    if (appleTouchIconExists) logMsg(`  > apple-touch-icon.png`);
+
 
     // Resolve Hoist-based path to replacement Blueprint icons (if available, requires HR >= v35.2.
     const bpIconStubsPath = path.resolve(hoistPath, 'static/requiredBlueprintIcons.js'),
@@ -206,13 +215,11 @@ async function configureWebpack(env) {
     // Resolve path to script for preflight checks. With HR >= v36.1 this routine has been broken
     // out into a standalone JS file to avoid the use of inline script tags. Script will be left
     // unprocessed/unbundled and injected into HTML index files prior to any bundles.
-    const preflightScriptPath = path.resolve(hoistPath, 'static/preflight.js'),
-        preflightScriptExists = fs.existsSync(preflightScriptPath);
+    const preflightScriptPath = path.resolve(hoistPath, 'static/preflight.js');
 
     // Resolve path to spinner image included in HR >= 43 to prep for copy into public assets.
     // Displayed by generated HTML index page while JS app downloads and starts.
-    const preloadSpinnerPath = path.resolve(hoistPath, 'static/spinner.png'),
-        preloadSpinnerExists = fs.existsSync(preloadSpinnerPath);
+    const preloadSpinnerPath = path.resolve(hoistPath, 'static/spinner.png');
 
     // Tell webpack where to look for modules when resolving imports - this is the key to getting
     // inlineHoist mode to look in within the checked-out hoist-react project at hoistPath.
@@ -254,6 +261,7 @@ async function configureWebpack(env) {
     if (!fs.existsSync(tmpPath)) fs.mkdirSync(tmpPath);
     let clDestUpdated = false;
     if (parseChangelog) {
+        logSep();
         logMsg('📜  Changelog:');
         const clSrcPath = path.resolve(basePath, '..', 'CHANGELOG.md');
         if (!fs.existsSync(clSrcPath)) {
@@ -271,7 +279,6 @@ async function configureWebpack(env) {
                 logMsg(`  > ERROR - exception parsing CHANGELOG.md: ${e}`);
             }
         }
-        logSep();
     }
     // Write dummy file if CL disabled or has failed to parse/write changelog.json.
     // Ensures we always have a file with either updated or appropriately empty JSON to alias.
@@ -279,7 +286,7 @@ async function configureWebpack(env) {
     // Setup resolver alias to synthetic import path used by XH.changelogService.
     resolveAliases['@xh/app-changelog.json'] = clDestPath;
 
-    // Resolve app entry points - one for each file within src/apps/ - to create bundle entries below.
+    // Resolve app entry points - one for each file within src/apps/ - to create bundles below.
     const appDirPath = path.resolve(srcPath, 'apps'),
         apps = fs
             .readdirSync(appDirPath)
@@ -303,6 +310,7 @@ async function configureWebpack(env) {
         ];
     });
 
+    logSep();
     logMsg('🎁  App bundle entry points:');
     appNames.forEach(it => logMsg(`  > ${it}`));
     logSep();
@@ -322,12 +330,15 @@ async function configureWebpack(env) {
             // Use chunkhash in prod to get distinct hashes for app vs. common chunks (throws error in dev - investigate)
             filename: prodBuild ? '[name]/[name].[chunkhash:8].js' : '[name]/[name].[fullhash:8].js',
             path: outPath,
-            publicPath: publicPath,
+            // (URL) path on which fully built app is served - i.e. root context
+            publicPath: contextRoot,
             pathinfo: !prodBuild
         },
 
         optimization: {
-            emitOnErrors: false,
+            // Disabled for performance, and to take upcoming default in next major version (as per
+            // https://webpack.js.org/configuration/optimization/#optimizationremoveavailablemodules)
+            removeAvailableModules: false,
 
             // Disable package.json `sideEffects` based tree-shaking - was getting inconsistent
             // results, with imports being dropped seemingly at random.
@@ -360,6 +371,10 @@ async function configureWebpack(env) {
         },
 
         stats: stats,
+
+        infrastructureLogging: {
+            level: infrastructureLoggingLevel
+        },
 
         module: {
             // Flag missing exports as a failure vs. warning
@@ -474,7 +489,8 @@ async function configureWebpack(env) {
                             // Always transpile Hoist - even when "packaged" we have the raw source as we are not
                             // currently transpiling anything in hoist-react on its own.
                             include: [srcPath, hoistPath, ...babelIncludePaths],
-                            // In inline mode also *avoid* transpiling inline hoist's own node_modules libraries.
+                            // In inline mode also *avoid* transpiling inline hoist's own
+                            // node_modules libraries.
                             exclude: inlineHoist ? [hoistNodeModulesPath, ...babelExcludePaths] : babelExcludePaths
                         },
 
@@ -559,7 +575,6 @@ async function configureWebpack(env) {
                 xhAppVersion: JSON.stringify(appVersion),
                 xhAppBuild: JSON.stringify(appBuild),
                 xhBaseUrl: JSON.stringify(baseUrl),
-                xhAgGridLicenseKey: JSON.stringify(env.agGridLicenseKey),
                 xhBuildTimestamp: buildDate.getTime(),
                 xhIsDevelopmentMode: !prodBuild
             }),
@@ -571,13 +586,15 @@ async function configureWebpack(env) {
                 contextRegExp: /moment$/
             }),
 
-            // Copy the /client-app/public directory and any contents into the build output if so
-            // configured. Also copy static preflight script if available.
+            // Copy preflight script and spinner provided by HR, plus entire /client-app/public
+            // directory into the build output.
             new CopyWebpackPlugin({
                 patterns: _.compact([
-                    copyPublicAssets ? {from: path.resolve(basePath, 'public'), to: 'public'} : undefined,
-                    preflightScriptExists ? {from: preflightScriptPath, to: 'public'} : undefined,
-                    preloadSpinnerExists ? {from: preloadSpinnerPath, to: 'public'} : undefined
+                    {from: preflightScriptPath, to: 'public'},
+                    {from: preloadSpinnerPath, to: 'public'},
+                    copyPublicAssets
+                        ? {from: path.resolve(basePath, 'public'), to: 'public'}
+                        : undefined
                 ])
             }),
 
@@ -586,24 +603,19 @@ async function configureWebpack(env) {
                 // Exclude all chunk combos not containing this app, which we currently generate as
                 // plugin doesn't have an include-by-regex feature (at least not one we have found).
                 const otherAppNames = appNames.filter(it => it !== jsAppName),
-                    excludeAssets = getChunkCombinations(otherAppNames),
-                    // Presence of preflight script indicates we can use the index template variant
-                    // supplied by hoist-react *without* any inline scripts.
-                    templateFilename = preflightScriptExists ? 'index-no-inline.html' : 'index.html';
+                    excludeAssets = getChunkCombinations(otherAppNames);
 
                 return new HtmlWebpackPlugin({
                     title: appName,
                     favicon: favicon,
                     // Note: HTML template is sourced from hoist-react.
-                    template: path.resolve(hoistPath, `static/${templateFilename}`),
+                    template: path.resolve(hoistPath, `static/index.html`),
                     filename: `${jsAppName}/index.html`,
                     excludeChunks: excludeAssets,
                     // No need to minify the HTML itself
                     minify: false,
-                    // Flag read within template file to conditionally render spinner img tag.
-                    enablePreloadSpinner: preloadSpinnerExists,
                     // Flag read within template file to include apple icon.
-                    includeAppleIcon: manifestIcons
+                    includeAppleIcon: appleTouchIconExists
                 });
             }),
 
@@ -619,20 +631,17 @@ async function configureWebpack(env) {
                 start_url: '/',
                 background_color: '#ffffff',
                 theme_color: '#212121', // off-black from default `--xh-black` CSS var
-                icons: _.isArray(manifestIcons) ? manifestIcons : manifestIcons ? [
-                    {src: '/public/favicon-192.png', sizes: '192x192', type: 'image/png'},
-                    {src: '/public/favicon-512.png', sizes: '512x512', type: 'image/png'}
-                ] : [],
+                icons: manifestIcons,
                 ...manifestConfig
             }),
 
             // Insert a script tag for the (unbundled) preflight script, before all other scripts.
-            preflightScriptExists ? new HtmlWebpackTagsPlugin({
+            new HtmlWebpackTagsPlugin({
                 // Script available at this path via CopyWebpackPlugin above.
                 scripts: ['public/preflight.js'],
                 append: false,
                 hash: true
-            }) : undefined,
+            }),
 
             // Support an optional post-build/run interactive treemap of output bundles and their sizes / contents.
             analyzeBundles ? new BundleAnalyzerPlugin({
@@ -640,8 +649,6 @@ async function configureWebpack(env) {
             }) : undefined,
 
             // Warn on dupe package included in bundle due to multiple, conflicting versions.
-            // Note that this plugin outputs a deprecation warning about 'Module.issuer'
-            // See: https://github.com/darrenscerri/duplicate-package-checker-webpack-plugin/issues/42
             checkForDupePackages ? new DuplicatePackageCheckerPlugin({
                 verbose: true,
                 showHelp: false,
@@ -667,7 +674,6 @@ async function configureWebpack(env) {
             https: devHttps,
             host: devHost,
             port: devWebpackPort,
-            compress: true,
             hot: true,
             client: {overlay: true},
             open: env.devServerOpenPage ? [env.devServerOpenPage] : false,
@@ -717,7 +723,7 @@ class HoistManifestPlugin {
 
 const extraPluginsProd = (terserOptions) => {
     return [
-        // Extract built CSS files into sub-directories by chunk / entry point name.
+        // Extract built CSS files into subdirectories by chunk / entry point name.
         new MiniCssExtractPlugin({
             filename: '[name]/[name].[contenthash:8].css'
         }),
@@ -747,7 +753,7 @@ const extraPluginsProd = (terserOptions) => {
 
 const extraPluginsDev = () => {
     return [
-        // Avoid dev-time errors with mis-matched casing in imports (where a less case sensitive OS
+        // Avoid dev-time errors with mis-matched casing in imports (where a less case-sensitive OS
         // will resolve OK, but import could fail at build time with strict case sensitivity).
         new CaseSensitivePathsPlugin()
     ];
