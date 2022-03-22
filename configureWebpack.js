@@ -347,10 +347,12 @@ async function configureWebpack(env) {
             // results, with imports being dropped seemingly at random.
             sideEffects: false,
 
-            // Aggressive chunking strategy - produces chunks for any shared imports across JS apps.
+            // Produce chunks for any shared imports across JS apps.
+            // Chunks are named by the JS app entry points to which they belong, concatenated with '~',
+            // e.g. `app.js`, `admin.js`, and `admin~app.js` for code shared by both apps.
             splitChunks: {
                 chunks: 'all',
-                minSize: 0
+                name: (module, chunks) => chunks.map((item) => item.name).join('~')
             },
 
             // Improved debugging with readable module/chunk names.
@@ -595,26 +597,22 @@ async function configureWebpack(env) {
                 patterns: _.compact([
                     {from: preflightScriptPath, to: 'public'},
                     {from: preloadSpinnerPath, to: 'public'},
-                    copyPublicAssets
-                        ? {from: path.resolve(basePath, 'public'), to: 'public'}
-                        : undefined
+                    copyPublicAssets ?
+                        {from: path.resolve(basePath, 'public'), to: 'public'} :
+                        undefined
                 ])
             }),
 
             // Generate HTML index pages - one per JS app.
             ...appNames.map(jsAppName => {
-                // Exclude all chunk combos not containing this app, which we currently generate as
-                // plugin doesn't have an include-by-regex feature (at least not one we have found).
-                const otherAppNames = appNames.filter(it => it !== jsAppName),
-                    excludeAssets = getChunkCombinations(otherAppNames);
-
                 return new HtmlWebpackPlugin({
                     title: appName,
                     favicon: favicon,
                     // Note: HTML template is sourced from hoist-react.
                     template: path.resolve(hoistPath, `static/index.html`),
                     filename: `${jsAppName}/index.html`,
-                    excludeChunks: excludeAssets,
+                    // Only include chunks that contain the js app name
+                    chunks: [jsAppName],
                     // No need to minify the HTML itself
                     minify: false,
                     // Flag read within template file to include apple icon.
@@ -761,31 +759,6 @@ const extraPluginsDev = () => {
         new CaseSensitivePathsPlugin()
     ];
 };
-
-// Generate combinations for given chunkNames so we can pass them as excludes to HtmlWebpackPlugin
-// where this is called. This will be passed the names of all the apps we *do not* want to load
-// from the HTML index page we are building and will output their possible chunk combos to exclude.
-//
-// Unclear if this is really a valid approach, but it seems to work. Relies on the fact that chunk
-// combos are named according to alpha-ordered entry points included (as well as "vendors" for
-// library dependencies). So given a list of apps such as [admin, app, mobile], possible chunk
-// combos will be of the form vendors~admin, vendors~admin~app, vendors~app~mobile, and so on...
-function getChunkCombinations(chunkNames) {
-    // Add 'vendors' to also generate 'vendors~fooApp~barApp' chunk paths for exclusion.
-    chunkNames = ['vendors', ...chunkNames];
-
-    let result = [];
-    let f = function(path, chunkNames) {
-        for (let i = 0; i < chunkNames.length; i++) {
-            const sep = path === '' ? '' : '~',
-                newPath = path + sep + chunkNames[i];
-            result.push(newPath);
-            f(newPath, chunkNames.slice(i + 1));
-        }
-    };
-    f('', chunkNames);
-    return result.filter(chunk => chunk !== 'vendors');
-}
 
 function logSep() {console.log(':------------------------------------')}
 function logMsg(msg) {console.log(`: ${msg}`)}
