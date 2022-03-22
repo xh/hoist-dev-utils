@@ -300,7 +300,8 @@ async function configureWebpack(env) {
                     path: path.resolve(appDirPath, f)
                 };
             }),
-        appNames = apps.map(it => it.name);
+        appNames = apps.map(it => it.name),
+        chunkNames = getChunkCombinations(appNames.sort());
 
     // Build Webpack entry config, with keys for each JS app to be bundled.
     const appEntryPoints = {};
@@ -352,7 +353,11 @@ async function configureWebpack(env) {
             // e.g. `app.js`, `admin.js`, and `admin~app.js` for code shared by both apps.
             splitChunks: {
                 chunks: 'all',
-                name: (module, chunks) => chunks.map((item) => item.name).join('~')
+                name: (module, chunks) => {
+                    const ret = chunks.sort().map((item) => item.name).join('~');
+                    chunkNames.push(ret);
+                    return ret;
+                }
             },
 
             // Improved debugging with readable module/chunk names.
@@ -612,7 +617,7 @@ async function configureWebpack(env) {
                     template: path.resolve(hoistPath, `static/index.html`),
                     filename: `${jsAppName}/index.html`,
                     // Only include chunks that contain the js app name
-                    chunks: [jsAppName],
+                    chunks: chunkNames.filter(it => it.includes(jsAppName)),
                     // No need to minify the HTML itself
                     minify: false,
                     // Flag read within template file to include apple icon.
@@ -759,6 +764,21 @@ const extraPluginsDev = () => {
         new CaseSensitivePathsPlugin()
     ];
 };
+
+// Generate combinations for given chunkNames. Given a list of apps such as [admin, app, mobile],
+// possible chunk combos will be of the form admin, admin~app, app~mobile, and so on...
+function getChunkCombinations(appNames) {
+    let ret = [];
+    const combineRecursiveFn = (path, arr, sep) => {
+        for (let i = 0; i < arr.length; i++) {
+            const newPath = path + sep + arr[i];
+            ret.push(newPath);
+            combineRecursiveFn(newPath, arr.slice(i + 1), '~');
+        }
+    };
+    combineRecursiveFn('', appNames, '');
+    return ret;
+}
 
 function logSep() {console.log(':------------------------------------')}
 function logMsg(msg) {console.log(`: ${msg}`)}
