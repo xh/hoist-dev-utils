@@ -55,6 +55,8 @@ try {reactPkg = require('react/package')} catch (e) {reactPkg = {version: 'NOT_F
  *      hoist-react developers to test plugin changes. Dev-mode only.
  * @param {boolean} [env.inlineHoistOpenFin=false] - true to use a locally checked-out copy of the
  *      hoist-openfin plugin - as with `inlineHoist` above. Dev-mode only.
+ * @param {boolean} [env.reactDevMode=false] - true to use the development build of React. Can be
+ *      useful for troubleshooting / profiling, but can cause performance issues in agGrid v27.
  * @param {string} env.agGridLicenseKey - key for ag-Grid enterprise license purchased / supplied
  *      for this application and your organization. Applicable only to Hoist React v34 and prior -
  *      as of v35 license key management is now handled exclusively within the application codebase.
@@ -128,6 +130,7 @@ async function configureWebpack(env) {
         prodBuild = env.prodBuild === true,
         inlineHoist = !prodBuild && env.inlineHoist === true,
         inlineHoistOpenFin = !prodBuild && env.inlineHoistOpenFin === true,
+        reactDevMode = !prodBuild && env.reactDevMode === true,
         resolveAliases = Object.assign({}, env.resolveAliases),
         analyzeBundles = env.analyzeBundles === true,
         checkForDupePackages = env.checkForDupePackages !== false,
@@ -166,6 +169,10 @@ async function configureWebpack(env) {
     process.env.BABEL_ENV = prodBuild ? 'production' : 'development';
     process.env.NODE_ENV = prodBuild ? 'production' : 'development';
 
+    // Passed to the client to set the React build mode. Defaults to production
+    // to improve performance of agGrid v27.
+    const REACT_NODE_ENV = reactDevMode ? 'development' : 'production';
+
     logSep();
     logMsg(`Building ${appName} v${appVersion}`);
     if (appBuild !== 'UNKNOWN') logMsg(`  Build ${appBuild}`);
@@ -175,6 +182,7 @@ async function configureWebpack(env) {
     if (!prodBuild) logMsg('💻  Development mode enabled');
     if (inlineHoist) logMsg('🏗️   Inline Hoist enabled');
     if (inlineHoistOpenFin) logMsg('🏗️   Inline Hoist-OpenFin enabled');
+    if (reactDevMode) logMsg('⚛️   React Development mode enabled');
     if (analyzeBundles) logMsg('🎁  Bundle analysis enabled');
     logSep();
     logMsg('📚  Key libraries:');
@@ -549,7 +557,7 @@ async function configureWebpack(env) {
 
             // Inject global constants at compile time.
             new webpack.DefinePlugin({
-                'process.env': {NODE_ENV: JSON.stringify(process.env.NODE_ENV)},
+                'process.env': {NODE_ENV: JSON.stringify(REACT_NODE_ENV)},
                 xhAppCode: JSON.stringify(appCode),
                 xhAppName: JSON.stringify(appName),
                 xhAppVersion: JSON.stringify(appVersion),
