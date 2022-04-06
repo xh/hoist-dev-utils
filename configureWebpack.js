@@ -55,8 +55,9 @@ try {reactPkg = require('react/package')} catch (e) {reactPkg = {version: 'NOT_F
  *      hoist-react developers to test plugin changes. Dev-mode only.
  * @param {boolean} [env.inlineHoistOpenFin=false] - true to use a locally checked-out copy of the
  *      hoist-openfin plugin - as with `inlineHoist` above. Dev-mode only.
- * @param {boolean} [env.reactDevMode=false] - true to use the development build of React. Can be
- *      useful for troubleshooting / profiling, but can cause performance issues in agGrid v27.
+ * @param {boolean} [env.reactDevMode=true] - true (default) to use the development build of React
+ *      for non-production mode. Can be useful for troubleshooting / profiling, but can cause
+ *      performance issues in agGrid v27. Consider setting to false if analyzing Grid performance.
  * @param {string} env.agGridLicenseKey - key for ag-Grid enterprise license purchased / supplied
  *      for this application and your organization. Applicable only to Hoist React v34 and prior -
  *      as of v35 license key management is now handled exclusively within the application codebase.
@@ -130,7 +131,7 @@ async function configureWebpack(env) {
         prodBuild = env.prodBuild === true,
         inlineHoist = !prodBuild && env.inlineHoist === true,
         inlineHoistOpenFin = !prodBuild && env.inlineHoistOpenFin === true,
-        reactDevMode = !prodBuild && env.reactDevMode === true,
+        reactDevMode = !prodBuild && env.reactDevMode !== false,
         resolveAliases = Object.assign({}, env.resolveAliases),
         analyzeBundles = env.analyzeBundles === true,
         checkForDupePackages = env.checkForDupePackages !== false,
