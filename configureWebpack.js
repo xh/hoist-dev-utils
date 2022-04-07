@@ -53,6 +53,8 @@ try {reactPkg = require('react/package')} catch (e) {reactPkg = {version: 'NOT_F
  * @param {boolean} [env.inlineHoist=false] - true to use a locally checked-out copy of hoist-react
  *      when running the dev server, as opposed to using the downloaded dependency. This allows
  *      hoist-react developers to test plugin changes. Dev-mode only.
+ * @param {boolean} [env.reactProdMode=false] - true to use the production build of React
+ *      when running the dev server.
  * @param {Object} [env.resolveAliases] - object mapping for custom webpack module resolution.
  *      When inlineHoist=true, a mapping between @xh/hoist and the local path will be added.
  * @param {boolean} [env.analyzeBundles] - true to launch an interactive bundle analyzer to
@@ -120,6 +122,7 @@ async function configureWebpack(env) {
         appBuild = env.appBuild || 'UNKNOWN',
         prodBuild = env.prodBuild === true,
         inlineHoist = !prodBuild && env.inlineHoist === true,
+        reactProdMode = prodBuild || env.reactProdMode === true,
         resolveAliases = Object.assign({}, env.resolveAliases),
         analyzeBundles = env.analyzeBundles === true,
         checkForDupePackages = env.checkForDupePackages !== false,
@@ -158,6 +161,7 @@ async function configureWebpack(env) {
 
     process.env.BABEL_ENV = prodBuild ? 'production' : 'development';
     process.env.NODE_ENV = prodBuild ? 'production' : 'development';
+    process.env.REACT_NODE_ENV = reactProdMode ? 'production' : 'development';
 
     logSep();
     logMsg(`Building ${appName} v${appVersion}`);
@@ -167,6 +171,7 @@ async function configureWebpack(env) {
     if (prodBuild) logMsg('🚀  Production build enabled');
     if (!prodBuild) logMsg('💻  Development mode enabled');
     if (inlineHoist) logMsg('🏗️   Inline Hoist enabled');
+    if (reactProdMode) logMsg('⚛️   React Production mode enabled');
     if (analyzeBundles) logMsg('🎁  Bundle analysis enabled');
     logSep();
     logMsg('📚  Key libraries:');
@@ -579,7 +584,7 @@ async function configureWebpack(env) {
 
             // Inject global constants at compile time.
             new webpack.DefinePlugin({
-                'process.env': {NODE_ENV: JSON.stringify(process.env.NODE_ENV)},
+                'process.env': {NODE_ENV: JSON.stringify(process.env.REACT_NODE_ENV)},
                 xhAppCode: JSON.stringify(appCode),
                 xhAppName: JSON.stringify(appName),
                 xhAppVersion: JSON.stringify(appVersion),
