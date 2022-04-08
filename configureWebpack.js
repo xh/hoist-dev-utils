@@ -358,11 +358,7 @@ async function configureWebpack(env) {
             // e.g. `app.js`, `admin.js`, and `admin~app.js` for code shared by both apps.
             splitChunks: {
                 chunks: 'all',
-                name: (module, chunks) => {
-                    const ret = chunks.sort().map((item) => item.name).join('~');
-                    chunkNames.push(ret);
-                    return ret;
-                }
+                name: (module, chunks) => chunks.sort().map(it => it.name).join('~')
             },
 
             // Improved debugging with readable module/chunk names.
