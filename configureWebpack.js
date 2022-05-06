@@ -615,7 +615,7 @@ async function configureWebpack(env) {
                     title: appName,
                     favicon: favicon,
                     // Note: HTML template is sourced from hoist-react.
-                    template: path.resolve(hoistPath, `static/index.html`),
+                    template: path.resolve(hoistPath, `static/index-manifest.html`),
                     filename: `${jsAppName}/index.html`,
                     // Only include chunks that contain the js app name
                     chunks: chunkNames.filter(it => it.includes(jsAppName)),
