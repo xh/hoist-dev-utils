@@ -1,8 +1,14 @@
 # Changelog
 
+## v5.14.0 - 2022-07-09
+
+* Supports new `reactProdMode` flag passed to `configureWebpack()`. Use to force React into production mode during local
+  development. (Production builds always use prod mode, as before.)
+
 ## v5.13.0 - 2021-12-17
 
 ### 📚 Libraries
+
 * @xh/eslint-config `3.0 -> 3.1`
 
 [Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.12.0...5.13.0)
@@ -10,6 +16,7 @@
 ## v5.12.0 - 2021-12-15
 
 ### 📚 Libraries
+
 * @babel/* `7.15 -> 7.16`
 * autoprefixer `10.3 -> 10.4`
 * webpack-bundle-analyzer `4.4 -> 4.5`
@@ -19,7 +26,7 @@
 ## v5.11.1 - 2021-10-04
 
 * Pass flag to HTML template to indicate if preload spinner is present and should be rendered.
-  * Respected by `hoist-react >= v43.0.2`.
+    * Respected by `hoist-react >= v43.0.2`.
 
 [Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.11.0...5.11.1)
 
@@ -74,10 +81,10 @@
 * Updated default `targetBrowsers` config for Babel-based transpiling to replace `Edge >= 18` with
   `last 2 Edge versions` (v89-90 as of this release). This removes a certain amount of transpiled
   code generated to support Edge 18.
-  * Edge 18 was the last version released before that browser's switch to the Chromium engine in
-    January 2020.
-  * ⚠ Any apps that require Edge 18 support and observe issues with this change can specify an
-    appropriate set of targets within their `webpack.config.js` file.
+    * Edge 18 was the last version released before that browser's switch to the Chromium engine in
+      January 2020.
+    * ⚠ Any apps that require Edge 18 support and observe issues with this change can specify an
+      appropriate set of targets within their `webpack.config.js` file.
 
 [Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.8.0...5.9.0)
 
@@ -88,9 +95,9 @@
 * New `faviconManifestConfig` option added to `configureWebpack()` build script. Allows
   customization of certain options related to adding a mobile app to a device home screen, as well
   as "installing" an app via Chrome's "create shortcut" option.
-  * Default options also improved to properly set application name, version, and non-empty
-    description (defaults to appName, but squelches console warning).
-  * See https://github.com/itgalaxy/favicons#usage for supported options.
+    * Default options also improved to properly set application name, version, and non-empty
+      description (defaults to appName, but squelches console warning).
+    * See https://github.com/itgalaxy/favicons#usage for supported options.
 
 [Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.7.0...5.8.0)
 
@@ -170,8 +177,8 @@
 * When paired with `hoist-react >= v36.1.0`, this release of dev-utils will avoid the use of any
   inline script tags within the `index.html` file generated for each app. Instead, it will copy and
   inject a link to an unbundled copy of the `static/preflight.js` script supplied by hoist-react.
-  * This allows for stricter Content Security Policy (CSP) headers - see Toolbox's nginx config @
-    `docker/nginx/app.conf` for an example.
+    * This allows for stricter Content Security Policy (CSP) headers - see Toolbox's nginx config @
+      `docker/nginx/app.conf` for an example.
 
 ### 📚 Libraries
 
@@ -219,11 +226,11 @@ see any indication that they would be incompatible.
 * App builds now load only a handful of `@blueprintjs` icons that are actually used by components.
   This change significantly reduces build size as BP ships a large set of generic SVG icons and
   bundles them all by default, but Hoist already includes FontAwesome as our standard icon library.
-  * If the full set of Blueprint icons are required for a special app use-case, `configureWebpack()`
-    now supports a new `loadAllBlueprintJsIcons` argument to revert to the previous behavior.
-  * Requires `hoist-react` v35.2 or higher to supply the more minimal set of icon SVGs. Older
-    versions of HR are compatible with this version of dev-utils, but the icons optimization will
-    not be activated.
+    * If the full set of Blueprint icons are required for a special app use-case, `configureWebpack()`
+      now supports a new `loadAllBlueprintJsIcons` argument to revert to the previous behavior.
+    * Requires `hoist-react` v35.2 or higher to supply the more minimal set of icon SVGs. Older
+      versions of HR are compatible with this version of dev-utils, but the icons optimization will
+      not be activated.
 
 ### 📚 Libraries
 
@@ -282,7 +289,6 @@ However no changes to application code or configs should be required.
 
 [Commit Log](https://github.com/xh/hoist-dev-utils/compare/v4.6.0...v5.0.0)
 
-
 ## v4.6.0 - 2020-03-29
 
 ### 🎁 New Features
@@ -306,7 +312,6 @@ However no changes to application code or configs should be required.
 * url-loader `3.0 -> 4.0`
 
 [Commit Log](https://github.com/xh/hoist-dev-utils/compare/v4.5.0...v4.6.0)
-
 
 ## 4.5.0 - 2020-03-04
 
