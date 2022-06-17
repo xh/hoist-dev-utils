@@ -1,6 +1,6 @@
 # Changelog
 
-## v5.14.0 - 2022-07-09
+## v5.14.0 - 2022-06-09
 
 * Supports new `reactProdMode` flag passed to `configureWebpack()`. Use to force React into production mode during local
   development. (Production builds always use prod mode, as before.)
