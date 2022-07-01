@@ -595,4 +595,4 @@ plugin we had been using in favor of `core-js@3` for polyfills (as of 7.5).
 
 📫☎️🌎 info@xh.io | <https://xh.io/contact>
 
-Copyright © 2021 Extremely Heavy Industries Inc.
+Copyright © 2022 Extremely Heavy Industries Inc.
