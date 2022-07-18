@@ -16,25 +16,25 @@ This release features an update to Webpack v5, along with updates to all support
 
 ### 📚 Libraries
 
-* @babel/* `7.16 -> 7.17`
+* @babel/* `7.16 -> 7.18`
 * @cerner/duplicate-package-checker-webpack-plugin `added @ 2.3` (fork w/WP5 support)
 * @xh/eslint-config `3.1 -> 4.0` (includes eslint v8)
 * clean-webpack-plugin `3.0 -> 4.0`
-* copy-webpack-plugin `6.3 -> 10.2`
+* copy-webpack-plugin `6.3 -> 11.0`
 * css-loader `5.2 -> 6.7`
 * favicons-webpack-plugin `removed`
 * html-webpack-plugin `4.5 -> 5.5`
 * html-webpack-tags-plugin `2.0 -> 3.0`
 * mini-css-extract-plugin `1.6-> 2.6`
 * postcss `8.3 -> 8.4`
-* postcss-loader `4.1 -> 6.2`
+* postcss-loader `4.1 -> 7.0`
 * sass `1.37 -> 1.49`
-* sass-loader `10.1 -> 12.6`
+* sass-loader `10.1 -> 13.0`
 * style-loader `2.0 -> 3.3`
 * terser-webpack-plugin `4.2 -> 5.3`
-* webpack `4.44 -> 5.70`
-* webpack-cli `3.3 -> 4.9`
-* webpack-dev-server `3.11 -> 4.7`
+* webpack `4.44 -> 5.73`
+* webpack-cli `3.3 -> 4.10`
+* webpack-dev-server `3.11 -> 4.9`
 * webpackbar `4.0 -> 5.0`
 
 [Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.13.0...v6.0.0)
