@@ -39,6 +39,11 @@ This release features an update to Webpack v5, along with updates to all support
 
 [Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.13.0...v6.0.0)
 
+## v5.14.0 - 2022-06-09
+
+* Supports new `reactProdMode` flag passed to `configureWebpack()`. Use to force React into production mode during local
+  development. (Production builds always use prod mode, as before.)
+
 ## v5.13.0 - 2021-12-17
 
 ### 📚 Libraries
@@ -60,7 +65,7 @@ This release features an update to Webpack v5, along with updates to all support
 ## v5.11.1 - 2021-10-04
 
 * Pass flag to HTML template to indicate if preload spinner is present and should be rendered.
-  * Respected by `hoist-react >= v43.0.2`.
+    * Respected by `hoist-react >= v43.0.2`.
 
 [Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.11.0...v5.11.1)
 
@@ -260,8 +265,7 @@ see any indication that they would be incompatible.
 * App builds now load only a handful of `@blueprintjs` icons that are actually used by components.
   This change significantly reduces build size as BP ships a large set of generic SVG icons and
   bundles them all by default, but Hoist already includes FontAwesome as our standard icon library.
-    * If the full set of Blueprint icons are required for a special app
-      use-case, `configureWebpack()`
+    * If the full set of Blueprint icons are required for a special app use-case, `configureWebpack()`
       now supports a new `loadAllBlueprintJsIcons` argument to revert to the previous behavior.
     * Requires `hoist-react` v35.2 or higher to supply the more minimal set of icon SVGs. Older
       versions of HR are compatible with this version of dev-utils, but the icons optimization will
