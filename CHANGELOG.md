@@ -1,5 +1,44 @@
 # Changelog
 
+## v6.0.0-SNAPSHOT - under development
+
+This release features an update to Webpack v5, along with updates to all supporting libraries.
+
+### 💥 Breaking Changes
+
+* Requires Hoist React v48 or higher.
+* Imports from `package.json` no longer support default export - you must import the entire json
+  as an object. This is most likely to be relevant in `Bootstrap.js`.
+* The syntax form passing variables to `yarn` scripts in your package.json has changed:
+  * e.g. `webpack --env.prodBuild` > `webpack --env prodBuild`
+* If you have a mobile app, you must provide a wider range of favicons for display on devices.
+  See https://github.com/xh/hoist-dev-utils/#favicons for more details.
+
+### 📚 Libraries
+
+* @babel/* `7.16 -> 7.18`
+* @cerner/duplicate-package-checker-webpack-plugin `added @ 2.3` (fork w/WP5 support)
+* @xh/eslint-config `3.1 -> 4.0` (includes eslint v8)
+* clean-webpack-plugin `3.0 -> 4.0`
+* copy-webpack-plugin `6.3 -> 11.0`
+* css-loader `5.2 -> 6.7`
+* favicons-webpack-plugin `removed`
+* html-webpack-plugin `4.5 -> 5.5`
+* html-webpack-tags-plugin `2.0 -> 3.0`
+* mini-css-extract-plugin `1.6-> 2.6`
+* postcss `8.3 -> 8.4`
+* postcss-loader `4.1 -> 7.0`
+* sass `1.37 -> 1.49`
+* sass-loader `10.1 -> 13.0`
+* style-loader `2.0 -> 3.3`
+* terser-webpack-plugin `4.2 -> 5.3`
+* webpack `4.44 -> 5.73`
+* webpack-cli `3.3 -> 4.10`
+* webpack-dev-server `3.11 -> 4.9`
+* webpackbar `4.0 -> 5.0`
+
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.13.0...v6.0.0)
+
 ## v5.14.0 - 2022-06-09
 
 * Supports new `reactProdMode` flag passed to `configureWebpack()`. Use to force React into production mode during local
@@ -11,7 +50,7 @@
 
 * @xh/eslint-config `3.0 -> 3.1`
 
-[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.12.0...5.13.0)
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.12.0...v5.13.0)
 
 ## v5.12.0 - 2021-12-15
 
@@ -21,14 +60,14 @@
 * autoprefixer `10.3 -> 10.4`
 * webpack-bundle-analyzer `4.4 -> 4.5`
 
-[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.11.1...5.12.0)
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.11.1...v5.12.0)
 
 ## v5.11.1 - 2021-10-04
 
 * Pass flag to HTML template to indicate if preload spinner is present and should be rendered.
     * Respected by `hoist-react >= v43.0.2`.
 
-[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.11.0...5.11.1)
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.11.0...v5.11.1)
 
 ## v5.11.0 - 2021-09-30
 
@@ -37,7 +76,7 @@
 * Support for copying the animated png used by Hoist React v43+ as a preload spinner into /public,
   so it can be loaded and shown while the JS app downloads and prepares to render.
 
-[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.10.0...5.11.0)
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.10.0...v5.11.0)
 
 ## v5.10.0 - 2021-09-28
 
@@ -45,13 +84,13 @@
 
 * New `devHttps` config adds support for running the local webpack-dev-server over SSL.
 
-[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.9.3...5.10.0)
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.9.3...v5.10.0)
 
 ## v5.9.3 - 2021-08-10
 
 * Add newly required babel plugin config to avoid console warnings during compilation.
 
-[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.9.2...5.9.3)
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.9.2...v5.9.3)
 
 ## v5.9.2 - 2021-08-10
 
@@ -61,7 +100,7 @@
 * autoprefixer `10.2 -> 10.3`
 * sass `1.35 -> 1.37`
 
-[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.9.1...5.9.2)
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.9.1...v5.9.2)
 
 ## v5.9.1 - 2021-06-24
 
@@ -72,7 +111,7 @@
 * post-css `8.2 -> 8.3`
 * sass `1.32 -> 1.35`
 
-[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.9.0...5.9.1)
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.9.0...v5.9.1)
 
 ## v5.9.0 - 2021-05-04
 
@@ -86,7 +125,7 @@
     * ⚠ Any apps that require Edge 18 support and observe issues with this change can specify an
       appropriate set of targets within their `webpack.config.js` file.
 
-[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.8.0...5.9.0)
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.8.0...v5.9.0)
 
 ## v5.8.0 - 2021-04-22
 
@@ -99,7 +138,7 @@
       description (defaults to appName, but squelches console warning).
     * See https://github.com/itgalaxy/favicons#usage for supported options.
 
-[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.7.0...5.8.0)
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.7.0...v5.8.0)
 
 ## v5.7.0 - 2021-04-09
 
@@ -121,7 +160,7 @@
 * css-loader `5.0 -> 5.2`
 * mini-css-extract-plugin `1.3 -> 1.4`
 
-[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.6.0...5.7.0)
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.6.0...v5.7.0)
 
 ## v5.6.0 - 2021-02-23
 
