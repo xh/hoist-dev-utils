@@ -1,16 +1,18 @@
 # Changelog
 
-## v6.0.0-SNAPSHOT - under development
+## v6.0.0 - 2022-07-19
 
-This release features an update to Webpack v5, along with updates to all supporting libraries.
+This release features a major update to Webpack v5, along with updates to all supporting libraries.
 
 ### 💥 Breaking Changes
 
 * Requires Hoist React v48 or higher.
-* Imports from `package.json` no longer support default export - you must import the entire json
-  as an object. This is most likely to be relevant in `Bootstrap.js`.
-* The syntax form passing variables to `yarn` scripts in your package.json has changed:
-  * e.g. `webpack --env.prodBuild` > `webpack --env prodBuild`
+* Imports from `package.json` no longer support default export - you must import the entire package JSON as an object.
+  This is most likely to be relevant in `Bootstrap.js` where apps read the Ag-Grid version from its package. See this
+  file within the XH Toolbox app for the updated syntax.
+* The syntax form passing variables to `yarn` scripts in your package.json has changed - note the removal of the dot:
+    * e.g. `webpack --env.prodBuild` > `webpack --env prodBuild`
+    * This will likely require updates to automated builds which pass in version / build tags via env args.
 * If you have a mobile app, you must provide a wider range of favicons for display on devices.
   See https://github.com/xh/hoist-dev-utils/#favicons for more details.
 
@@ -37,12 +39,14 @@ This release features an update to Webpack v5, along with updates to all support
 * webpack-dev-server `3.11 -> 4.9`
 * webpackbar `4.0 -> 5.0`
 
-[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.13.0...v6.0.0)
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.14.0...v6.0.0)
 
 ## v5.14.0 - 2022-06-09
 
 * Supports new `reactProdMode` flag passed to `configureWebpack()`. Use to force React into production mode during local
   development. (Production builds always use prod mode, as before.)
+
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.13.0...v5.14.0)
 
 ## v5.13.0 - 2021-12-17
 
