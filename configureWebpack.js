@@ -262,6 +262,9 @@ async function configureWebpack(env) {
         devtool = sourceMaps;
     }
 
+    // Ignore DefinePlugin warnings on mis-matched process.env when reactProdMode enabled during local development.
+    const ignoreWarnings = (prodBuild !== reactProdMode) ? [{message: /Conflicting values for 'process.env.NODE_ENV'/}] : [];
+
     // Parse CHANGELOG.md and write to tmp .json file, if requested. Write fallback file if disabled
     // or parsing fails, then install a resolver alias to support import from XH.changelogService.
     const tmpPath = path.resolve(basePath, 'node_modules', '.xhtmp'),
@@ -580,7 +583,7 @@ async function configureWebpack(env) {
 
             // Inject global constants at compile time.
             new webpack.DefinePlugin({
-                'process.env': {NODE_ENV: JSON.stringify(process.env.REACT_NODE_ENV)},
+                'process.env.NODE_ENV': JSON.stringify(process.env.REACT_NODE_ENV),
                 xhAppCode: JSON.stringify(appCode),
                 xhAppName: JSON.stringify(appName),
                 xhAppVersion: JSON.stringify(appVersion),
@@ -675,6 +678,8 @@ async function configureWebpack(env) {
         ].filter(Boolean),
 
         devtool: devtool,
+
+        ignoreWarnings: ignoreWarnings,
 
         // Inline dev-time configuration for webpack-dev-server.
         devServer: prodBuild ? undefined : {
