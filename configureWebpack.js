@@ -374,7 +374,7 @@ async function configureWebpack(env) {
             // Add JSX to support imports from .jsx source w/o needing to add the extension.
             // Include "*" to continue supporting other imports that *do* specify an extension
             // within the import statement (i.e. `import './foo.png'`). Yes, it's confusing.
-            extensions: ['*', '.js', '.jsx', '.json']
+            extensions: ['*', '.js', '.ts', '.jsx', '.tsx', '.json']
         },
 
         // Ensure Webpack can find loaders installed both within the top-level node_modules dir for
@@ -424,15 +424,16 @@ async function configureWebpack(env) {
                         },
 
                         //------------------------
-                        // JS processing
+                        // JS/TS processing
                         // Transpile via Babel, with presets/plugins to support Hoist's use of modern / staged JS features.
                         //------------------------
                         {
-                            test: /\.(jsx?)$/,
+                            test: /\.(jsx?)$|\.(tsx?)$/,
                             use: {
                                 loader: 'babel-loader',
                                 options: {
                                     presets: [
+                                        '@babel/preset-typescript',
                                         '@babel/preset-react',
                                         [
                                             '@babel/preset-env',
@@ -701,7 +702,6 @@ async function configureWebpack(env) {
         }
     };
 }
-
 
 //------------------------
 // Implementation
