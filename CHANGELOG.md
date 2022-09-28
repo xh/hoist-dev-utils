@@ -2,11 +2,11 @@
 
 ## v7.0.0-SNAPSHOT - under development
 
-Typescript support
+* Typescript support
 
 ## v6.0.0
 
-This release features an update to Webpack v5, along with updates to all supporting libraries.
+* This release features an update to Webpack v5, along with updates to all supporting libraries.
 
 ### 💥 Breaking Changes
 
