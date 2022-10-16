@@ -301,10 +301,10 @@ async function configureWebpack(env) {
     const appDirPath = path.resolve(srcPath, 'apps'),
         apps = fs
             .readdirSync(appDirPath)
-            .filter(f => f.endsWith('.js'))
+            .filter(f => f.endsWith('.js') || f.endsWith('.ts'))
             .map(f => {
                 return {
-                    name: f.replace('.js', ''),
+                    name: f.replace('.js', '').replace('.ts', ''),
                     path: path.resolve(appDirPath, f)
                 };
             }),
@@ -388,6 +388,10 @@ async function configureWebpack(env) {
 
         infrastructureLogging: {
             level: infrastructureLoggingLevel
+        },
+
+        experiments: {
+            topLevelAwait: true
         },
 
         module: {
@@ -474,7 +478,10 @@ async function configureWebpack(env) {
                                         // Support `let x = foo.bar ?? 'default'`.
                                         ['@babel/plugin-proposal-nullish-coalescing-operator'],
 
-                                        // Avoid importing every FA icon ever made.
+                                        // support export x = await fooAsync
+                                        ['@babel/plugin-syntax-top-level-await'],
+
+                                            // Avoid importing every FA icon ever made.
                                         // See https://github.com/FortAwesome/react-fontawesome/issues/70
                                         [require('babel-plugin-transform-imports'), {
                                             '@fortawesome/pro-light-svg-icons': {
