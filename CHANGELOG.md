@@ -4,6 +4,12 @@
 
 * Typescript support
 
+### 📚 Libraries
+
+* @babel/* `7.18 -> 7.19`
+* webpack `5.73 -> 5.74`
+* webpack-dev-server `4.9 -> 4.11`
+
 ## v6.0.0
 
 * This release features an update to Webpack v5, along with updates to all supporting libraries.
