@@ -461,6 +461,7 @@ async function configureWebpack(env) {
                                         ]
                                     ],
                                     plugins: [
+                                        ["@babel/plugin-transform-typescript", {allowDeclareFields: true}],
                                         // Support our current decorator syntax, for MobX and Hoist decorators.
                                         // See notes @ https://babeljs.io/docs/en/babel-plugin-proposal-decorators#legacy
                                         ['@babel/plugin-proposal-decorators', {legacy: true}],
