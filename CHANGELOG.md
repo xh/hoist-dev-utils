@@ -1,8 +1,29 @@
 # Changelog
 
+## v6.1.0 - 2022-11-21
+
+### 🎁 New Features
+
+* Typescript support for Hoist React v54+ via `@babel/plugin-transform-typescript`.
+* Remains compatible for use with JS-only application projects and prior JS-only versions of Hoist React.
+
+### 📚 Libraries
+
+* @babel/* `7.18 -> 7.20`
+* @xh/eslint-config `4.0 -> 5.0`
+* babel-loader `8.2 -> 9.1`
+* mini-css-extract-plugin `2.6 -> 2.7`
+* sass `1.53 -> 1.56`
+* sass-loader `13.0 -> 13.2`
+* webpack `5.73 -> 5.75`
+* webpack-cli `4.10 -> 5.0`
+* webpack-dev-server `4.9 -> 4.11`
+
+[Commit Log](https://github.com/xh/hoist-dev-utils/compare/v6.0.0...v6.1.0)
+
 ## v6.0.0 - 2022-07-19
 
-This release features a major update to Webpack v5, along with updates to all supporting libraries.
+* This release features a major update to Webpack v5, along with updates to all supporting libraries.
 
 ### 💥 Breaking Changes
 

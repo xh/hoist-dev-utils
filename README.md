@@ -14,9 +14,9 @@ including Webpack Dev Server, Babel, and other essential loaders.
 
 In most cases this package could be the _only_ dev dependency required by Hoist React apps, although
 apps might wish to configure additional tooling such as stylelint (for linting SASS files) or
-lint-staged (for running linters as a pre-commit git hook). See the
+lint-staged and husky (for running linters as a pre-commit git hook). See the
 [Toolbox package.json](https://github.com/xh/toolbox/blob/develop/client-app/package.json) for
-examples of both of these libraries in action.
+examples of these libraries in action.
 
 ### Webpack configuration
 
@@ -56,7 +56,6 @@ versioned 1.2.3 release).
 See the [Hoist React docs](https://github.com/xh/hoist-react/blob/develop/docs/build-and-deploy.md)
 for step-by-step details on the build process.
 
-
 ### Favicons
 
 To include a favicon with your app, provide the `favicon` option to `configureWebpack()`. This can be either
@@ -71,27 +70,32 @@ return configureWebpack({
 ```
 
 If your app is intended to be used on mobile devices, you may want to also include a wider variety of favicons.
-The following files will be automatically bundled in your app's manifest.json if they are found your `/public` folder:
+The following files will be automatically bundled in your app's manifest.json if they are found in your project's
+`/client-app/public` folder:
 
 + `favicon-192.png` (192px x 192px)
 + `favicon-512.png` (512px x 512px)
 + `apple-touch-icon.png` (180px x 180px)
 
 You can use the `svg-favicon.sh` script to automatically create these favicons from a square SVG. Note that this script
-requires inkscape to be installed. Download the latest version from [https://inkscape.org/](https://inkscape.org/)
+requires inkscape to be installed. Download the latest version from [https://inkscape.org/](https://inkscape.org/) or
+install on Mac via Homebrew with `brew install inkscape`.
 
-Inkscape includes a command-line interface which is leveraged by the script. In order for the script to be able to use it,
-you must first symlink Inkscape to `/usr/local/bin`:
+Inkscape includes a command-line interface which is leveraged by the script. In order for the script to be able to use
+it, you must first symlink Inkscape to `/usr/local/bin`. (Note this step is _not_ required if you have installed via
+Homebrew.)
 
 ```shell
 ln -s /Applications/Inkscape.app/Contents/MacOS/inkscape \
 /usr/local/bin/inkscape
 ```
 
-Then run the script, passing a path to the SVG file as the argument:
+Then run the script, passing a path to the SVG file as the argument. The command below assumes that you have 
+`hoist-dev-utils` checked out as a sibling of your top-level project directory, and that you are running the command 
+from within `$projectDir/client-app/public`: 
 
 ```shell
-sh svg-favicon.sh ./favicon.svg
+../../../hoist-dev-utils/svg-favicon.sh favicon.svg
 ```
 
 ### ESLint Configuration
