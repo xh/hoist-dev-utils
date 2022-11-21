@@ -390,10 +390,6 @@ async function configureWebpack(env) {
             level: infrastructureLoggingLevel
         },
 
-        experiments: {
-            topLevelAwait: true
-        },
-
         module: {
             // Flag missing exports as a failure vs. warning
             strictExportPresence: true,
@@ -479,10 +475,7 @@ async function configureWebpack(env) {
                                         // Support `let x = foo.bar ?? 'default'`.
                                         ['@babel/plugin-proposal-nullish-coalescing-operator'],
 
-                                        // support export x = await fooAsync
-                                        ['@babel/plugin-syntax-top-level-await'],
-
-                                            // Avoid importing every FA icon ever made.
+                                        // Avoid importing every FA icon ever made.
                                         // See https://github.com/FortAwesome/react-fontawesome/issues/70
                                         [require('babel-plugin-transform-imports'), {
                                             '@fortawesome/pro-light-svg-icons': {
