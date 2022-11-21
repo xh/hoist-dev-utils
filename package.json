@@ -19,7 +19,7 @@
     "@cerner/duplicate-package-checker-webpack-plugin": "~2.3.0",
     "@types/lodash": "^4.0.0",
     "@types/react": "^18.0.0",
-    "@xh/eslint-config": "5.0.0-SNAPSHOT.1666756809670",
+    "@xh/eslint-config": "^5.0.0",
     "autoprefixer": "~10.4.13",
     "babel-loader": "~9.1.0",
     "babel-plugin-transform-imports": "~2.0.0",
@@ -32,7 +32,7 @@
     "html-webpack-plugin": "~5.5.0",
     "html-webpack-tags-plugin": "~3.0.2",
     "lodash": "~4.17.21",
-    "mini-css-extract-plugin": "~2.6.1",
+    "mini-css-extract-plugin": "~2.7.0",
     "postcss": "~8.4.14",
     "postcss-flexbugs-fixes": "~5.0.2",
     "postcss-loader": "~7.0.1",
@@ -45,7 +45,7 @@
     "url-loader": "~4.1.1",
     "webpack": "~5.75.0",
     "webpack-bundle-analyzer": "~4.7.0",
-    "webpack-cli": "~4.10.0",
+    "webpack-cli": "~5.0.0",
     "webpack-dev-server": "~4.11.1",
     "webpackbar": "~5.0.2"
   }
