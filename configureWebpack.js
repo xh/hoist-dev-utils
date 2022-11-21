@@ -457,7 +457,11 @@ async function configureWebpack(env) {
                                         ]
                                     ],
                                     plugins: [
-                                        ["@babel/plugin-transform-typescript", {allowDeclareFields: true}],
+                                        // Support Typescript via Babel. `isTSX` option allows use of JSX inline with
+                                        // .js files for older JS apps. Typescript apps must use the .tsx extension for
+                                        // any files containing JSX syntax.
+                                        ['@babel/plugin-transform-typescript', {allowDeclareFields: true, isTSX: true}],
+
                                         // Support our current decorator syntax, for MobX and Hoist decorators.
                                         // See notes @ https://babeljs.io/docs/en/babel-plugin-proposal-decorators#legacy
                                         ['@babel/plugin-proposal-decorators', {legacy: true}],
