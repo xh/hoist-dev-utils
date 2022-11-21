@@ -301,10 +301,10 @@ async function configureWebpack(env) {
     const appDirPath = path.resolve(srcPath, 'apps'),
         apps = fs
             .readdirSync(appDirPath)
-            .filter(f => f.endsWith('.js'))
+            .filter(f => f.endsWith('.js') || f.endsWith('.ts'))
             .map(f => {
                 return {
-                    name: f.replace('.js', ''),
+                    name: f.replace('.js', '').replace('.ts', ''),
                     path: path.resolve(appDirPath, f)
                 };
             }),
@@ -374,7 +374,7 @@ async function configureWebpack(env) {
             // Add JSX to support imports from .jsx source w/o needing to add the extension.
             // Include "*" to continue supporting other imports that *do* specify an extension
             // within the import statement (i.e. `import './foo.png'`). Yes, it's confusing.
-            extensions: ['*', '.js', '.jsx', '.json']
+            extensions: ['*', '.js', '.ts', '.jsx', '.tsx', '.json']
         },
 
         // Ensure Webpack can find loaders installed both within the top-level node_modules dir for
@@ -424,15 +424,16 @@ async function configureWebpack(env) {
                         },
 
                         //------------------------
-                        // JS processing
+                        // JS/TS processing
                         // Transpile via Babel, with presets/plugins to support Hoist's use of modern / staged JS features.
                         //------------------------
                         {
-                            test: /\.(jsx?)$/,
+                            test: /\.(jsx?)$|\.(tsx?)$/,
                             use: {
                                 loader: 'babel-loader',
                                 options: {
                                     presets: [
+                                        '@babel/preset-typescript',
                                         '@babel/preset-react',
                                         [
                                             '@babel/preset-env',
@@ -456,6 +457,11 @@ async function configureWebpack(env) {
                                         ]
                                     ],
                                     plugins: [
+                                        // Support Typescript via Babel. `isTSX` option allows use of JSX inline with
+                                        // .js files for older JS apps. Typescript apps must use the .tsx extension for
+                                        // any files containing JSX syntax.
+                                        ['@babel/plugin-transform-typescript', {allowDeclareFields: true, isTSX: true}],
+
                                         // Support our current decorator syntax, for MobX and Hoist decorators.
                                         // See notes @ https://babeljs.io/docs/en/babel-plugin-proposal-decorators#legacy
                                         ['@babel/plugin-proposal-decorators', {legacy: true}],
@@ -701,7 +707,6 @@ async function configureWebpack(env) {
         }
     };
 }
-
 
 //------------------------
 // Implementation
