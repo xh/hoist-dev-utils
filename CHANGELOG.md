@@ -1,5 +1,11 @@
 # Changelog
 
+## v6.1.1 - 2022-11-25
+
+* Flipped options for Babel plugins related to decorator and class field proposals, reverting to `loose:false` (the
+  default) as per latest MobX docs.
+    * ⚠️Required for `@enhancedBindable` decorator in Hoist React v54.
+
 ## v6.1.0 - 2022-11-21
 
 ### 🎁 New Features
