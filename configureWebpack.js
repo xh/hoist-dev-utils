@@ -464,14 +464,16 @@ async function configureWebpack(env) {
 
                                         // Support our current decorator syntax, for MobX and Hoist decorators.
                                         // See notes @ https://babeljs.io/docs/en/babel-plugin-proposal-decorators#legacy
-                                        ['@babel/plugin-proposal-decorators', {legacy: true}],
+                                        // and https://mobx.js.org/enabling-decorators.html#babel-7
+                                        ['@babel/plugin-proposal-decorators', {version: 'legacy'}],
 
-                                        // Support classes level fields - must come after decorators plugin and be loose.
-                                        ['@babel/plugin-proposal-class-properties', {loose: true}],
-                                        // Must also configure private-* plugins below to config the "loose" setting
-                                        // to match plugin-proposal-class-properties.
-                                        ['@babel/plugin-proposal-private-methods', {loose: true}],
-                                        ['@babel/plugin-proposal-private-property-in-object', {loose: true}],
+                                        // Support class-level fields.
+                                        // Must come after decorators plugin as per Babel docs linked above.
+                                        ['@babel/plugin-proposal-class-properties'],
+
+                                        // Support private methods + properties.
+                                        ['@babel/plugin-proposal-private-methods'],
+                                        ['@babel/plugin-proposal-private-property-in-object'],
 
                                         // Support `let x = foo?.bar`.
                                         ['@babel/plugin-proposal-optional-chaining'],
