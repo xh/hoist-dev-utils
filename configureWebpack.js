@@ -29,7 +29,7 @@ const _ = require('lodash'),
 // this script locally to debug via `yarn link`.
 let hoistReactPkg, reactPkg;
 try {hoistReactPkg = require('@xh/hoist/package')} catch (e) {hoistReactPkg = {version: 'NOT_FOUND'}}
-try {reactPkg = require('react/package')} catch (e) {reactPkg = {version: 'NOT_FOUND'}}
+try {reactPkg = require('react')} catch (e) {reactPkg = {version: 'NOT_FOUND'}}
 
 /**
  * Consolidated Webpack configuration for both dev-time and production builds of Hoist React web
