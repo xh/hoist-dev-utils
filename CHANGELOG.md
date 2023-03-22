@@ -1,5 +1,15 @@
 # Changelog
 
+## v6.1.2 - 2023-03-22
+
+### 📚 Libraries
+
+* @babel/* `7.20 -> 7.21`
+* postcss-loader `7.0 -> 7.1`
+* sass `1.56 -> 1.59`
+* webpack `5.75 -> 5.76`
+* webpack-dev-server `4.11 -> 4.13`
+
 ## v6.1.1 - 2022-12-07
 
 * Flipped options for Babel plugins related to decorator and class field proposals, reverting to `loose:false` (the
