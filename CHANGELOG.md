@@ -2,6 +2,9 @@
 
 ## v7.0.0-SNAPSHOT
 
+* Updated special transformations for the FontAwesome icon dependencies to include their "thin" package, which was added
+  to hoist-react last year and was not being properly tree-shaken.
+
 ### 📚 Libraries
 
 * postcss-loader `7.1 -> 7.3`
