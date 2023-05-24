@@ -48,5 +48,8 @@
     "webpack-cli": "~5.1.1",
     "webpack-dev-server": "~4.15.0",
     "webpackbar": "~5.0.2"
+  },
+  "devDependencies": {
+    "prettier": "^2.8.8"
   }
 }
