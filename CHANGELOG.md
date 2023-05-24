@@ -1,5 +1,16 @@
 # Changelog
 
+## v7.0.0-SNAPSHOT
+
+### 📚 Libraries
+
+* postcss-loader `7.1 -> 7.3`
+* sass `1.59 -> 1.62`
+* sass-loader `13.2 -> 13.3`
+* webpack `5.76 -> 5.83`
+* webpack-cli `5.0 -> 5.1`
+* webpack-dev-server `4.13 -> 4.15`
+
 ## v6.1.2 - 2023-03-22
 
 ### 📚 Libraries
