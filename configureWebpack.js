@@ -628,8 +628,8 @@ async function configureWebpack(env) {
             // Load only the BlueprintJS icons used by Hoist-React components.
             !loadAllBlueprintJsIcons
                 ? new webpack.NormalModuleReplacementPlugin(
-                      /.*\/generated\/iconSvgPaths.*/,
-                      bpIconStubsPath
+                    /.*\/@blueprintjs\/icons\/lib\/esm\/iconSvgPaths.*/,
+                    bpIconStubsPath
                   )
                 : undefined,
 
