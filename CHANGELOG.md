@@ -4,13 +4,19 @@
 
 * Updated special transformations for the FontAwesome icon dependencies to include their "thin" package, which was added
   to hoist-react last year and was not being properly tree-shaken.
+* Updated Babel configuration to enable key transforms via preset-env `includes` directive. Resolves issue with outdated
+  plugin names in the prior config causing errors like "cannot find package @babel/plugin-proposal-class-properties"
+  for apps that updated to Babel 7.22 (several key transforms were released under new names with the 7.22 release -
+  see https://github.com/babel/babel/pull/15614).
 
 ### 📚 Libraries
 
+* @babel/* `7.21 -> 7.22`
+* css-loader `6.7 -> 6.8`
 * postcss-loader `7.1 -> 7.3`
 * sass `1.59 -> 1.62`
 * sass-loader `13.2 -> 13.3`
-* webpack `5.76 -> 5.83`
+* webpack `5.76 -> 5.84`
 * webpack-cli `5.0 -> 5.1`
 * webpack-dev-server `4.13 -> 4.15`
 
