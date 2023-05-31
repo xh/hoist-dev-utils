@@ -116,6 +116,12 @@ own ESLint config by specifying their `.eslintrc` file as simply:
 If required, rules and other settings extended from this base configuration can be overridden at the
 app level.
 
+### Hoist Dev Utils Development
+
+To develop improvements to this library, clone its repo into your workspace alongside a project 
+that uses Hoist-React, like [Toolbox](https://github.com/xh/toolbox).  Then follow the instructions for 
+[yarn link](https://classic.yarnpkg.com/lang/en/docs/cli/link/) to symlink to this repo.
+
 ------------------------------------------
 
 ☎️ info@xh.io | <https://xh.io>

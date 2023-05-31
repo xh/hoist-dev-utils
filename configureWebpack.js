@@ -196,7 +196,8 @@ async function configureWebpack(env) {
 
     const srcPath = path.resolve(basePath, 'src'),
         outPath = path.resolve(basePath, 'build'),
-        publicAssetsPath = path.resolve(basePath, 'public');
+        publicAssetsPath = path.resolve(basePath, 'public'),
+        hoistDevUtilsPath = path.resolve(basePath, 'node_modules/@xh/hoist-dev-utils');
 
     // Resolve Hoist as either a sibling (inline, checked-out) project or a downloaded package
     const hoistPath = inlineHoist
@@ -232,10 +233,9 @@ async function configureWebpack(env) {
         copyPublicAssets && fs.existsSync(path.resolve(publicAssetsPath, 'apple-touch-icon.png'));
     if (appleTouchIconExists) logMsg(`  > apple-touch-icon.png`);
 
-    // Resolve Hoist-based path to replacement Blueprint icons (if available, requires HR >= v35.2.
-    const bpIconStubsPath = path.resolve(hoistPath, 'static/requiredBlueprintIcons.js'),
-        bpIconStubsExist = fs.existsSync(bpIconStubsPath),
-        loadAllBlueprintJsIcons = env.loadAllBlueprintJsIcons === true || !bpIconStubsExist;
+    // Resolve path to lightweight shim for Blueprint icons bundled with this project.
+    const bpIconStubsPath = path.resolve(hoistDevUtilsPath, 'static/requiredBlueprintIcons.js'),
+        loadAllBlueprintJsIcons = env.loadAllBlueprintJsIcons === true;
 
     // Resolve path to script for preflight checks. With HR >= v36.1 this routine has been broken
     // out into a standalone JS file to avoid the use of inline script tags. Script will be left
@@ -263,10 +263,7 @@ async function configureWebpack(env) {
 
     // Also get a handle on the nested @xh/hoist-dev-utils/node_modules path - dev-utils dependencies
     // (namely loaders) can be installed here due to the vagaries of node module version / conflict resolution.
-    const devUtilsNodeModulesPath = path.resolve(
-        basePath,
-        'node_modules/@xh/hoist-dev-utils/node_modules'
-    );
+    const devUtilsNodeModulesPath = path.resolve(hoistDevUtilsPath, 'node_modules');
 
     // Determine source map (devtool) mode.
     let devtool;
@@ -624,7 +621,7 @@ async function configureWebpack(env) {
             // Load only the BlueprintJS icons used by Hoist-React components.
             !loadAllBlueprintJsIcons
                 ? new webpack.NormalModuleReplacementPlugin(
-                      /.*\/generated\/iconSvgPaths.*/,
+                      /.*\/@blueprintjs\/icons\/lib\/esm\/iconSvgPaths.*/,
                       bpIconStubsPath
                   )
                 : undefined,

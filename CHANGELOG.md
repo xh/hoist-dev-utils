@@ -2,12 +2,15 @@
 
 ## v7.0.0-SNAPSHOT
 
-* Updated special transformations for the FontAwesome icon dependencies to include their "thin" package, which was added
-  to hoist-react last year and was not being properly tree-shaken.
 * Updated Babel configuration to enable key transforms via preset-env `includes` directive. Resolves issue with outdated
   plugin names in the prior config causing errors like "cannot find package @babel/plugin-proposal-class-properties"
   for apps that updated to Babel 7.22 (several key transforms were released under new names with the 7.22 release -
   see https://github.com/babel/babel/pull/15614).
+* Updated special transformations for the FontAwesome icon dependencies to include their "thin" package, which was added
+  to hoist-react last year and was not being properly tree-shaken.
+* Updated minimal shim for required-only BlueprintJS icons to restore another bundle size reduction that had been lost
+  with the update to Blueprint 4.x back in Hoist React v50. Update required a new path for import transformations and
+  moved the shim file from hoist-react to this project.
 
 ### 📚 Libraries
 
