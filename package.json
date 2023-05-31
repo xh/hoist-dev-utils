@@ -8,7 +8,8 @@
   "author": "Extremely Heavy Industries, Inc.",
   "license": "Apache-2.0",
   "files": [
-    "configureWebpack.js"
+    "configureWebpack.js",
+    "static/**/*"
   ],
   "dependencies": {
     "@babel/core": "^7.22.1",
