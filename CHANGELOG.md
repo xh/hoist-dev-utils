@@ -1,6 +1,6 @@
 # Changelog
 
-## v7.0.0-SNAPSHOT
+## v6.2.0 - 2023-05-31
 
 * Updated Babel configuration to enable key transforms via preset-env `includes` directive. Resolves issue with outdated
   plugin names in the prior config causing errors like "cannot find package @babel/plugin-proposal-class-properties"
