@@ -474,6 +474,16 @@ async function configureWebpack(env) {
                                                 // not required. See https://babeljs.io/docs/en/babel-preset-env#bugfixes.
                                                 bugfixes: true,
 
+                                                // Ensure expected transform plugins are enabled for latest features.
+                                                // (Note these plugins are all generally bundled with preset-env.)
+                                                include: [
+                                                    'transform-class-properties',
+                                                    'transform-nullish-coalescing-operator',
+                                                    'transform-optional-chaining',
+                                                    'transform-private-methods',
+                                                    'transform-private-property-in-object'
+                                                ],
+
                                                 // Allow direct overrides from env config.
                                                 ...babelPresetEnvOptions
                                             }
@@ -492,20 +502,6 @@ async function configureWebpack(env) {
                                         // See notes @ https://babeljs.io/docs/en/babel-plugin-proposal-decorators#legacy
                                         // and https://mobx.js.org/enabling-decorators.html#babel-7
                                         ['@babel/plugin-proposal-decorators', {version: 'legacy'}],
-
-                                        // Support class-level fields.
-                                        // Must come after decorators plugin as per Babel docs linked above.
-                                        ['@babel/plugin-proposal-class-properties'],
-
-                                        // Support private methods + properties.
-                                        ['@babel/plugin-proposal-private-methods'],
-                                        ['@babel/plugin-proposal-private-property-in-object'],
-
-                                        // Support `let x = foo?.bar`.
-                                        ['@babel/plugin-proposal-optional-chaining'],
-
-                                        // Support `let x = foo.bar ?? 'default'`.
-                                        ['@babel/plugin-proposal-nullish-coalescing-operator'],
 
                                         // Avoid importing every FA icon ever made.
                                         // See https://github.com/FortAwesome/react-fontawesome/issues/70
