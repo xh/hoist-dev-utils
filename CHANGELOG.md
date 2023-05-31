@@ -7,10 +7,12 @@
 
 ### 📚 Libraries
 
+* @babel/* `7.21 -> 7.22`
+* css-loader `6.7 -> 6.8`
 * postcss-loader `7.1 -> 7.3`
 * sass `1.59 -> 1.62`
 * sass-loader `13.2 -> 13.3`
-* webpack `5.76 -> 5.83`
+* webpack `5.76 -> 5.84`
 * webpack-cli `5.0 -> 5.1`
 * webpack-dev-server `4.13 -> 4.15`
 
