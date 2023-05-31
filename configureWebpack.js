@@ -28,8 +28,16 @@ const _ = require('lodash'),
 // These are not direct deps of hoist-dev-utils, so might be undefined - e.g. when running
 // this script locally to debug via `yarn link`.
 let hoistReactPkg, reactPkg;
-try {hoistReactPkg = require('@xh/hoist/package')} catch (e) {hoistReactPkg = {version: 'NOT_FOUND'}}
-try {reactPkg = require('react')} catch (e) {reactPkg = {version: 'NOT_FOUND'}}
+try {
+    hoistReactPkg = require('@xh/hoist/package');
+} catch (e) {
+    hoistReactPkg = {version: 'NOT_FOUND'};
+}
+try {
+    reactPkg = require('react');
+} catch (e) {
+    reactPkg = {version: 'NOT_FOUND'};
+}
 
 /**
  * Consolidated Webpack configuration for both dev-time and production builds of Hoist React web
@@ -127,15 +135,16 @@ async function configureWebpack(env) {
         analyzeBundles = env.analyzeBundles === true,
         checkForDupePackages = env.checkForDupePackages !== false,
         dupePackageCheckExcludes = env.dupePackageCheckExcludes || ['tslib'],
-        devHost = (env.devHost ? env.devHost.toLowerCase() : 'localhost'),
-        devHttps = prodBuild ?
-            null :
-            _.isPlainObject(env.devHttps) ?
-                {
-                    ca: fs.readFileSync(env.devHttps.ca),
-                    cert: fs.readFileSync(env.devHttps.cert),
-                    key: fs.readFileSync(env.devHttps.key)
-                } : !!env.devHttps,
+        devHost = env.devHost ? env.devHost.toLowerCase() : 'localhost',
+        devHttps = prodBuild
+            ? null
+            : _.isPlainObject(env.devHttps)
+            ? {
+                  ca: fs.readFileSync(env.devHttps.ca),
+                  cert: fs.readFileSync(env.devHttps.cert),
+                  key: fs.readFileSync(env.devHttps.key)
+              }
+            : !!env.devHttps,
         devGrailsPort = env.devGrailsPort || 8080,
         devWebpackPort = env.devWebpackPort || 3000,
         baseUrl = env.baseUrl || (prodBuild ? '/api/' : `http://${devHost}:${devGrailsPort}/`),
@@ -187,12 +196,13 @@ async function configureWebpack(env) {
 
     const srcPath = path.resolve(basePath, 'src'),
         outPath = path.resolve(basePath, 'build'),
-        publicAssetsPath = path.resolve(basePath, 'public');
+        publicAssetsPath = path.resolve(basePath, 'public'),
+        hoistDevUtilsPath = path.resolve(basePath, 'node_modules/@xh/hoist-dev-utils');
 
     // Resolve Hoist as either a sibling (inline, checked-out) project or a downloaded package
-    const hoistPath = inlineHoist ?
-        path.resolve(basePath, '../../hoist-react') :
-        path.resolve(basePath, 'node_modules/@xh/hoist');
+    const hoistPath = inlineHoist
+        ? path.resolve(basePath, '../../hoist-react')
+        : path.resolve(basePath, 'node_modules/@xh/hoist');
 
     // Check for and resolve standard/expected favicons.
     const manifestIcons = [];
@@ -203,22 +213,29 @@ async function configureWebpack(env) {
             logMsg(`  > ${path.basename(favicon)}`);
         }
         if (fs.existsSync(path.resolve(publicAssetsPath, 'favicon-192.png'))) {
-            manifestIcons.push({src: '/public/favicon-192.png', sizes: '192x192', type: 'image/png'});
+            manifestIcons.push({
+                src: '/public/favicon-192.png',
+                sizes: '192x192',
+                type: 'image/png'
+            });
             logMsg(`  > favicon-192.png`);
         }
         if (fs.existsSync(path.resolve(publicAssetsPath, 'favicon-512.png'))) {
-            manifestIcons.push({src: '/public/favicon-512.png', sizes: '512x512', type: 'image/png'});
+            manifestIcons.push({
+                src: '/public/favicon-512.png',
+                sizes: '512x512',
+                type: 'image/png'
+            });
             logMsg(`  > favicon-512.png`);
         }
     }
-    const appleTouchIconExists = copyPublicAssets && fs.existsSync(path.resolve(publicAssetsPath, 'apple-touch-icon.png'));
+    const appleTouchIconExists =
+        copyPublicAssets && fs.existsSync(path.resolve(publicAssetsPath, 'apple-touch-icon.png'));
     if (appleTouchIconExists) logMsg(`  > apple-touch-icon.png`);
 
-
-    // Resolve Hoist-based path to replacement Blueprint icons (if available, requires HR >= v35.2.
-    const bpIconStubsPath = path.resolve(hoistPath, 'static/requiredBlueprintIcons.js'),
-        bpIconStubsExist = fs.existsSync(bpIconStubsPath),
-        loadAllBlueprintJsIcons = env.loadAllBlueprintJsIcons === true || !bpIconStubsExist;
+    // Resolve path to lightweight shim for Blueprint icons bundled with this project.
+    const bpIconStubsPath = path.resolve(hoistDevUtilsPath, 'static/requiredBlueprintIcons.js'),
+        loadAllBlueprintJsIcons = env.loadAllBlueprintJsIcons === true;
 
     // Resolve path to script for preflight checks. With HR >= v36.1 this routine has been broken
     // out into a standalone JS file to avoid the use of inline script tags. Script will be left
@@ -242,13 +259,11 @@ async function configureWebpack(env) {
     }
 
     // When running inline, resolve inline Hoist's own node_modules package so we can tell Babel to exclude
-    const hoistNodeModulesPath = inlineHoist ?
-        path.resolve(hoistPath, 'node_modules') :
-        null;
+    const hoistNodeModulesPath = inlineHoist ? path.resolve(hoistPath, 'node_modules') : null;
 
     // Also get a handle on the nested @xh/hoist-dev-utils/node_modules path - dev-utils dependencies
     // (namely loaders) can be installed here due to the vagaries of node module version / conflict resolution.
-    const devUtilsNodeModulesPath = path.resolve(basePath, 'node_modules/@xh/hoist-dev-utils/node_modules');
+    const devUtilsNodeModulesPath = path.resolve(hoistDevUtilsPath, 'node_modules');
 
     // Determine source map (devtool) mode.
     let devtool;
@@ -263,7 +278,10 @@ async function configureWebpack(env) {
     }
 
     // Ignore DefinePlugin warnings on mis-matched process.env when reactProdMode enabled during local development.
-    const ignoreWarnings = (prodBuild !== reactProdMode) ? [{message: /Conflicting values for 'process.env.NODE_ENV'/}] : [];
+    const ignoreWarnings =
+        prodBuild !== reactProdMode
+            ? [{message: /Conflicting values for 'process.env.NODE_ENV'/}]
+            : [];
 
     // Parse CHANGELOG.md and write to tmp .json file, if requested. Write fallback file if disabled
     // or parsing fails, then install a resolver alias to support import from XH.changelogService.
@@ -316,10 +334,7 @@ async function configureWebpack(env) {
     apps.forEach(app => {
         // Ensure core-js and regenerator-runtime both imported for every app bundle - they are
         // specified as dependencies by Hoist and imported once in its polyfills.js file.
-        appEntryPoints[app.name] = [
-            path.resolve(hoistPath, 'static/polyfills.js'),
-            app.path
-        ];
+        appEntryPoints[app.name] = [path.resolve(hoistPath, 'static/polyfills.js'), app.path];
     });
 
     logSep();
@@ -340,7 +355,9 @@ async function configureWebpack(env) {
         output: {
             // Output built assets in directories per entry point / chunk.
             // Use chunkhash in prod to get distinct hashes for app vs. common chunks (throws error in dev - investigate)
-            filename: prodBuild ? '[name]/[name].[chunkhash:8].js' : '[name]/[name].[fullhash:8].js',
+            filename: prodBuild
+                ? '[name]/[name].[chunkhash:8].js'
+                : '[name]/[name].[fullhash:8].js',
             path: outPath,
             // (URL) path on which fully built app is served - i.e. root context
             publicPath: contextRoot,
@@ -361,7 +378,11 @@ async function configureWebpack(env) {
             // e.g. `app.js`, `admin.js`, and `admin~app.js` for code shared by both apps.
             splitChunks: {
                 chunks: 'all',
-                name: (module, chunks) => chunks.sort().map(it => it.name).join('~')
+                name: (module, chunks) =>
+                    chunks
+                        .sort()
+                        .map(it => it.name)
+                        .join('~')
             },
 
             // Improved debugging with readable module/chunk names.
@@ -397,7 +418,6 @@ async function configureWebpack(env) {
             rules: [
                 {
                     oneOf: [
-
                         //------------------------
                         // Type mapping for .mjs files, used by the stylis library distribution.
                         // We have a transitive dep on stylis via: react-select > emotion > stylis
@@ -451,6 +471,16 @@ async function configureWebpack(env) {
                                                 // not required. See https://babeljs.io/docs/en/babel-preset-env#bugfixes.
                                                 bugfixes: true,
 
+                                                // Ensure expected transform plugins are enabled for latest features.
+                                                // (Note these plugins are all generally bundled with preset-env.)
+                                                include: [
+                                                    'transform-class-properties',
+                                                    'transform-nullish-coalescing-operator',
+                                                    'transform-optional-chaining',
+                                                    'transform-private-methods',
+                                                    'transform-private-property-in-object'
+                                                ],
+
                                                 // Allow direct overrides from env config.
                                                 ...babelPresetEnvOptions
                                             }
@@ -460,47 +490,48 @@ async function configureWebpack(env) {
                                         // Support Typescript via Babel. `isTSX` option allows use of JSX inline with
                                         // .js files for older JS apps. Typescript apps must use the .tsx extension for
                                         // any files containing JSX syntax.
-                                        ['@babel/plugin-transform-typescript', {allowDeclareFields: true, isTSX: true}],
+                                        [
+                                            '@babel/plugin-transform-typescript',
+                                            {allowDeclareFields: true, isTSX: true}
+                                        ],
 
                                         // Support our current decorator syntax, for MobX and Hoist decorators.
                                         // See notes @ https://babeljs.io/docs/en/babel-plugin-proposal-decorators#legacy
                                         // and https://mobx.js.org/enabling-decorators.html#babel-7
                                         ['@babel/plugin-proposal-decorators', {version: 'legacy'}],
 
-                                        // Support class-level fields.
-                                        // Must come after decorators plugin as per Babel docs linked above.
-                                        ['@babel/plugin-proposal-class-properties'],
-
-                                        // Support private methods + properties.
-                                        ['@babel/plugin-proposal-private-methods'],
-                                        ['@babel/plugin-proposal-private-property-in-object'],
-
-                                        // Support `let x = foo?.bar`.
-                                        ['@babel/plugin-proposal-optional-chaining'],
-
-                                        // Support `let x = foo.bar ?? 'default'`.
-                                        ['@babel/plugin-proposal-nullish-coalescing-operator'],
-
                                         // Avoid importing every FA icon ever made.
                                         // See https://github.com/FortAwesome/react-fontawesome/issues/70
-                                        [require('babel-plugin-transform-imports'), {
-                                            '@fortawesome/pro-light-svg-icons': {
-                                                transform: '@fortawesome/pro-light-svg-icons/${member}',
-                                                skipDefaultConversion: true
-                                            },
-                                            '@fortawesome/pro-regular-svg-icons': {
-                                                transform: '@fortawesome/pro-regular-svg-icons/${member}',
-                                                skipDefaultConversion: true
-                                            },
-                                            '@fortawesome/pro-solid-svg-icons': {
-                                                transform: '@fortawesome/pro-solid-svg-icons/${member}',
-                                                skipDefaultConversion: true
-                                            },
-                                            '@fortawesome/free-brands-svg-icons': {
-                                                transform: '@fortawesome/free-brands-svg-icons/${member}',
-                                                skipDefaultConversion: true
+                                        [
+                                            require('babel-plugin-transform-imports'),
+                                            {
+                                                '@fortawesome/pro-light-svg-icons': {
+                                                    transform:
+                                                        '@fortawesome/pro-light-svg-icons/${member}',
+                                                    skipDefaultConversion: true
+                                                },
+                                                '@fortawesome/pro-regular-svg-icons': {
+                                                    transform:
+                                                        '@fortawesome/pro-regular-svg-icons/${member}',
+                                                    skipDefaultConversion: true
+                                                },
+                                                '@fortawesome/pro-solid-svg-icons': {
+                                                    transform:
+                                                        '@fortawesome/pro-solid-svg-icons/${member}',
+                                                    skipDefaultConversion: true
+                                                },
+                                                '@fortawesome/pro-thin-svg-icons': {
+                                                    transform:
+                                                        '@fortawesome/pro-thin-svg-icons/${member}',
+                                                    skipDefaultConversion: true
+                                                },
+                                                '@fortawesome/free-brands-svg-icons': {
+                                                    transform:
+                                                        '@fortawesome/free-brands-svg-icons/${member}',
+                                                    skipDefaultConversion: true
+                                                }
                                             }
-                                        }]
+                                        ]
                                     ],
                                     // Cache for dev builds, don't bother compressing.
                                     cacheDirectory: !prodBuild,
@@ -513,7 +544,9 @@ async function configureWebpack(env) {
                             include: [srcPath, hoistPath, ...babelIncludePaths],
                             // In inline mode also *avoid* transpiling inline hoist's own
                             // node_modules libraries.
-                            exclude: inlineHoist ? [hoistNodeModulesPath, ...babelExcludePaths] : babelExcludePaths
+                            exclude: inlineHoist
+                                ? [hoistNodeModulesPath, ...babelExcludePaths]
+                                : babelExcludePaths
                         },
 
                         //------------------------
@@ -545,13 +578,16 @@ async function configureWebpack(env) {
                                     options: {
                                         postcssOptions: {
                                             plugins: [
-                                                require('postcss-flexbugs-fixes'),  // Inclusion of postcss-flexbugs-fixes is from CRA.
-                                                ['autoprefixer', {
-                                                    // We still want to provide an array of target browsers
-                                                    // that can be passed to / managed centrally by this script.
-                                                    overrideBrowserslist: targetBrowsers,
-                                                    flexbox: 'no-2009'
-                                                }]
+                                                require('postcss-flexbugs-fixes'), // Inclusion of postcss-flexbugs-fixes is from CRA.
+                                                [
+                                                    'autoprefixer',
+                                                    {
+                                                        // We still want to provide an array of target browsers
+                                                        // that can be passed to / managed centrally by this script.
+                                                        overrideBrowserslist: targetBrowsers,
+                                                        flexbox: 'no-2009'
+                                                    }
+                                                ]
                                             ]
                                         }
                                     }
@@ -561,7 +597,6 @@ async function configureWebpack(env) {
                                 {loader: 'sass-loader'}
                             ]
                         },
-
 
                         //------------------------
                         // Fall-through entry to process all other assets via a file-loader.
@@ -584,10 +619,12 @@ async function configureWebpack(env) {
             new CleanWebpackPlugin(),
 
             // Load only the BlueprintJS icons used by Hoist-React components.
-            !loadAllBlueprintJsIcons ? new webpack.NormalModuleReplacementPlugin(
-                /.*\/generated\/iconSvgPaths.*/,
-                bpIconStubsPath
-            ) : undefined,
+            !loadAllBlueprintJsIcons
+                ? new webpack.NormalModuleReplacementPlugin(
+                      /.*\/@blueprintjs\/icons\/lib\/esm\/iconSvgPaths.*/,
+                      bpIconStubsPath
+                  )
+                : undefined,
 
             // Inject global constants at compile time.
             new webpack.DefinePlugin({
@@ -614,9 +651,9 @@ async function configureWebpack(env) {
                 patterns: _.compact([
                     {from: preflightScriptPath, to: 'public'},
                     {from: preloadSpinnerPath, to: 'public'},
-                    copyPublicAssets ?
-                        {from: path.resolve(basePath, 'public'), to: 'public'} :
-                        undefined
+                    copyPublicAssets
+                        ? {from: path.resolve(basePath, 'public'), to: 'public'}
+                        : undefined
                 ])
             }),
 
@@ -662,17 +699,21 @@ async function configureWebpack(env) {
             }),
 
             // Support an optional post-build/run interactive treemap of output bundles and their sizes / contents.
-            analyzeBundles ? new BundleAnalyzerPlugin({
-                analyzerMode: 'server'
-            }) : undefined,
+            analyzeBundles
+                ? new BundleAnalyzerPlugin({
+                      analyzerMode: 'server'
+                  })
+                : undefined,
 
             // Warn on dupe package included in bundle due to multiple, conflicting versions.
-            checkForDupePackages ? new DuplicatePackageCheckerPlugin({
-                verbose: true,
-                showHelp: false,
-                strict: false,
-                exclude: (instance) => dupePackageCheckExcludes.includes(instance.name)
-            }) : undefined,
+            checkForDupePackages
+                ? new DuplicatePackageCheckerPlugin({
+                      verbose: true,
+                      showHelp: false,
+                      strict: false,
+                      exclude: instance => dupePackageCheckExcludes.includes(instance.name)
+                  })
+                : undefined,
 
             // Display build progress - enable profile for per-loader/file type stats.
             new WebpackBar({
@@ -682,7 +723,6 @@ async function configureWebpack(env) {
 
             // Environment-specific plugins.
             ...(prodBuild ? extraPluginsProd(terserOptions) : extraPluginsDev())
-
         ].filter(Boolean),
 
         devtool: devtool,
@@ -690,23 +730,25 @@ async function configureWebpack(env) {
         ignoreWarnings: ignoreWarnings,
 
         // Inline dev-time configuration for webpack-dev-server.
-        devServer: prodBuild ? undefined : {
-            https: devHttps,
-            host: devHost,
-            port: devWebpackPort,
-            hot: true,
-            client: {overlay: true},
-            open: env.devServerOpenPage ? [env.devServerOpenPage] : false,
-            // Support HTML5 history routes for apps, with /appName/ as the base route for each
-            historyApiFallback: {
-                rewrites: appNames.map(appName => {
-                    return {
-                        from: new RegExp(`^/${appName}`),
-                        to: `/${appName}/index.html`
-                    };
-                })
-            }
-        }
+        devServer: prodBuild
+            ? undefined
+            : {
+                  https: devHttps,
+                  host: devHost,
+                  port: devWebpackPort,
+                  hot: true,
+                  client: {overlay: true},
+                  open: env.devServerOpenPage ? [env.devServerOpenPage] : false,
+                  // Support HTML5 history routes for apps, with /appName/ as the base route for each
+                  historyApiFallback: {
+                      rewrites: appNames.map(appName => {
+                          return {
+                              from: new RegExp(`^/${appName}`),
+                              to: `/${appName}/index.html`
+                          };
+                      })
+                  }
+              }
     };
 }
 
@@ -714,7 +756,6 @@ async function configureWebpack(env) {
 // Implementation
 //------------------------
 class HoistManifestPlugin {
-
     constructor(content = {}) {
         this.content = content;
     }
@@ -725,22 +766,24 @@ class HoistManifestPlugin {
             {RawSource} = compiler.webpack.sources;
 
         // Tap into compilation hook which gives compilation as argument to the callback function
-        compiler.hooks.compilation.tap(pluginName, (compilation) => {
-            compilation.hooks.processAssets.tap({
-                name: pluginName,
-                stage: Compilation.PROCESS_ASSETS_STAGE_SUMMARIZE
-            }, () => {
-                compilation.emitAsset(
-                    '/public/manifest.json',
-                    new RawSource(JSON.stringify(this.content))
-                );
-            });
+        compiler.hooks.compilation.tap(pluginName, compilation => {
+            compilation.hooks.processAssets.tap(
+                {
+                    name: pluginName,
+                    stage: Compilation.PROCESS_ASSETS_STAGE_SUMMARIZE
+                },
+                () => {
+                    compilation.emitAsset(
+                        '/public/manifest.json',
+                        new RawSource(JSON.stringify(this.content))
+                    );
+                }
+            );
         });
     }
 }
 
-
-const extraPluginsProd = (terserOptions) => {
+const extraPluginsProd = terserOptions => {
     return [
         // Extract built CSS files into subdirectories by chunk / entry point name.
         new MiniCssExtractPlugin({
@@ -793,7 +836,11 @@ function getChunkCombinations(appNames) {
     return ret;
 }
 
-function logSep() {console.log(':------------------------------------')}
-function logMsg(msg) {console.log(`: ${msg}`)}
+function logSep() {
+    console.log(':------------------------------------');
+}
+function logMsg(msg) {
+    console.log(`: ${msg}`);
+}
 
 module.exports = configureWebpack;

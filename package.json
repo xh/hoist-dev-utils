@@ -8,17 +8,18 @@
   "author": "Extremely Heavy Industries, Inc.",
   "license": "Apache-2.0",
   "files": [
-    "configureWebpack.js"
+    "configureWebpack.js",
+    "static/**/*"
   ],
   "dependencies": {
-    "@babel/core": "^7.21",
-    "@babel/plugin-proposal-decorators": "^7.21",
-    "@babel/preset-env": "^7.20",
-    "@babel/preset-react": "^7.18",
-    "@babel/preset-typescript": "^7.21",
+    "@babel/core": "^7.22.1",
+    "@babel/plugin-proposal-decorators": "^7.22.3",
+    "@babel/preset-env": "^7.22.4",
+    "@babel/preset-react": "^7.22.3",
+    "@babel/preset-typescript": "^7.21.5",
     "@cerner/duplicate-package-checker-webpack-plugin": "~2.3.0",
-    "@types/lodash": "^4.0",
-    "@types/react": "^18.0",
+    "@types/lodash": "4.x",
+    "@types/react": "18.x",
     "@xh/eslint-config": "^5.0",
     "autoprefixer": "~10.4.14",
     "babel-loader": "~9.1.2",
@@ -27,7 +28,7 @@
     "changelog-parser": "~3.0.1",
     "clean-webpack-plugin": "~4.0.0",
     "copy-webpack-plugin": "~11.0.0",
-    "css-loader": "~6.7.3",
+    "css-loader": "~6.8.1",
     "file-loader": "~6.2.0",
     "html-webpack-plugin": "~5.5.0",
     "html-webpack-tags-plugin": "~3.0.2",
@@ -35,18 +36,21 @@
     "mini-css-extract-plugin": "~2.7.5",
     "postcss": "~8.4.21",
     "postcss-flexbugs-fixes": "~5.0.2",
-    "postcss-loader": "~7.1.0",
+    "postcss-loader": "~7.3.0",
     "rimraf": "~4.4.0",
-    "sass": "~1.59.3",
-    "sass-loader": "~13.2.1",
+    "sass": "~1.62.1",
+    "sass-loader": "~13.3.0",
     "sass-material-colors": "~0.0.5",
     "style-loader": "~3.3.2",
     "terser-webpack-plugin": "~5.3.7",
     "url-loader": "~4.1.1",
-    "webpack": "~5.76.3",
+    "webpack": "~5.84.1",
     "webpack-bundle-analyzer": "~4.8.0",
-    "webpack-cli": "~5.0.1",
-    "webpack-dev-server": "~4.13.1",
+    "webpack-cli": "~5.1.1",
+    "webpack-dev-server": "~4.15.0",
     "webpackbar": "~5.0.2"
+  },
+  "devDependencies": {
+    "prettier": "^2.8.8"
   }
 }
