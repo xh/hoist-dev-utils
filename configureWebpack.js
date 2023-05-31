@@ -203,6 +203,8 @@ async function configureWebpack(env) {
         ? path.resolve(basePath, '../../hoist-react')
         : path.resolve(basePath, 'node_modules/@xh/hoist');
 
+    const hoistDevUtilsPath = 'node_modules/@xh/hoist-dev-utils';
+
     // Check for and resolve standard/expected favicons.
     const manifestIcons = [];
     if (copyPublicAssets) {
@@ -233,7 +235,7 @@ async function configureWebpack(env) {
     if (appleTouchIconExists) logMsg(`  > apple-touch-icon.png`);
 
     // Resolve Hoist-based path to replacement Blueprint icons (if available, requires HR >= v35.2.
-    const bpIconStubsPath = path.resolve(hoistPath, 'static/requiredBlueprintIcons.js'),
+    const bpIconStubsPath = path.resolve(basePath, hoistDevUtilsPath, 'static/requiredBlueprintIcons.js'),
         bpIconStubsExist = fs.existsSync(bpIconStubsPath),
         loadAllBlueprintJsIcons = env.loadAllBlueprintJsIcons === true || !bpIconStubsExist;
 
@@ -265,7 +267,8 @@ async function configureWebpack(env) {
     // (namely loaders) can be installed here due to the vagaries of node module version / conflict resolution.
     const devUtilsNodeModulesPath = path.resolve(
         basePath,
-        'node_modules/@xh/hoist-dev-utils/node_modules'
+        hoistDevUtilsPath,
+        'node_modules'
     );
 
     // Determine source map (devtool) mode.
