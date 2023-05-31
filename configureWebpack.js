@@ -234,7 +234,7 @@ async function configureWebpack(env) {
         copyPublicAssets && fs.existsSync(path.resolve(publicAssetsPath, 'apple-touch-icon.png'));
     if (appleTouchIconExists) logMsg(`  > apple-touch-icon.png`);
 
-    // Resolve Hoist-based path to replacement Blueprint icons (if available, requires HR >= v35.2.
+    // Resolve Hoist-based path to replacement Blueprint icons
     const bpIconStubsPath = path.resolve(basePath, hoistDevUtilsPath, 'static/requiredBlueprintIcons.js'),
         loadAllBlueprintJsIcons = env.loadAllBlueprintJsIcons === true;
 
