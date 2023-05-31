@@ -236,8 +236,7 @@ async function configureWebpack(env) {
 
     // Resolve Hoist-based path to replacement Blueprint icons (if available, requires HR >= v35.2.
     const bpIconStubsPath = path.resolve(basePath, hoistDevUtilsPath, 'static/requiredBlueprintIcons.js'),
-        bpIconStubsExist = fs.existsSync(bpIconStubsPath),
-        loadAllBlueprintJsIcons = env.loadAllBlueprintJsIcons === true || !bpIconStubsExist;
+        loadAllBlueprintJsIcons = env.loadAllBlueprintJsIcons === true;
 
     // Resolve path to script for preflight checks. With HR >= v36.1 this routine has been broken
     // out into a standalone JS file to avoid the use of inline script tags. Script will be left
