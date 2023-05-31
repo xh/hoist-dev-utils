@@ -8,6 +8,8 @@
   plugin names in the prior config causing errors like "cannot find package @babel/plugin-proposal-class-properties"
   for apps that updated to Babel 7.22 (several key transforms were released under new names with the 7.22 release -
   see https://github.com/babel/babel/pull/15614).
+* Updated path to BlueprintJS icons and moved the BlueprintJS icon svg code file that hoist-react uses 
+  into hoist-dev-utils to avoid creating a breaking change in hoist-dev-utils.
 
 ### 📚 Libraries
 
