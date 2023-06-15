@@ -5,6 +5,12 @@
 * Added new `devServerOverlay` config to control full-screen error overlay added by webpack-dev-server. Default to show 
   compilation errors only, allowing devs to opt-in to compilation warnings and/or runtime errors.
 
+### 📚 Libraries
+
+* sass `1.62 → 1.63`
+* webpack `5.84 → 5.87`
+* webpack-bundle-analyzer `4.8 0 → 4.9`
+
 ## v6.2.0 - 2023-05-31
 
 * Updated Babel configuration to enable key transforms via preset-env `includes` directive. Resolves issue with outdated
@@ -19,26 +25,26 @@
 
 ### 📚 Libraries
 
-* @babel/* `7.21 -> 7.22`
-* css-loader `6.7 -> 6.8`
-* postcss-loader `7.1 -> 7.3`
-* sass `1.59 -> 1.62`
-* sass-loader `13.2 -> 13.3`
-* webpack `5.76 -> 5.84`
-* webpack-cli `5.0 -> 5.1`
-* webpack-dev-server `4.13 -> 4.15`
+* @babel/* `7.21 → 7.22`
+* css-loader `6.7 → 6.8`
+* postcss-loader `7.1 → 7.3`
+* sass `1.59 → 1.62`
+* sass-loader `13.2 → 13.3`
+* webpack `5.76 → 5.84`
+* webpack-cli `5.0 → 5.1`
+* webpack-dev-server `4.13 → 4.15`
 
 ## v6.1.2 - 2023-03-22
 
 ### 📚 Libraries
 
-* @babel/* `7.20 -> 7.21`
-* changelog-parser `2.8 -> 3.0`
-* postcss-loader `7.0 -> 7.1`
-* rimraf `3.0 -> 4.4`
-* sass `1.56 -> 1.59`
-* webpack `5.75 -> 5.76`
-* webpack-dev-server `4.11 -> 4.13`
+* @babel/* `7.20 → 7.21`
+* changelog-parser `2.8 → 3.0`
+* postcss-loader `7.0 → 7.1`
+* rimraf `3.0 → 4.4`
+* sass `1.56 → 1.59`
+* webpack `5.75 → 5.76`
+* webpack-dev-server `4.11 → 4.13`
 
 ## v6.1.1 - 2022-12-07
 
@@ -55,15 +61,15 @@
 
 ### 📚 Libraries
 
-* @babel/* `7.18 -> 7.20`
-* @xh/eslint-config `4.0 -> 5.0`
-* babel-loader `8.2 -> 9.1`
-* mini-css-extract-plugin `2.6 -> 2.7`
-* sass `1.53 -> 1.56`
-* sass-loader `13.0 -> 13.2`
-* webpack `5.73 -> 5.75`
-* webpack-cli `4.10 -> 5.0`
-* webpack-dev-server `4.9 -> 4.11`
+* @babel/* `7.18 → 7.20`
+* @xh/eslint-config `4.0 → 5.0`
+* babel-loader `8.2 → 9.1`
+* mini-css-extract-plugin `2.6 → 2.7`
+* sass `1.53 → 1.56`
+* sass-loader `13.0 → 13.2`
+* webpack `5.73 → 5.75`
+* webpack-cli `4.10 → 5.0`
+* webpack-dev-server `4.9 → 4.11`
 
 [Commit Log](https://github.com/xh/hoist-dev-utils/compare/v6.0.0...v6.1.0)
 
@@ -85,26 +91,26 @@
 
 ### 📚 Libraries
 
-* @babel/* `7.16 -> 7.18`
+* @babel/* `7.16 → 7.18`
 * @cerner/duplicate-package-checker-webpack-plugin `added @ 2.3` (fork w/WP5 support)
-* @xh/eslint-config `3.1 -> 4.0` (includes eslint v8)
-* clean-webpack-plugin `3.0 -> 4.0`
-* copy-webpack-plugin `6.3 -> 11.0`
-* css-loader `5.2 -> 6.7`
+* @xh/eslint-config `3.1 → 4.0` (includes eslint v8)
+* clean-webpack-plugin `3.0 → 4.0`
+* copy-webpack-plugin `6.3 → 11.0`
+* css-loader `5.2 → 6.7`
 * favicons-webpack-plugin `removed`
-* html-webpack-plugin `4.5 -> 5.5`
-* html-webpack-tags-plugin `2.0 -> 3.0`
-* mini-css-extract-plugin `1.6-> 2.6`
-* postcss `8.3 -> 8.4`
-* postcss-loader `4.1 -> 7.0`
-* sass `1.37 -> 1.49`
-* sass-loader `10.1 -> 13.0`
-* style-loader `2.0 -> 3.3`
-* terser-webpack-plugin `4.2 -> 5.3`
-* webpack `4.44 -> 5.73`
-* webpack-cli `3.3 -> 4.10`
-* webpack-dev-server `3.11 -> 4.9`
-* webpackbar `4.0 -> 5.0`
+* html-webpack-plugin `4.5 → 5.5`
+* html-webpack-tags-plugin `2.0 → 3.0`
+* mini-css-extract-plugin `1.6→ 2.6`
+* postcss `8.3 → 8.4`
+* postcss-loader `4.1 → 7.0`
+* sass `1.37 → 1.49`
+* sass-loader `10.1 → 13.0`
+* style-loader `2.0 → 3.3`
+* terser-webpack-plugin `4.2 → 5.3`
+* webpack `4.44 → 5.73`
+* webpack-cli `3.3 → 4.10`
+* webpack-dev-server `3.11 → 4.9`
+* webpackbar `4.0 → 5.0`
 
 [Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.14.0...v6.0.0)
 
@@ -119,7 +125,7 @@
 
 ### 📚 Libraries
 
-* @xh/eslint-config `3.0 -> 3.1`
+* @xh/eslint-config `3.0 → 3.1`
 
 [Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.12.0...v5.13.0)
 
@@ -127,9 +133,9 @@
 
 ### 📚 Libraries
 
-* @babel/* `7.15 -> 7.16`
-* autoprefixer `10.3 -> 10.4`
-* webpack-bundle-analyzer `4.4 -> 4.5`
+* @babel/* `7.15 → 7.16`
+* autoprefixer `10.3 → 10.4`
+* webpack-bundle-analyzer `4.4 → 4.5`
 
 [Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.11.1...v5.12.0)
 
@@ -167,9 +173,9 @@
 
 ### 📚 Libraries
 
-* @babel/* `7.14 -> 7.15`
-* autoprefixer `10.2 -> 10.3`
-* sass `1.35 -> 1.37`
+* @babel/* `7.14 → 7.15`
+* autoprefixer `10.2 → 10.3`
+* sass `1.35 → 1.37`
 
 [Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.9.1...v5.9.2)
 
@@ -177,10 +183,10 @@
 
 ### 📚 Libraries
 
-* @babel/* `7.13 -> 7.14`
-* mini-css-extract-plugin `1.4 -> 1.6`
-* post-css `8.2 -> 8.3`
-* sass `1.32 -> 1.35`
+* @babel/* `7.13 → 7.14`
+* mini-css-extract-plugin `1.4 → 1.6`
+* post-css `8.2 → 8.3`
+* sass `1.32 → 1.35`
 
 [Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.9.0...v5.9.1)
 
@@ -228,8 +234,8 @@
 ### 📚 Libraries
 
 * changelog-parser `added @ 2.8`
-* css-loader `5.0 -> 5.2`
-* mini-css-extract-plugin `1.3 -> 1.4`
+* css-loader `5.0 → 5.2`
+* mini-css-extract-plugin `1.3 → 1.4`
 
 [Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.6.0...v5.7.0)
 
@@ -242,13 +248,13 @@
 
 ### 📚 Libraries
 
-* @babel/* `7.12 -> 7.13`
-* @xh/eslint-config `2.3 -> 3.0`
-* autoprefixer `10.0 -> 10.2`
-* case-sensitive-paths-webpack-plugin `2.3 -> 2.4`
-* postcss `8.1 -> 8.2`
-* sass `1.29 -> 1.32`
-* webpack-bundle-analyzer `4.2 -> 4.4`
+* @babel/* `7.12 → 7.13`
+* @xh/eslint-config `2.3 → 3.0`
+* autoprefixer `10.0 → 10.2`
+* case-sensitive-paths-webpack-plugin `2.3 → 2.4`
+* postcss `8.1 → 8.2`
+* sass `1.29 → 1.32`
+* webpack-bundle-analyzer `4.2 → 4.4`
 
 [Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.5.0...v5.6.0)
 
@@ -262,21 +268,21 @@
 
 ### 📚 Libraries
 
-* @babel/* `7.11 -> 7.12`
-* @types/react `16.9 -> 17.0`
-* autoprefixer `9.8 -> 10.0`
-* babel-loader `8.1 -> 8.2`
-* copy-webpack-plugin `6.1 -> 6.3`
-* css-loader `4.3 -> 5.0`
-* file-loader `6.1 -> 6.2`
-* mini-css-extract-plugin `0.11 -> 1.3`
+* @babel/* `7.11 → 7.12`
+* @types/react `16.9 → 17.0`
+* autoprefixer `9.8 → 10.0`
+* babel-loader `8.1 → 8.2`
+* copy-webpack-plugin `6.1 → 6.3`
+* css-loader `4.3 → 5.0`
+* file-loader `6.1 → 6.2`
+* mini-css-extract-plugin `0.11 → 1.3`
 * postcss `added @ 8.1`
-* postcss-flexbugs-fixes `4.2 -> 5.0`
-* postcss-loader `3.0 -> 4.1`
-* sass `1.26 -> 1.29`
-* sass-loader `9.0 -> 10.1`
-* style-loader `1.2 -> 2.0`
-* webpack-bundle-analyzer `3.9 -> 4.2`
+* postcss-flexbugs-fixes `4.2 → 5.0`
+* postcss-loader `3.0 → 4.1`
+* sass `1.26 → 1.29`
+* sass-loader `9.0 → 10.1`
+* style-loader `1.2 → 2.0`
+* webpack-bundle-analyzer `3.9 → 4.2`
 
 [Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.4.0...v5.5.0)
 
@@ -292,14 +298,14 @@
 
 ### 📚 Libraries
 
-* copy-webpack-plugin `6.0 -> 6.1`
-* css-loader `4.2 -> 4.3`
-* file-loader `6.0 -> 6.1`
-* html-webpack-plugin `4.3 -> 4.5`
+* copy-webpack-plugin `6.0 → 6.1`
+* css-loader `4.2 → 4.3`
+* file-loader `6.0 → 6.1`
+* html-webpack-plugin `4.3 → 4.5`
 * html-webpack-tags-plugin `added @ 2.0`
-* mini-css-extract-plugin `0.9 -> 0.11`
-* terser-webpack-plugin `4.1 -> 4.2`
-* webpack-bundle-analyzer `3.8 -> 3.9`
+* mini-css-extract-plugin `0.9 → 0.11`
+* terser-webpack-plugin `4.1 → 4.2`
+* webpack-bundle-analyzer `3.8 → 3.9`
 
 [Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.3.0...v5.4.0)
 
@@ -311,12 +317,12 @@ Resolutions added for some transitive dependencies that had grown excessively st
 triggering console warnings on install/upgrade. Reviewed changelogs for these projects and did not
 see any indication that they would be incompatible.
 
-* @babel/core `7.10 -> 7.11`
-* css-loader `3.6 -> 4.2`
-* favicons-webpack-plugin `3.0 -> 4.2`
-* mini-css-extract-plugin `0.9 -> 0.10`
-* terser-webpack-plugin `3.0 -> 4.1`
-* webpack `4.43 -> 4.44`
+* @babel/core `7.10 → 7.11`
+* css-loader `3.6 → 4.2`
+* favicons-webpack-plugin `3.0 → 4.2`
+* mini-css-extract-plugin `0.9 → 0.10`
+* terser-webpack-plugin `3.0 → 4.1`
+* webpack `4.43 → 4.44`
 
 [Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.2.2...v5.3.0)
 
@@ -344,7 +350,7 @@ see any indication that they would be incompatible.
 
 ### 📚 Libraries
 
-* @xh/eslint-config `2.2 -> 2.3`
+* @xh/eslint-config `2.2 → 2.3`
 
 [Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.1.0...v5.2.0)
 
@@ -356,10 +362,10 @@ This version switches to the newly-recommended dart-sass library (aka the `sass`
 SASS compilation. This replaces the often-problematic usage of node-sass, which required OS-specific
 tooling to support building native code on developer workstations.
 
-* css-loader `3.5 -> 3.6`
+* css-loader `3.5 → 3.6`
 * node-sass `removed`
 * sass `added @ 1.26`
-* sass-loader `8.0 -> 9.0`
+* sass-loader `8.0 → 9.0`
 
 [Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.0.0...v5.1.0)
 
@@ -381,21 +387,21 @@ wide variety of enterprise software projects. For any questions regarding this c
 This release includes updates to a number of tooling dependencies, including some major updates.
 However no changes to application code or configs should be required.
 
-* @babel/core `7.9 -> 7.10`
-* @babel/preset-env `7.9 -> 7.10`
-* @babel/preset-react `7.9 -> 7.10`
-* autoprefixer `9.7 -> 9.8`
-* copy-webpack-plugin `5.1 -> 6.0`
-* css-loader `3.4 -> 3.5`
-* favicons-webpack-plugin `2.1 -> 3.0`
-* html-webpack-plugin `3.2 -> 4.3`
-* node-sass `4.13 -> 4.14`
-* style-loader `1.1 -> 1.2`
-* terser-webpack-plugin `2.3 -> 3.0`
-* url-loader `4.0 -> 4.1`
-* webpack `4.42 -> 4.43`
-* webpack-bundle-analyzer `3.6 -> 3.8`
-* webpack-dev-server `3.10 -> 3.11`
+* @babel/core `7.9 → 7.10`
+* @babel/preset-env `7.9 → 7.10`
+* @babel/preset-react `7.9 → 7.10`
+* autoprefixer `9.7 → 9.8`
+* copy-webpack-plugin `5.1 → 6.0`
+* css-loader `3.4 → 3.5`
+* favicons-webpack-plugin `2.1 → 3.0`
+* html-webpack-plugin `3.2 → 4.3`
+* node-sass `4.13 → 4.14`
+* style-loader `1.1 → 1.2`
+* terser-webpack-plugin `2.3 → 3.0`
+* url-loader `4.0 → 4.1`
+* webpack `4.42 → 4.43`
+* webpack-bundle-analyzer `3.6 → 3.8`
+* webpack-dev-server `3.10 → 3.11`
 
 [Commit Log](https://github.com/xh/hoist-dev-utils/compare/v4.6.0...v5.0.0)
 
@@ -414,12 +420,12 @@ However no changes to application code or configs should be required.
 
 ### 📚 Libraries
 
-* @babel/core `7.8 -> 7.9`
-* @babel/preset-env `7.8 -> 7.9`
-* @babel/preset-react `7.8 -> 7.9`
-* babel-loader `8.0 -> 8.1`
-* file-loader `5.0 -> 6.0`
-* url-loader `3.0 -> 4.0`
+* @babel/core `7.8 → 7.9`
+* @babel/preset-env `7.8 → 7.9`
+* @babel/preset-react `7.8 → 7.9`
+* babel-loader `8.0 → 8.1`
+* file-loader `5.0 → 6.0`
+* url-loader `3.0 → 4.0`
 
 [Commit Log](https://github.com/xh/hoist-dev-utils/compare/v4.5.0...v4.6.0)
 
@@ -434,7 +440,7 @@ However no changes to application code or configs should be required.
 ### 📚 Libraries
 
 * copy-webpack-plugin: `added @ 5.1`
-* webpack: `4.41 -> 4.42`
+* webpack: `4.41 → 4.42`
 
 [Commit Log](https://github.com/xh/hoist-dev-utils/compare/v4.4.1...v4.5.0)
 
@@ -447,7 +453,7 @@ However no changes to application code or configs should be required.
 
 ### 📚 Libraries
 
-* favicons-webpack-plugin: `1.0 -> 2.1`
+* favicons-webpack-plugin: `1.0 → 2.1`
 
 [Commit Log](https://github.com/xh/hoist-dev-utils/compare/v4.4.0...v4.4.1)
 
@@ -455,12 +461,12 @@ However no changes to application code or configs should be required.
 
 ### 📚 Libraries
 
-* @babel/core (and related) `7.7 -> 7.8`
-* css-loader `3.2 -> 3.4`
-* mini-css-extract-plugin `0.8 -> 0.9`
-* style-loader `1.0 -> 1.1`
-* terser-webpack-plugin `2.2 -> 2.3`
-* webpack-dev-server `3.9 -> 3.10`
+* @babel/core (and related) `7.7 → 7.8`
+* css-loader `3.2 → 3.4`
+* mini-css-extract-plugin `0.8 → 0.9`
+* style-loader `1.0 → 1.1`
+* terser-webpack-plugin `2.2 → 2.3`
+* webpack-dev-server `3.9 → 3.10`
 
 [Commit Log](https://github.com/xh/hoist-dev-utils/compare/v4.3.7...v4.4.0)
 
@@ -468,10 +474,10 @@ However no changes to application code or configs should be required.
 
 ### 📚 Libraries
 
-* @babel/plugin-proposal-nullish-coalescing-operator `7.4 -> 7.7`
-* @babel/plugin-proposal-optional-chaining `7.6 -> 7.7`
-* file-loader `4.2 -> 5.0`
-* url-loader `2.2 -> 3.0`
+* @babel/plugin-proposal-nullish-coalescing-operator `7.4 → 7.7`
+* @babel/plugin-proposal-optional-chaining `7.6 → 7.7`
+* file-loader `4.2 → 5.0`
+* url-loader `2.2 → 3.0`
 
 [Commit Log](https://github.com/xh/hoist-dev-utils/compare/v4.3.6...v4.3.7)
 
@@ -489,12 +495,12 @@ However no changes to application code or configs should be required.
 
 ### 📚 Libraries
 
-* @babel/core (and related) `7.6 -> 7.7`
-* autoprefixer `9.6 -> 9.7`
-* node-sass `4.12 -> 4.13`
-* terser-webpack-plugin `2.1 -> 2.2`
-* webpack-bundle-analyzer `3.5 -> 3.6`
-* webpack-dev-server `3.8 -> 3.9`
+* @babel/core (and related) `7.6 → 7.7`
+* autoprefixer `9.6 → 9.7`
+* node-sass `4.12 → 4.13`
+* terser-webpack-plugin `2.1 → 2.2`
+* webpack-bundle-analyzer `3.5 → 3.6`
+* webpack-dev-server `3.8 → 3.9`
 * chalk (removed)
 
 [Commit Log](https://github.com/xh/hoist-dev-utils/compare/v4.3.4...v4.3.5)
@@ -508,7 +514,7 @@ However no changes to application code or configs should be required.
 
 ### 📚 Libraries
 
-* @babel/preset-react `7.0 -> 7.6`
+* @babel/preset-react `7.0 → 7.6`
 
 [Commit Log](https://github.com/xh/hoist-dev-utils/compare/v4.3.3...v4.3.4)
 
@@ -522,7 +528,7 @@ However no changes to application code or configs should be required.
 
 ### 📚 Libraries
 
-* url-loader `2.1 -> 2.2`
+* url-loader `2.1 → 2.2`
 
 [Commit Log](https://github.com/xh/hoist-dev-utils/compare/v4.3.1...v4.3.3)
 
@@ -532,7 +538,7 @@ However no changes to application code or configs should be required.
 
 ### 📚 Libraries
 
-* @xh/eslint-config `2.1 -> 2.2`
+* @xh/eslint-config `2.1 → 2.2`
 
 [Commit Log](https://github.com/xh/hoist-dev-utils/compare/v4.3.0...v4.3.1)
 
@@ -550,7 +556,7 @@ However no changes to application code or configs should be required.
 
 ### 📚 Libraries
 
-* webpack `4.40 -> 4.41`
+* webpack `4.40 → 4.41`
 
 [Commit Log](https://github.com/xh/hoist-dev-utils/compare/v4.2.0...v4.3.0)
 
@@ -573,15 +579,15 @@ However no changes to application code or configs should be required.
 
 ### 📚 Libraries
 
-* @xh/eslint-config `2.0 -> 2.1.1`
-* terser-webpack-plugin `2.0 -> 2.1`
+* @xh/eslint-config `2.0 → 2.1.1`
+* terser-webpack-plugin `2.0 → 2.1`
 
 [Commit Log](https://github.com/xh/hoist-dev-utils/compare/v4.0.0...v4.1.1)
 
 ## 4.0.0 - 2019-09-12
 
 This release includes a number of major/minor updates for the build toolchain. Most notably, it
-updates Babel and its plugins from `7.4 -> 7.6`, which removes support for the `@babel/polyfill`
+updates Babel and its plugins from `7.4 → 7.6`, which removes support for the `@babel/polyfill`
 plugin we had been using in favor of `core-js@3` for polyfills (as of 7.5).
 
 ### 🎁 New Features
@@ -599,9 +605,9 @@ plugin we had been using in favor of `core-js@3` for polyfills (as of 7.5).
 
 ### 📚 Libraries
 
-* @babel `7.4 -> 7.6`
-* @xh/eslint-config `1.2 -> 2.0`
-* webpack `4.31 -> 4.40`
+* @babel `7.4 → 7.6`
+* @xh/eslint-config `1.2 → 2.0`
+* webpack `4.31 → 4.40`
 * *Multiple* other library updates for loaders, plugins, and other utils.
 
 [Commit Log](https://github.com/xh/hoist-dev-utils/compare/v3.8.1...v4.0.0)
@@ -620,7 +626,7 @@ plugin we had been using in favor of `core-js@3` for polyfills (as of 7.5).
 
 ### 📚 Libraries
 
-* @xh/eslint-config `1.1.1 -> 1.2.0` - react-hooks plugin and linting rules.
+* @xh/eslint-config `1.1.1 → 1.2.0` - react-hooks plugin and linting rules.
 
 [Commit Log](https://github.com/xh/hoist-dev-utils/compare/v3.7.7...v3.8.0)
 
@@ -637,7 +643,7 @@ plugin we had been using in favor of `core-js@3` for polyfills (as of 7.5).
 
 ### 📚 Libraries
 
-* @xh/eslint-config `1.1.0 -> 1.1.1` - whitelist WebSocket global.
+* @xh/eslint-config `1.1.0 → 1.1.1` - whitelist WebSocket global.
 
 [Commit Log](https://github.com/xh/hoist-dev-utils/compare/v3.7.5...v3.7.6)
 
@@ -675,8 +681,8 @@ plugin we had been using in favor of `core-js@3` for polyfills (as of 7.5).
 
 ### 📚 Libraries
 
-* node-sass `4.11 -> 4.12`
-* webpack `4.30 -> 4.31`
+* node-sass `4.11 → 4.12`
+* webpack `4.30 → 4.31`
 * Other minor/patch updates
 
 [Commit Log](https://github.com/xh/hoist-dev-utils/compare/v3.7.1...v3.7.2)
@@ -685,8 +691,8 @@ plugin we had been using in favor of `core-js@3` for polyfills (as of 7.5).
 
 ### 📚 Libraries
 
-* webpack `4.29 -> 4.30`
-* webpack-dev-server `3.2 -> 3.3`
+* webpack `4.29 → 4.30`
+* webpack-dev-server `3.2 → 3.3`
 * Other minor/patch updates
 
 [Commit Log](https://github.com/xh/hoist-dev-utils/compare/v3.7.0...v3.7.1)
@@ -695,9 +701,9 @@ plugin we had been using in favor of `core-js@3` for polyfills (as of 7.5).
 
 ### 📚 Libraries
 
-* Babel `7.3 -> 7.4`
-* autoprefixer `9.4 -> 9.5`
-* webpack-cli `3.2 -> 3.3`
+* Babel `7.3 → 7.4`
+* autoprefixer `9.4 → 9.5`
+* webpack-cli `3.2 → 3.3`
 
 [Commit Log](https://github.com/xh/hoist-dev-utils/compare/v3.6.0...v3.7.0)
 
@@ -705,4 +711,4 @@ plugin we had been using in favor of `core-js@3` for polyfills (as of 7.5).
 
 📫☎️🌎 info@xh.io | <https://xh.io/contact>
 
-Copyright © 2022 Extremely Heavy Industries Inc.
+Copyright © 2023 Extremely Heavy Industries Inc.
