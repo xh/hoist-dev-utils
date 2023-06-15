@@ -1,5 +1,10 @@
 # Changelog
 
+## v6.3.0 - 2023-06-15
+
+* Added new `devServerOverlay` config to control full-screen error overlay added by webpack-dev-server. Default to show 
+  compilation errors only, allowing devs to opt-in to compilation warnings and/or runtime errors.
+
 ## v6.2.0 - 2023-05-31
 
 * Updated Babel configuration to enable key transforms via preset-env `includes` directive. Resolves issue with outdated

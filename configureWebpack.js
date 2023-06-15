@@ -48,16 +48,13 @@ try {
  *      `webpack-dev-server --env inlineHoist` to run dev server w/hoist-react in inline mode
  *
  * @param {Object} env - config passed in from app webpack config or the CLI via --env flags.
- * @param {string} env.appCode - short, internal code for the application - baked into client as
- *      XH.appCode. Should be lowercase, dash-separated, and should match the Gradle project name
- *      (e.g. portfolio-manager).
- * @param {string} [env.appName] - user-facing display name for the application - baked into client
- *      as XH.appName. Should be title cased and space-separated. If null, will be defaulted based
- *      on appCode (e.g. portfolio-manager -> Portfolio Manager).
+ * @param {string} env.appCode - short, internal code for the application - baked into client as XH.appCode. Should be
+ *      lowercase, dash-separated, and should match the Gradle project name (e.g. portfolio-manager).
+ * @param {string} [env.appName] - user-facing display name for the application - baked into client as XH.appName.
+ *      Title cased and space-separated. If null, defaulted from appCode (portfolio-manager -> Portfolio Manager).
  * @param {string} [env.appVersion] - client version - baked into client as XH.appVersion
  * @param {string} [env.appBuild] - build/git tag - baked into client as XH.appBuild
- * @param {boolean} [env.prodBuild=false] - true to indicate this is a build (as opposed to run of
- *      webpack-dev-server)
+ * @param {boolean} [env.prodBuild=false] - true to indicate this is a build (as opposed to run of webpack-dev-server)
  * @param {boolean} [env.inlineHoist=false] - true to use a locally checked-out copy of hoist-react
  *      when running the dev server, as opposed to using the downloaded dependency. This allows
  *      hoist-react developers to test plugin changes. Dev-mode only.
@@ -65,61 +62,52 @@ try {
  *      when running the dev server.
  * @param {Object} [env.resolveAliases] - object mapping for custom webpack module resolution.
  *      When inlineHoist=true, a mapping between @xh/hoist and the local path will be added.
- * @param {boolean} [env.analyzeBundles] - true to launch an interactive bundle analyzer to
- *      review output bundles, contents, and sizes.
- * @param {boolean} [env.checkForDupePackages] - true (default) to run build through
- *      DuplicatePackageCheckerPlugin and output a build-time console warning if duplicate packages
- *      have been resolved due to non-overlapping dependencies. Set to false to disable if dupe
- *      warnings are not desired / distracting.
- * @param {string[]} [env.dupePackageCheckExcludes] - optional list of string package names to
- *      exclude from dupe package checking. Defaults to ['tslib'].
- * @param {string} [env.baseUrl] - root path prepended to all relative URLs called via FetchService.
- *      Defaults to `/api/` in production mode to work with proxy-based deployments and to
- *      `$devHost:$devGrailsPort` in dev mode.
- * @param {string[]} [env.babelIncludePaths] - additional paths to pass Babel for transpiling via
- *      settings shared with app-level and @xh/hoist code. Intended for custom packages.
- * @param {string[]} [env.babelExcludePaths] - paths to exclude from Babel transpilation. An
- *      example use would be a local package with a nested node_modules folder.
- * @param {string} [env.contextRoot] - root path for where the app will be served, used as the base
- *      path for static files.
- * @param {boolean} [env.copyPublicAssets] - true (default) to copy the /client-app/public
- *      contents into the root of the build. Note that files within this directory will not be
- *      processed, named with a hash, etc. Use for static assets you wish to link to without using
- *      an import to run through the url or file-loader. Required for favicons.
- * @param {boolean} [env.parseChangelog] - true (default) to parse a `CHANGELOG.md` file in the
- *      project root directory into JSON and make available for import by `XH.changelogService`.
+ * @param {boolean} [env.checkForDupePackages=true] - true to run build throughDuplicatePackageCheckerPlugin and output
+ *      a build-time warning if duplicate packages have been resolved due to non-overlapping dependencies.
+ * @param {string[]} [env.dupePackageCheckExcludes] - optional list of string package names to exclude from dupe package
+ *      checking. Defaults to ['tslib'].
+ * @param {string} [env.baseUrl] - root path prepended to all relative URLs called via FetchService. Defaults to
+ *      `/api/` in production mode to work with proxy-based deployments and to `$devHost:$devGrailsPort` in dev mode.
+ * @param {string[]} [env.babelIncludePaths] - additional paths to pass Babel for transpiling via settings shared with
+ *      app-level and @xh/hoist code. Intended for custom packages.
+ * @param {string[]} [env.babelExcludePaths] - paths to exclude from Babel transpiling. An example use would be a local
+ *      package with a nested node_modules folder.
+ * @param {string} [env.contextRoot] - root path from which app will be served, used as the base path for static files.
+ * @param {boolean} [env.copyPublicAssets=true] - true to copy the /client-app/public contents into the root of the
+ *      build. Note that files within this directory will not be processed, named with a hash, etc. Use for static
+ *      assets you wish to link to without using an import to run through the url or file-loader. Required for favicons.
+ * @param {boolean} [env.parseChangelog=true] - true to parse a `CHANGELOG.md` file in the project root directory into
+ *      JSON and make available for import by `XH.changelogService`.
  * @param {string} [env.favicon] - relative path to a primary favicon source image.
- * @param {Object} [env.manifestConfig] - override values for manifest.json file. This controls
- *     certain options related to adding a mobile app to a device home screen, as well as
- *     "installing" an app via Chrome's "create shortcut" option. See
- *     https://developer.mozilla.org/en-US/docs/Web/Manifest for options.
+ * @param {Object} [env.manifestConfig] - override values for manifest.json file. This controls options related to
+ *      adding a mobile app to a device home screen, as well as "installing" an app via Chrome's "create shortcut"
+ *      option. See https://developer.mozilla.org/en-US/docs/Web/Manifest for options.
+ * @param {string[]} [env.targetBrowsers] - array of browserslist queries specifying target browsers for Babel and CSS
+ *      transpiling and processing.
+ * @param {Object} [env.babelPresetEnvOptions] - options to spread onto / override defaults passed here to the Babel
+ *      loader preset-env preset config.
+ * @param {Object} [env.terserOptions] - options to spread onto / override defaults passed here to the Terser
+ *      minification plugin for production builds.
+ * @param {(boolean|string)} [env.sourceMaps=true] - control sourceMap generation. Set to `true` to enable defaults
+ *      specific to dev vs. prod builds, `false` to disable source maps entirely, special string `'devOnly'` to enable
+ *      default for dev and disable in prod, or any other valid Webpack `devtool` string to specify a mode directly.
+ * @param {boolean} [env.loadAllBlueprintJsIcons=false] - false to only load the BlueprintJs icons required by Hoist
+ *      React, resulting in a much smaller bundle size. Set to true if your app wishes to access all the BP icons.
  * @param {string} [env.stats] - stats output - see https://webpack.js.org/configuration/stats/.
- * @param {string} [env.infrastructureLoggingLevel] - default 'error' to quiet chatty devServer.
- * @param {string} [env.devHost] - hostname for both local Grails and Webpack dev servers.
- *      Defaults to localhost, but may be overridden to a proper hostname for testing on alternate
- *      workstations or devices. Will be automatically set to lowercase to comply with
+ * @param {boolean} [env.analyzeBundles] - true to launch an interactive bundle analyzer to review output bundle sizes.
+ * @param {string} [env.infrastructureLoggingLevel=error] - logging level for devServer.
+ * @param {boolean|Object} [env.devClientOverlay] - customize devServer overlay behavior. Set to show only compilation
+ *      errors by default. See https://webpack.js.org/configuration/dev-server/#overlay. Dev-mode only.
+ * @param {string} [env.devHost=localhost] - hostname for both local Grails and Webpack dev servers. Override for
+ *      testing on alternate workstations or devices. Will be automatically set to lowercase to comply with
  *      webpack-dev-server's host checking. Dev-mode only.
  * @param {number} [env.devGrailsPort] - port of local Grails server. Dev-mode only.
  * @param {number} [env.devWebpackPort] - port on which to start webpack-dev server. Dev-mode only.
- * @param {string} [env.devServerOpenPage] - path to auto-open when webpack-dev-server starts.
- *      Leave null to disable automatic page open on startup.
- * @param {string[]} [env.targetBrowsers] - array of browserslist queries specifying target
- *      browsers for Babel and CSS transpilation and processing.
- * @param {Object} [env.babelPresetEnvOptions] - options to spread onto / override defaults passed
- *      here to the Babel loader preset-env preset config.
- * @param {Object} [env.terserOptions] - options to spread onto / override defaults passed here to
- *      the Terser minification plugin for production builds.
- * @param {(boolean|string)} [env.sourceMaps] - control sourceMap generation. Set to `true`
- *      (default) to enable defaults specific to dev vs. prod builds, `false` to disable source
- *      maps entirely, special string `'devOnly'` to enable default for dev and disable in prod, or
- *      any other valid Webpack `devtool` string to specify a mode directly.
- * @param {boolean} [env.loadAllBlueprintJsIcons] - false (default) to only load the BlueprintJs
- *      icons required by Hoist React components, resulting in a much smaller bundle size. Set to
- *      true if your app wishes to access all the BP icons (but consider FontAwesome instead!).
- * @param {(Object|boolean)} [env.devHttps] - Object of the form `{ca, cert, key}`, with each
- *      key pointing to the required resource for a full SSL config. Pass `true` to serve locally
- *      over SSL w/o providing a cert (browser will warn). Applies to local dev only, no effect on
- *      production builds.
+ * @param {string} [env.devServerOpenPage] - path to auto-open when webpack-dev-server starts. Leave null to disable
+ *      automatic page open on startup. Dev-mode only.
+ *  @param {(Object|boolean)} [env.devHttps] - Object of the form `{ca, cert, key}`, with each key pointing to the
+ *      required resource for a full SSL config. Pass `true` to serve locally over SSL w/o providing a cert (browser
+ *      will warn). Dev-mode only.
  */
 async function configureWebpack(env) {
     if (!env.appCode) throw 'Missing required "appCode" config - cannot proceed';
@@ -135,6 +123,11 @@ async function configureWebpack(env) {
         analyzeBundles = env.analyzeBundles === true,
         checkForDupePackages = env.checkForDupePackages !== false,
         dupePackageCheckExcludes = env.dupePackageCheckExcludes || ['tslib'],
+        devClientOverlay = env.devClientOverlay ?? {
+            errors: true,
+            warnings: false,
+            runtimeErrors: false
+        },
         devHost = env.devHost ? env.devHost.toLowerCase() : 'localhost',
         devHttps = prodBuild
             ? null
@@ -737,7 +730,7 @@ async function configureWebpack(env) {
                   host: devHost,
                   port: devWebpackPort,
                   hot: true,
-                  client: {overlay: true},
+                  client: {overlay: devClientOverlay},
                   open: env.devServerOpenPage ? [env.devServerOpenPage] : false,
                   // Support HTML5 history routes for apps, with /appName/ as the base route for each
                   historyApiFallback: {
@@ -839,6 +832,7 @@ function getChunkCombinations(appNames) {
 function logSep() {
     console.log(':------------------------------------');
 }
+
 function logMsg(msg) {
     console.log(`: ${msg}`);
 }
