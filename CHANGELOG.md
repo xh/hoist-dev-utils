@@ -1,5 +1,14 @@
 # Changelog
 
+## v7.0.0 - 2023-07-19
+
+* Updated `@xh/eslint-config` to v6.0, for use with Typescript v5.1+ and Hoist React v59+.
+
+### 📚 Libraries
+
+* @xh/eslint-config `5.0 → 6.0`
+* webpack `5.84 → 5.87`
+
 ## v6.3.0 - 2023-06-15
 
 * Added new `devServerOverlay` config to control full-screen error overlay added by webpack-dev-server. Default to show 
