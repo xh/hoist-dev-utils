@@ -1,6 +1,6 @@
 # Changelog
 
-## v7.0.0-SNAPSHOT
+## v7.0.0 - 2023-07-19
 
 * Updated `@xh/eslint-config` to v6.0, for use with Typescript v5.1+ and Hoist React v59+.
 
