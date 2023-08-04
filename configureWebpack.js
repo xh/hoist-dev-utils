@@ -601,6 +601,11 @@ async function configureWebpack(env) {
                             options: {
                                 name: 'static/media/[name].[hash:8].[ext]'
                             }
+                        },
+                        {
+                            test: /\.js$/,
+                            enforce: "pre",
+                            use: ["source-map-loader"],
                         }
                     ]
                 }
