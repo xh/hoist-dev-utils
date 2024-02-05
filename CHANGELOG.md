@@ -2,6 +2,9 @@
 
 ## v8.0-SNAPSHOT
 
+* Updated to new webpack API for enabling HTTPS on local dev server. Note that the handling of the (rarely used) 
+  `devHttps` parameter has changed.
+
 ### 🐞 Bug Fixes
 
 * Fixed chunk collection so that similarly named apps within a project do not load each other's app chunk.
@@ -32,7 +35,7 @@
 
 ## v6.3.0 - 2023-06-15
 
-* Added new `devServerOverlay` config to control full-screen error overlay added by webpack-dev-server. Default to show 
+* Added new `devServerOverlay` config to control full-screen error overlay added by webpack-dev-server. Default to show
   compilation errors only, allowing devs to opt-in to compilation warnings and/or runtime errors.
 
 ### 📚 Libraries

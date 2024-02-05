@@ -102,12 +102,12 @@ try {
  *      testing on alternate workstations or devices. Will be automatically set to lowercase to comply with
  *      webpack-dev-server's host checking. Dev-mode only.
  * @param {number} [env.devGrailsPort] - port of local Grails server. Dev-mode only.
- * @param {number} [env.devWebpackPort] - port on which to start webpack-dev server. Dev-mode only.
+ * @param {number} [env.devWebpackPort] - port on which to start webpack-dev-server. Dev-mode only.
  * @param {string} [env.devServerOpenPage] - path to auto-open when webpack-dev-server starts. Leave null to disable
  *      automatic page open on startup. Dev-mode only.
- *  @param {(Object|boolean)} [env.devHttps] - Object of the form `{ca, cert, key}`, with each key pointing to the
- *      required resource for a full SSL config. Pass `true` to serve locally over SSL w/o providing a cert (browser
- *      will warn). Dev-mode only.
+ *  @param {(boolean|Object)} [env.devHttps] - `true` to run webpack-dev-server locally over SSL w/o providing a cert
+ *      (browser will warn). Or provide an object that will be passed to `devServer.server.options` to enable SSL and
+ *      while specifying a custom cert/key. Default `false` runs locally over HTTP only. Dev-mode only.
  */
 async function configureWebpack(env) {
     if (!env.appCode) throw 'Missing required "appCode" config - cannot proceed';
@@ -129,15 +129,7 @@ async function configureWebpack(env) {
             runtimeErrors: false
         },
         devHost = env.devHost ? env.devHost.toLowerCase() : 'localhost',
-        devHttps = prodBuild
-            ? null
-            : _.isPlainObject(env.devHttps)
-            ? {
-                  ca: fs.readFileSync(env.devHttps.ca),
-                  cert: fs.readFileSync(env.devHttps.cert),
-                  key: fs.readFileSync(env.devHttps.key)
-              }
-            : !!env.devHttps,
+        devHttps = prodBuild ? null : _.isPlainObject(env.devHttps) ? env.devHttps : !!env.devHttps,
         devGrailsPort = env.devGrailsPort || 8080,
         devWebpackPort = env.devWebpackPort || 3000,
         baseUrl = env.baseUrl || (prodBuild ? '/api/' : `http://${devHost}:${devGrailsPort}/`),
@@ -659,7 +651,9 @@ async function configureWebpack(env) {
                     template: path.resolve(hoistPath, `static/index-manifest.html`),
                     filename: `${jsAppName}/index.html`,
                     // Only include chunks that contain the js app name
-                    chunks: chunkNames.filter(it => it.startsWith(jsAppName) || it.includes('~' + jsAppName)),
+                    chunks: chunkNames.filter(
+                        it => it.startsWith(jsAppName) || it.includes('~' + jsAppName)
+                    ),
                     // No need to minify the HTML itself
                     minify: false,
                     // Flag read within template file to include apple icon.
@@ -726,11 +720,16 @@ async function configureWebpack(env) {
         devServer: prodBuild
             ? undefined
             : {
-                  https: devHttps,
                   host: devHost,
                   port: devWebpackPort,
                   hot: true,
                   client: {overlay: devClientOverlay},
+                  server:
+                      devHttps === true
+                          ? {type: 'https'}
+                          : _.isPlainObject(devHttps)
+                            ? {type: 'https', options: {...devHttps}}
+                            : undefined,
                   open: env.devServerOpenPage ? [env.devServerOpenPage] : false,
                   // Support HTML5 history routes for apps, with /appName/ as the base route for each
                   historyApiFallback: {
