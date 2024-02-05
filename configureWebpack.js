@@ -659,7 +659,7 @@ async function configureWebpack(env) {
                     template: path.resolve(hoistPath, `static/index-manifest.html`),
                     filename: `${jsAppName}/index.html`,
                     // Only include chunks that contain the js app name
-                    chunks: chunkNames.filter(it => it.includes(jsAppName)),
+                    chunks: chunkNames.filter(it => it.startsWith(jsAppName) || it.includes('~' + jsAppName)),
                     // No need to minify the HTML itself
                     minify: false,
                     // Flag read within template file to include apple icon.
