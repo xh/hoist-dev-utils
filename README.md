@@ -126,4 +126,4 @@ that uses Hoist-React, like [Toolbox](https://github.com/xh/toolbox).  Then foll
 
 ☎️ info@xh.io | <https://xh.io>
 
-Copyright © 2023 Extremely Heavy Industries Inc.
+Copyright © 2024 Extremely Heavy Industries Inc.
