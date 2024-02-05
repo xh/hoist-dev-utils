@@ -6,6 +6,21 @@
 
 * Fixed chunk collection so that similarly named apps within a project do not load each other's app chunk.
 
+### 📚 Libraries
+
+* @babel/* `7.22 → 7.23`
+* copy-webpack-plugin `11.0 → 12.0`
+* css-loader `6.8 → 6.10`
+* html-webpack-plugin `5.5 → 5.6`
+* mini-css-extract-plugin `2.7 → 2.8`
+* postcss-loader `7.3 → 8.1`
+* rimraf `4.4 → 5.0`
+* sass `1.63 → 1.70`
+* sass-loader `13.3 → 14.1`
+* webpack `5.88 → 5.90`
+* webpack-bundle-analyzer `4.9 → 4.10`
+* webpackbar `5.0 → 6.0`
+
 ## v7.0.0 - 2023-07-19
 
 * Updated `@xh/eslint-config` to v6.0, for use with Typescript v5.1+ and Hoist React v59+.
