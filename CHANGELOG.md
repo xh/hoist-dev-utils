@@ -1,6 +1,6 @@
 # Changelog
 
-## v8.0-SNAPSHOT
+## v7.1.0 - 2024-02-05
 
 * Updated to new webpack API for enabling HTTPS on local dev server. Note that the handling of the (rarely used) 
   `devHttps` parameter has changed.
