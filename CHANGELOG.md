@@ -2,7 +2,14 @@
 
 ## v7.2.0 - 2024-03-15
 
+### 🎁 New Features
+
 * Adds `xhClientApps` as a global constant for Hoist React v61+.
+
+### 📚 Libraries
+
+* Removed `clean-webpack-plugin`.  was not maintained and was causing runtime issues in development.
+  Its functionality is replaced by the `clean` option in the `output` section of the webpack config.
 
 ## v7.1.0 - 2024-02-05
 

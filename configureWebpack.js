@@ -12,7 +12,6 @@ const _ = require('lodash'),
     webpack = require('webpack'),
     BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin,
     CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin'),
-    {CleanWebpackPlugin} = require('clean-webpack-plugin'),
     CopyWebpackPlugin = require('copy-webpack-plugin'),
     MiniCssExtractPlugin = require('mini-css-extract-plugin'),
     HtmlWebpackPlugin = require('html-webpack-plugin'),
@@ -346,7 +345,8 @@ async function configureWebpack(env) {
             path: outPath,
             // (URL) path on which fully built app is served - i.e. root context
             publicPath: contextRoot,
-            pathinfo: !prodBuild
+            pathinfo: !prodBuild,
+            clean: true
         },
 
         optimization: {
@@ -600,9 +600,6 @@ async function configureWebpack(env) {
         },
 
         plugins: [
-            // Clean (remove) the output directory before each run.
-            new CleanWebpackPlugin(),
-
             // Load only the BlueprintJS icons used by Hoist-React components.
             !loadAllBlueprintJsIcons
                 ? new webpack.NormalModuleReplacementPlugin(
