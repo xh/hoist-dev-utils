@@ -1,5 +1,9 @@
 # Changelog
 
+## v7.2.0 - 2024-03-15
+
+* Adds `xhClientApps` as a global constant for Hoist React v61+.
+
 ## v7.1.0 - 2024-02-05
 
 * Updated to new webpack API for enabling HTTPS on local dev server. Note that the handling of the (rarely used) 
