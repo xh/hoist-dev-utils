@@ -620,6 +620,7 @@ async function configureWebpack(env) {
                 xhAppBuild: JSON.stringify(appBuild),
                 xhBaseUrl: JSON.stringify(baseUrl),
                 xhBuildTimestamp: buildDate.getTime(),
+                xhClientApps: JSON.stringify(appNames),
                 xhIsDevelopmentMode: !prodBuild
             }),
 
