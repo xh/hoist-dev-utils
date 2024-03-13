@@ -1,5 +1,21 @@
 # Changelog
 
+## 8.0-SNAPSHOT
+
+### 💥 Breaking Changes
+
+* Requires Hoist-React v62+, from which older `index*.html` entry point templates were removed.  
+  Hoist-React's new `/static/index.html` file template is now the only supported entry point.  
+
+### ⚙️ Technical
+
+* Chunking strategy updated to use webpack's own naming strategy and own entry collection. This should
+  prevent any issues with build systems erroring on file names that are too long.
+
+### 📚 Libraries
+
+* `webpack-dev-server` 4.15.0 → 5.0.3, and other libraries bumped to latest versions.
+
 ## v7.2.0 - 2024-03-15
 
 ### 🎁 New Features

@@ -355,8 +355,7 @@ async function configureWebpack(env) {
 
             // Produce chunks for any shared imports across JS apps.
             splitChunks: {
-                chunks: 'all',
-                maxSize: 1000000  // ~1MB, size pre-compression
+                chunks: 'all'
             },
 
             // Improved debugging with readable module/chunk names.
@@ -635,7 +634,7 @@ async function configureWebpack(env) {
                     title: appName,
                     favicon: favicon,
                     // Note: HTML template is sourced from hoist-react.
-                    template: path.resolve(hoistPath, `static/index-manifest.html`),
+                    template: path.resolve(hoistPath, `static/index.html`),
                     filename: `${jsAppName}/index.html`,
 
                     // Take 0 chunks from plugin, because we collect just the ones for the jsAppName
@@ -648,6 +647,9 @@ async function configureWebpack(env) {
                     // This will provide the html tag strings for just the css and js that jsAppName uses.
                     templateParameters: (compilation, assets, assetTags, options) => {
                         const tags = getFileDependenciesByEntrypoint(compilation, jsAppName);
+
+                        // Output recommended by plugin example:
+                        // https://github.com/jantimon/html-webpack-plugin/blob/main/examples/template-parameters/webpack.config.js
                         return {
                             compilation,
                             webpackConfig: compilation.options,
@@ -656,7 +658,7 @@ async function configureWebpack(env) {
                               files: assets,
                               options
                             },
-                              stylesTags: tags.css,
+                              styleTags: tags.css,
                               scriptTags: tags.js
                         };
                     },
