@@ -4,17 +4,20 @@
 
 ### 💥 Breaking Changes
 
-* Requires Hoist-React v62+, from which older `index*.html` entry point templates were removed.  
-  Hoist-React's new `/static/index.html` file template is now the only supported entry point.  
+* Requires Hoist-React v62+ and its updated (and now only) `/static/index.html` HTML entrypoint template.
 
 ### ⚙️ Technical
 
-* Chunking strategy updated to use webpack's own naming strategy and own entry collection. This should
-  prevent any issues with build systems erroring on file names that are too long.
+* Chunking of bundled JS and CSS outputs updated to use webpack's default naming and splitting strategy, avoiding issues
+  where builds with many client apps could generate bundle names that exceeded filename length limits.
+* Builds can now generate more but smaller chunks, allowing browsers to better parallelize the initial download of an
+  app's codebase.
 
 ### 📚 Libraries
 
-* `webpack-dev-server` 4.15.0 → 5.0.3, and other libraries bumped to latest versions.
+* @babel/* `7.23 → 7.24`
+* sass `1.70 → 1.72`
+* webpack-dev-server `4.15 → 5.0`
 
 ## v7.2.0 - 2024-03-15
 
@@ -24,12 +27,12 @@
 
 ### 📚 Libraries
 
-* Removed `clean-webpack-plugin`.  was not maintained and was causing runtime issues in development.
+* Removed `clean-webpack-plugin`. was not maintained and was causing runtime issues in development.
   Its functionality is replaced by the `clean` option in the `output` section of the webpack config.
 
 ## v7.1.0 - 2024-02-05
 
-* Updated to new webpack API for enabling HTTPS on local dev server. Note that the handling of the (rarely used) 
+* Updated to new webpack API for enabling HTTPS on local dev server. Note that the handling of the (rarely used)
   `devHttps` parameter has changed.
 
 ### 🐞 Bug Fixes
