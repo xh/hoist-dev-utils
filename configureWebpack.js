@@ -654,12 +654,12 @@ async function configureWebpack(env) {
                             compilation,
                             webpackConfig: compilation.options,
                             htmlWebpackPlugin: {
-                              tags: assetTags,
-                              files: assets,
-                              options
+                                tags: assetTags,
+                                files: assets,
+                                options
                             },
-                              styleTags: tags.css,
-                              scriptTags: tags.js
+                            styleTags: tags.css,
+                            scriptTags: tags.js
                         };
                     },
                     // No need to minify the HTML itself
@@ -730,7 +730,7 @@ async function configureWebpack(env) {
             : {
                   host: devHost,
                   port: devWebpackPort,
-                  hot: false,  // Hot module replacement is not currently supported by Hoist, but live reload is.
+                  hot: false, // Hot module replacement is not currently supported by Hoist, but live reload is.
                   client: {overlay: devClientOverlay},
                   server:
                       devHttps === true
@@ -822,20 +822,21 @@ const extraPluginsDev = () => {
     ];
 };
 
+// Resolves the specific script + style chunks required by a given client app entry point, to be injected into
+// the generated HTML index page for that client app.
 function getFileDependenciesByEntrypoint(compilation, entryName) {
-    const ret = {
-        css: '',
-        js: ''
-    };
-
-    compilation.entrypoints?.get(entryName)?.getFiles()?.forEach((file) => {
-        const ext = path.extname(file).slice(1);
-        if (['css', 'js'].includes(ext)) {
-            ret[ext] += ext === 'js' ?
-                `<script defer src="../${file}"></script>` :
-                `<link rel="stylesheet" href="../${file}" />`;
-        }
-    });
+    const ret = {css: '', js: ''};
+    compilation.entrypoints
+        .get(entryName)
+        .getFiles()
+        .forEach(file => {
+            const ext = path.extname(file).slice(1);
+            if (ext === 'js') {
+                ret.js += `<script defer src="../${file}"></script>`;
+            } else if (ext === 'css') {
+                ret.css += `<link rel="stylesheet" href="../${file}" />`;
+            }
+        });
 
     return ret;
 }
