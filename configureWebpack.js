@@ -380,7 +380,7 @@ async function configureWebpack(env) {
             // Add JSX to support imports from .jsx source w/o needing to add the extension.
             // Include "*" to continue supporting other imports that *do* specify an extension
             // within the import statement (i.e. `import './foo.png'`). Yes, it's confusing.
-            extensions: ['*', '.js', '.ts', '.jsx', '.tsx', '.json']
+            extensions: ['.*', '.js', '.ts', '.jsx', '.tsx', '.json']
         },
 
         // Ensure Webpack can find loaders installed both within the top-level node_modules dir for
@@ -414,7 +414,13 @@ async function configureWebpack(env) {
                             test: /\.mjs$/,
                             type: 'javascript/auto'
                         },
-
+                        //------------------------
+                        // Handle non-esModules from within esModules without specifying their file extension
+                        //------------------------
+                        {
+                            test: /\.m?js$/,
+                            resolve: {fullySpecified: false}
+                        },
                         //------------------------
                         // Image processing
                         // Encodes `url()` references directly when small enough.
@@ -593,6 +599,11 @@ async function configureWebpack(env) {
                             options: {
                                 name: 'static/media/[name].[hash:8].[ext]'
                             }
+                        },
+                        {
+                            test: /\.js$/,
+                            enforce: "pre",
+                            use: ["source-map-loader"],
                         }
                     ]
                 }
