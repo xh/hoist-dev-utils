@@ -1,10 +1,10 @@
 # Changelog
 
-## 8.0-SNAPSHOT
+## v8.0.0 - 2024-03-18
 
 ### 💥 Breaking Changes
 
-* Requires Hoist-React v62+ and its updated (and now only) `/static/index.html` HTML entrypoint template.
+* Requires Hoist-React v62+ with updated (and now only) `/static/index.html` HTML entrypoint template.
 
 ### ⚙️ Technical
 
@@ -27,7 +27,7 @@
 
 ### 📚 Libraries
 
-* Removed `clean-webpack-plugin`. was not maintained and was causing runtime issues in development.
+* Removed `clean-webpack-plugin` - it is no longer maintained and was causing runtime issues in development.
   Its functionality is replaced by the `clean` option in the `output` section of the webpack config.
 
 ## v7.1.0 - 2024-02-05
