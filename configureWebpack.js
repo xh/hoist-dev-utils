@@ -832,9 +832,9 @@ function getFileDependenciesByEntrypoint(compilation, entryName) {
         .forEach(file => {
             const ext = path.extname(file).slice(1);
             if (ext === 'js') {
-                ret.js += `<script defer src="../${file}"></script>`;
+                ret.js += `<script defer src="/${file}"></script>`;
             } else if (ext === 'css') {
-                ret.css += `<link rel="stylesheet" href="../${file}" />`;
+                ret.css += `<link rel="stylesheet" href="/${file}" />`;
             }
         });
 
