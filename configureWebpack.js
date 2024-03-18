@@ -310,8 +310,7 @@ async function configureWebpack(env) {
                     path: path.resolve(appDirPath, f)
                 };
             }),
-        appNames = apps.map(it => it.name),
-        chunkNames = getChunkCombinations(appNames.sort());
+        appNames = apps.map(it => it.name);
 
     // Build Webpack entry config, with keys for each JS app to be bundled.
     const appEntryPoints = {};
@@ -337,11 +336,7 @@ async function configureWebpack(env) {
         entry: appEntryPoints,
 
         output: {
-            // Output built assets in directories per entry point / chunk.
-            // Use chunkhash in prod to get distinct hashes for app vs. common chunks (throws error in dev - investigate)
-            filename: prodBuild
-                ? '[name]/[name].[chunkhash:8].js'
-                : '[name]/[name].[fullhash:8].js',
+            filename: '[name].[chunkhash:8].js',
             path: outPath,
             // (URL) path on which fully built app is served - i.e. root context
             publicPath: contextRoot,
@@ -359,15 +354,8 @@ async function configureWebpack(env) {
             sideEffects: false,
 
             // Produce chunks for any shared imports across JS apps.
-            // Chunks are named by the JS app entry points to which they belong, concatenated with '~',
-            // e.g. `app.js`, `admin.js`, and `admin~app.js` for code shared by both apps.
             splitChunks: {
-                chunks: 'all',
-                name: (module, chunks) =>
-                    chunks
-                        .sort()
-                        .map(it => it.name)
-                        .join('~')
+                chunks: 'all'
             },
 
             // Improved debugging with readable module/chunk names.
@@ -646,12 +634,34 @@ async function configureWebpack(env) {
                     title: appName,
                     favicon: favicon,
                     // Note: HTML template is sourced from hoist-react.
-                    template: path.resolve(hoistPath, `static/index-manifest.html`),
+                    template: path.resolve(hoistPath, `static/index.html`),
                     filename: `${jsAppName}/index.html`,
-                    // Only include chunks that contain the js app name
-                    chunks: chunkNames.filter(
-                        it => it.startsWith(jsAppName) || it.includes('~' + jsAppName)
-                    ),
+
+                    // Take 0 chunks from plugin, because we collect just the ones for the jsAppName
+                    // below in templateParameters
+                    chunks: [],
+
+                    // No need to ever cache here, either in production or development
+                    cache: false,
+
+                    // This will provide the html tag strings for just the css and js that jsAppName uses.
+                    templateParameters: (compilation, assets, assetTags, options) => {
+                        const tags = getFileDependenciesByEntrypoint(compilation, jsAppName);
+
+                        // Output recommended by plugin example:
+                        // https://github.com/jantimon/html-webpack-plugin/blob/main/examples/template-parameters/webpack.config.js
+                        return {
+                            compilation,
+                            webpackConfig: compilation.options,
+                            htmlWebpackPlugin: {
+                                tags: assetTags,
+                                files: assets,
+                                options
+                            },
+                            styleTags: tags.css,
+                            scriptTags: tags.js
+                        };
+                    },
                     // No need to minify the HTML itself
                     minify: false,
                     // Flag read within template file to include apple icon.
@@ -720,7 +730,7 @@ async function configureWebpack(env) {
             : {
                   host: devHost,
                   port: devWebpackPort,
-                  hot: true,
+                  hot: false, // Hot module replacement is not currently supported by Hoist, but live reload is.
                   client: {overlay: devClientOverlay},
                   server:
                       devHttps === true
@@ -734,7 +744,8 @@ async function configureWebpack(env) {
                       rewrites: appNames.map(appName => {
                           return {
                               from: new RegExp(`^/${appName}`),
-                              to: `/${appName}/index.html`
+                              // helps cache busting during live reload in development
+                              to: `/${appName}/index.html?_=${Date.now()}`
                           };
                       })
                   }
@@ -777,7 +788,7 @@ const extraPluginsProd = terserOptions => {
     return [
         // Extract built CSS files into subdirectories by chunk / entry point name.
         new MiniCssExtractPlugin({
-            filename: '[name]/[name].[contenthash:8].css'
+            filename: '[name].[contenthash:8].css'
         }),
 
         // Minify and tree-shake via Terser - https://github.com/terser/terser#readme
@@ -811,18 +822,22 @@ const extraPluginsDev = () => {
     ];
 };
 
-// Generate combinations for given chunkNames. Given a list of apps such as [admin, app, mobile],
-// possible chunk combos will be of the form admin, admin~app, app~mobile, and so on...
-function getChunkCombinations(appNames) {
-    let ret = [];
-    const combineRecursiveFn = (path, arr, sep) => {
-        for (let i = 0; i < arr.length; i++) {
-            const newPath = path + sep + arr[i];
-            ret.push(newPath);
-            combineRecursiveFn(newPath, arr.slice(i + 1), '~');
-        }
-    };
-    combineRecursiveFn('', appNames, '');
+// Resolves the specific script + style chunks required by a given client app entry point, to be injected into
+// the generated HTML index page for that client app.
+function getFileDependenciesByEntrypoint(compilation, entryName) {
+    const ret = {css: '', js: ''};
+    compilation.entrypoints
+        .get(entryName)
+        .getFiles()
+        .forEach(file => {
+            const ext = path.extname(file).slice(1);
+            if (ext === 'js') {
+                ret.js += `<script defer src="/${file}"></script>`;
+            } else if (ext === 'css') {
+                ret.css += `<link rel="stylesheet" href="/${file}" />`;
+            }
+        });
+
     return ret;
 }
 
