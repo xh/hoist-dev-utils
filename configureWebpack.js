@@ -81,6 +81,7 @@ try {
  * @param {Object} [env.manifestConfig] - override values for manifest.json file. This controls options related to
  *      adding a mobile app to a device home screen, as well as "installing" an app via Chrome's "create shortcut"
  *      option. See https://developer.mozilla.org/en-US/docs/Web/Manifest for options.
+ * @param {string} [env.preloadBackgroundColor] - background color to use for the preloader spinner. Defaults to white.
  * @param {string[]} [env.targetBrowsers] - array of browserslist queries specifying target browsers for Babel and CSS
  *      transpiling and processing.
  * @param {Object} [env.babelPresetEnvOptions] - options to spread onto / override defaults passed here to the Babel
@@ -139,6 +140,7 @@ async function configureWebpack(env) {
         parseChangelog = env.parseChangelog !== false,
         favicon = env.favicon || null,
         manifestConfig = env.manifestConfig || {},
+        preloadBackgroundColor = env.preloadBackgroundColor || 'white',
         stats = env.stats || 'errors-only',
         infrastructureLoggingLevel = env.infrastructureLoggingLevel || 'error',
         targetBrowsers = env.targetBrowsers || [
@@ -226,9 +228,9 @@ async function configureWebpack(env) {
     // unprocessed/unbundled and injected into HTML index files prior to any bundles.
     const preflightScriptPath = path.resolve(hoistPath, 'static/preflight.js');
 
-    // Resolve path to spinner image included in HR >= 43 to prep for copy into public assets.
+    // Resolve path to preload spinner image to prep for copy into public assets.
     // Displayed by generated HTML index page while JS app downloads and starts.
-    const preloadSpinnerPath = path.resolve(hoistPath, 'static/spinner.png');
+    const preloadSpinnerPath = path.resolve(hoistDevUtilsPath, 'static/spinner.png');
 
     // Tell webpack where to look for modules when resolving imports - this is the key to getting
     // inlineHoist mode to look in within the checked-out hoist-react project at hoistPath.
@@ -301,7 +303,7 @@ async function configureWebpack(env) {
 
     // Resolve app entry points - one for each file within src/apps/ - to create bundles below.
     const appDirPath = path.resolve(srcPath, 'apps'),
-        apps = fs
+        clientApps = fs
             .readdirSync(appDirPath)
             .filter(f => f.endsWith('.js') || f.endsWith('.ts'))
             .map(f => {
@@ -310,19 +312,22 @@ async function configureWebpack(env) {
                     path: path.resolve(appDirPath, f)
                 };
             }),
-        appNames = apps.map(it => it.name);
+        clientAppNames = clientApps.map(it => it.name);
 
     // Build Webpack entry config, with keys for each JS app to be bundled.
     const appEntryPoints = {};
-    apps.forEach(app => {
+    clientApps.forEach(clientApp => {
         // Ensure core-js and regenerator-runtime both imported for every app bundle - they are
         // specified as dependencies by Hoist and imported once in its polyfills.js file.
-        appEntryPoints[app.name] = [path.resolve(hoistPath, 'static/polyfills.js'), app.path];
+        appEntryPoints[clientApp.name] = [
+            path.resolve(hoistPath, 'static/polyfills.js'),
+            clientApp.path
+        ];
     });
 
     logSep();
     logMsg('🎁  App bundle entry points:');
-    appNames.forEach(it => logMsg(`  > ${it}`));
+    clientAppNames.forEach(it => logMsg(`  > ${it}`));
     logSep();
     logMsg('🤕  Something going wrong?');
     logMsg('  > support@xh.io');
@@ -605,7 +610,7 @@ async function configureWebpack(env) {
                 xhAppBuild: JSON.stringify(appBuild),
                 xhBaseUrl: JSON.stringify(baseUrl),
                 xhBuildTimestamp: buildDate.getTime(),
-                xhClientApps: JSON.stringify(appNames),
+                xhClientApps: JSON.stringify(clientAppNames),
                 xhIsDevelopmentMode: !prodBuild
             }),
 
@@ -616,8 +621,8 @@ async function configureWebpack(env) {
                 contextRegExp: /moment$/
             }),
 
-            // Copy preflight script and spinner provided by HR, plus entire /client-app/public
-            // directory into the build output.
+            // Copy preflight script provided by HR, preload spinner included here in DU,
+            // plus entire /client-app/public directory into the build output.
             new CopyWebpackPlugin({
                 patterns: _.compact([
                     {from: preflightScriptPath, to: 'public'},
@@ -629,13 +634,12 @@ async function configureWebpack(env) {
             }),
 
             // Generate HTML index pages - one per JS app.
-            ...appNames.map(jsAppName => {
+            ...clientAppNames.map(clientAppName => {
                 return new HtmlWebpackPlugin({
                     title: appName,
                     favicon: favicon,
-                    // Note: HTML template is sourced from hoist-react.
-                    template: path.resolve(hoistPath, `static/index.html`),
-                    filename: `${jsAppName}/index.html`,
+                    template: path.resolve(hoistDevUtilsPath, `static/index.html`),
+                    filename: `${clientAppName}/index.html`,
 
                     // Take 0 chunks from plugin, because we collect just the ones for the jsAppName
                     // below in templateParameters
@@ -646,11 +650,14 @@ async function configureWebpack(env) {
 
                     // This will provide the html tag strings for just the css and js that jsAppName uses.
                     templateParameters: (compilation, assets, assetTags, options) => {
-                        const tags = getFileDependenciesByEntrypoint(compilation, jsAppName);
+                        const {styleTags, scriptTags} = getFileDependenciesByEntrypoint(
+                            compilation,
+                            clientAppName
+                        );
 
-                        // Output recommended by plugin example:
-                        // https://github.com/jantimon/html-webpack-plugin/blob/main/examples/template-parameters/webpack.config.js
                         return {
+                            // Base output recommended by plugin example:
+                            // https://github.com/jantimon/html-webpack-plugin/blob/main/examples/template-parameters/webpack.config.js
                             compilation,
                             webpackConfig: compilation.options,
                             htmlWebpackPlugin: {
@@ -658,8 +665,11 @@ async function configureWebpack(env) {
                                 files: assets,
                                 options
                             },
-                            styleTags: tags.css,
-                            scriptTags: tags.js
+                            // XH additions
+                            styleTags,
+                            scriptTags,
+                            clientAppName,
+                            preloadBackgroundColor
                         };
                     },
                     // No need to minify the HTML itself
@@ -669,20 +679,21 @@ async function configureWebpack(env) {
                 });
             }),
 
-            // Create a manifest.json. The icon choices here work with the favicon provided
+            // Create a manifest.json for each app. The icon choices here work with the favicon provided
             // to HtmlWebpackPlugin above to match the spec here:
             // https://evilmartians.com/chronicles/how-to-favicon-in-2021-six-files-that-fit-most-needs
-            new HoistManifestPlugin({
-                name: appName,
-                short_name: appName,
-                description: `${appName} - ${appVersion}`,
-                display: 'standalone',
-                orientation: 'any',
-                start_url: '/',
-                background_color: '#ffffff',
-                theme_color: '#212121', // off-black from default `--xh-black` CSS var
-                icons: manifestIcons,
-                ...manifestConfig
+            ...clientAppNames.map(clientAppName => {
+                return new HoistManifestPlugin(clientAppName, {
+                    name: appName,
+                    short_name: appName,
+                    description: `${appName} - ${appVersion}`,
+                    display: 'standalone',
+                    orientation: 'any',
+                    background_color: preloadBackgroundColor, // ignored by Safari, but also used within index.html
+                    theme_color: '#212121', // off-black from default `--xh-black` CSS var
+                    icons: manifestIcons,
+                    ...manifestConfig
+                });
             }),
 
             // Insert a script tag for the (unbundled) preflight script, before all other scripts.
@@ -741,7 +752,7 @@ async function configureWebpack(env) {
                   open: env.devServerOpenPage ? [env.devServerOpenPage] : false,
                   // Support HTML5 history routes for apps, with /appName/ as the base route for each
                   historyApiFallback: {
-                      rewrites: appNames.map(appName => {
+                      rewrites: clientAppNames.map(appName => {
                           return {
                               from: new RegExp(`^/${appName}`),
                               // helps cache busting during live reload in development
@@ -757,7 +768,15 @@ async function configureWebpack(env) {
 // Implementation
 //------------------------
 class HoistManifestPlugin {
-    constructor(content = {}) {
+    constructor(clientAppName, content = {}) {
+        this.clientAppName = clientAppName;
+
+        // We create one of these per clientApp. Default start_url to the clientApp's root, to bring user back to the
+        // clientApp from which they added the bookmark without any need for redirects, respecting possible override.
+        if (!content.start_url) {
+            content = {...content, start_url: `/${clientAppName}/`};
+        }
+
         this.content = content;
     }
 
@@ -774,9 +793,11 @@ class HoistManifestPlugin {
                     stage: Compilation.PROCESS_ASSETS_STAGE_SUMMARIZE
                 },
                 () => {
+                    // Emit client-app specific manifest.json within /public, to avoid issues with deeper routes
+                    // and relative paths. This is picked up by this project's /static/index.html template.
                     compilation.emitAsset(
-                        '/public/manifest.json',
-                        new RawSource(JSON.stringify(this.content))
+                        `/public/${this.clientAppName}/manifest.json`,
+                        new RawSource(JSON.stringify(this.content, null, 2))
                     );
                 }
             );
@@ -824,17 +845,17 @@ const extraPluginsDev = () => {
 
 // Resolves the specific script + style chunks required by a given client app entry point, to be injected into
 // the generated HTML index page for that client app.
-function getFileDependenciesByEntrypoint(compilation, entryName) {
-    const ret = {css: '', js: ''};
+function getFileDependenciesByEntrypoint(compilation, clientAppName) {
+    const ret = {scriptTags: '', styleTags: ''};
     compilation.entrypoints
-        .get(entryName)
+        .get(clientAppName)
         .getFiles()
         .forEach(file => {
             const ext = path.extname(file).slice(1);
             if (ext === 'js') {
-                ret.js += `<script defer src="/${file}"></script>`;
+                ret.scriptTags += `<script defer src="/${file}"></script>`;
             } else if (ext === 'css') {
-                ret.css += `<link rel="stylesheet" href="/${file}" />`;
+                ret.styleTags += `<link rel="stylesheet" href="/${file}" />`;
             }
         });
 

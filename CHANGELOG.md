@@ -1,5 +1,20 @@
 # Changelog
 
+## v8.1.0 - 2024-03-27
+
+### 🎁 New Features
+
+* Individual manifest.json files are now generated for each clientApp, with their starting URL set to the base URL
+  for that app. Intended specifically for mobile apps added to device home screens, so they can load their intended
+  client app directly without the need for additional redirects.
+* A new `preloadBackgroundColor` config will be applied to the preloader spinner, allowing apps to set a background
+  color that matches their app's theme. This can help minimize a flash of white when the app first loads.
+
+### ⚙️ Technical
+
+* The static `index.html` file used as an entry point template has been moved out of hoist-react and into this project,
+  to aid in future dev-utils releases where changes to this file are required.
+
 ## v8.0.0 - 2024-03-18
 
 ### 💥 Breaking Changes
