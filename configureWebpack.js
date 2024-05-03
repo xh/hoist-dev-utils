@@ -241,7 +241,7 @@ async function configureWebpack(env) {
         // to get hooks working since they will throw an error if the lib instance that the hook
         // was imported from is different than the instance that was used to render the component
         // (which will always be the instance hoist-react has when using element factories)
-        resolveAliases.react = path.resolve('./node_modules/react');
+        resolveAliases['react'] = path.resolve('./node_modules/react');
         resolveAliases['@ag-grid-community'] = path.resolve('./node_modules/@ag-grid-community');
     }
 
