@@ -237,11 +237,12 @@ async function configureWebpack(env) {
     if (inlineHoist) {
         resolveAliases['@xh/hoist'] = hoistPath;
 
-        // This ensures that we use the same instance of react in hoist-react as in the app - needed
-        // to get hooks working since they will throw an error if the react instance that the hook
+        // This ensures that we use the same instance of libs in hoist-react as in the app - needed
+        // to get hooks working since they will throw an error if the lib instance that the hook
         // was imported from is different than the instance that was used to render the component
         // (which will always be the instance hoist-react has when using element factories)
         resolveAliases.react = path.resolve('./node_modules/react');
+        resolveAliases['@ag-grid-community'] = path.resolve('./node_modules/@ag-grid-community');
     }
 
     // When running inline, resolve inline Hoist's own node_modules package so we can tell Babel to exclude
