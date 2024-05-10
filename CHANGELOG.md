@@ -1,6 +1,6 @@
 # Changelog
 
-## 9.0.0-SNAPSHOT
+## v8.1.1 - 2024-05-10
 
 ### ⚙️ Technical
 
