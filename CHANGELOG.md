@@ -1,5 +1,12 @@
 # Changelog
 
+## v8.1.1 - 2024-05-10
+
+### ⚙️ Technical
+
+* Added another `resolveAliases` entry to ensure that the same instance of `@ag-grid-community` is used when
+  developing inline.  This ensures there is only one version of ag-grid's hook contexts.
+
 ## v8.1.0 - 2024-03-27
 
 ### 🎁 New Features
