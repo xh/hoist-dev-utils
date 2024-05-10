@@ -1,5 +1,12 @@
 # Changelog
 
+## v9.0-SNAPSHOT
+
+### ⚙️ Technical
+
+* Updated the viewport `meta` tag within the static `index.html` template to remove constraints on user scaling.
+  (See https://github.com/xh/hoist-react/issues/3651.)
+
 ## v8.1.1 - 2024-05-10
 
 ### ⚙️ Technical
