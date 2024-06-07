@@ -6,7 +6,7 @@
 
 * Updated the viewport `meta` tag within the static `index.html` template to remove constraints on user scaling.
   (See https://github.com/xh/hoist-react/issues/3651.)
-* default `baseUrl` in development now has an adaptive protocol (http/https) based on browser location.  
+* Default `baseUrl` in development now has an adaptive protocol (http/https) based on browser location.  
   This makes it simpler for developers to configure their local sandbox to use https.
 
 ## v8.1.1 - 2024-05-10
