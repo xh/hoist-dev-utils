@@ -9,6 +9,15 @@
 * Default `baseUrl` in development now has an adaptive protocol (http/https) based on browser location.  
   This makes it simpler for developers to configure their local sandbox to use https.
 
+### 📚 Libraries
+
+* css-loader `6.10 → 7.1`
+* mini-css-extract-plugin `2.8 → 2.9`
+* sass `1.72 → 1.77`
+* sass-loader `14.1 → 14.2`
+* style-loader `3.3 → 4.0`
+* webpack `5.90 → 5.91`
+
 ## v8.1.1 - 2024-05-10
 
 ### ⚙️ Technical
