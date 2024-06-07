@@ -1,13 +1,13 @@
 # Changelog
 
-## v9.0-SNAPSHOT
+## v8.2.0 - 2024-06-07
 
 ### ⚙️ Technical
 
 * Updated the viewport `meta` tag within the static `index.html` template to remove constraints on user scaling.
   (See https://github.com/xh/hoist-react/issues/3651.)
 * Default `baseUrl` in development now has an adaptive protocol (http/https) based on browser location.  
-  This makes it simpler for developers to configure their local sandbox to use https.
+  This makes it simpler for developers to configure their local development environment to use https.
 
 ### 📚 Libraries
 
@@ -23,7 +23,7 @@
 ### ⚙️ Technical
 
 * Added another `resolveAliases` entry to ensure that the same instance of `@ag-grid-community` is used when
-  developing inline.  This ensures there is only one version of ag-grid's hook contexts.
+  developing inline. This ensures there is only one version of ag-grid's hook contexts.
 
 ## v8.1.0 - 2024-03-27
 
