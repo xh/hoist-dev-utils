@@ -132,7 +132,7 @@ async function configureWebpack(env) {
         devHttps = prodBuild ? null : _.isPlainObject(env.devHttps) ? env.devHttps : !!env.devHttps,
         devGrailsPort = env.devGrailsPort || 8080,
         devWebpackPort = env.devWebpackPort || 3000,
-        baseUrl = env.baseUrl || (prodBuild ? '/api/' : `http://${devHost}:${devGrailsPort}/`),
+        baseUrl = env.baseUrl || (prodBuild ? '/api/' : `//${devHost}:${devGrailsPort}/`),
         babelIncludePaths = env.babelIncludePaths || [],
         babelExcludePaths = env.babelExcludePaths || [],
         contextRoot = env.contextRoot || '/',
