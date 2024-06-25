@@ -2,7 +2,10 @@
   "name": "@xh/hoist-dev-utils",
   "version": "9.0.0-SNAPSHOT",
   "description": "Utilities for configuring builds of Hoist-React client applications.",
-  "repository": "github:xh/hoist-dev-utils",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xh/hoist-dev-utils.git"
+  },
   "homepage": "https://github.com/xh/hoist-dev-utils",
   "bugs": "https://github.com/xh/hoist-dev-utils/issues",
   "author": "Extremely Heavy Industries, Inc.",
