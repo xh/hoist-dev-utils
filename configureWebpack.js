@@ -223,15 +223,6 @@ async function configureWebpack(env) {
     const bpIconStubsPath = path.resolve(hoistDevUtilsPath, 'static/requiredBlueprintIcons.js'),
         loadAllBlueprintJsIcons = env.loadAllBlueprintJsIcons === true;
 
-    // Resolve path to script for preflight checks. With HR >= v36.1 this routine has been broken
-    // out into a standalone JS file to avoid the use of inline script tags. Script will be left
-    // unprocessed/unbundled and injected into HTML index files prior to any bundles.
-    const preflightScriptPath = path.resolve(hoistPath, 'static/preflight.js');
-
-    // Resolve path to preload spinner image to prep for copy into public assets.
-    // Displayed by generated HTML index page while JS app downloads and starts.
-    const preloadSpinnerPath = path.resolve(hoistDevUtilsPath, 'static/spinner.png');
-
     // Tell webpack where to look for modules when resolving imports - this is the key to getting
     // inlineHoist mode to look in within the checked-out hoist-react project at hoistPath.
     if (inlineHoist) {
@@ -622,12 +613,10 @@ async function configureWebpack(env) {
                 contextRegExp: /moment$/
             }),
 
-            // Copy preflight script provided by HR, preload spinner included here in DU,
-            // plus entire /client-app/public directory into the build output.
+            // Copy /public directories from HR and App into the output -- App files should win
             new CopyWebpackPlugin({
                 patterns: _.compact([
-                    {from: preflightScriptPath, to: 'public'},
-                    {from: preloadSpinnerPath, to: 'public'},
+                    {from: path.resolve(hoistPath, 'public'), to: 'public'},
                     copyPublicAssets
                         ? {from: path.resolve(basePath, 'public'), to: 'public'}
                         : undefined

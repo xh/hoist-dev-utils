@@ -1,5 +1,10 @@
 # Changelog
 
+## v8.3.0 - unreleased
+
+### ⚙️ Technical
+* Support for generic `/public` assets from `hoist-react` to be published with build.
+
 ## v8.2.0 - 2024-06-07
 
 ### ⚙️ Technical
