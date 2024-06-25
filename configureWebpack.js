@@ -613,7 +613,8 @@ async function configureWebpack(env) {
                 contextRegExp: /moment$/
             }),
 
-            // Copy /public directories from HR and App into the output -- App files should win
+            // Copy /public directories from HR and App into the output - App files should win.
+            // Note that this includes preflight.js from HR, injected into index.html below.
             new CopyWebpackPlugin({
                 patterns: _.compact([
                     {from: path.resolve(hoistPath, 'public'), to: 'public'},
