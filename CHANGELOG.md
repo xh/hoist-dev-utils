@@ -1,5 +1,16 @@
 # Changelog
 
+## v9.0.0 - 2024-06-25
+
+### 💥 Breaking Changes
+
+* Requires Hoist-React v64.1+ with updated static assets within a new `/public` directory. These are now copied at build
+  time to the `/public/` output directory, alongside (and deferring to) any app-provided assets. 
+
+### 📚 Libraries
+
+* webpack `5.91 → 5.92`
+
 ## v8.2.0 - 2024-06-07
 
 ### ⚙️ Technical
@@ -44,7 +55,7 @@
 
 ### 💥 Breaking Changes
 
-* Requires Hoist-React v62+ with updated (and now only) `/static/index.html` HTML entrypoint template.
+* Requires Hoist React v62+ with updated (and now only) `/static/index.html` HTML entrypoint template.
 
 ### ⚙️ Technical
 
@@ -182,7 +193,7 @@
 
 ### 💥 Breaking Changes
 
-* Requires Hoist React v48 or higher.
+* Requires Hoist React v48+.
 * Imports from `package.json` no longer support default export - you must import the entire package JSON as an object.
   This is most likely to be relevant in `Bootstrap.js` where apps read the Ag-Grid version from its package. See this
   file within the XH Toolbox app for the updated syntax.
@@ -447,7 +458,7 @@ see any indication that they would be incompatible.
   bundles them all by default, but Hoist already includes FontAwesome as our standard icon library.
     * If the full set of Blueprint icons are required for a special app use-case, `configureWebpack()`
       now supports a new `loadAllBlueprintJsIcons` argument to revert to the previous behavior.
-    * Requires `hoist-react` v35.2 or higher to supply the more minimal set of icon SVGs. Older
+    * Requires Hoist React v35.2+ to supply the more minimal set of icon SVGs. Older
       versions of HR are compatible with this version of dev-utils, but the icons optimization will
       not be activated.
 
