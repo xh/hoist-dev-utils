@@ -1,6 +1,6 @@
 {
   "name": "@xh/hoist-dev-utils",
-  "version": "9.0.1",
+  "version": "10.0.0-SNAPSHOT",
   "description": "Utilities for configuring builds of Hoist-React client applications.",
   "repository": {
     "type": "git",
