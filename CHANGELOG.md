@@ -1,11 +1,18 @@
 # Changelog
 
+## v10.0.0-SNAPSHOT
+
+### 📚 Libraries
+
+* type-fest `added @ 4.x` - ensure that apps have a recent version of this library installed as a dev dependency. It's
+  required to compile hoist-react typescript as part of the current combined Hoist + app build.
+
 ## v9.0.0 - 2024-06-25
 
 ### 💥 Breaking Changes
 
 * Requires Hoist-React v64.1+ with updated static assets within a new `/public` directory. These are now copied at build
-  time to the `/public/` output directory, alongside (and deferring to) any app-provided assets. 
+  time to the `/public/` output directory, alongside (and deferring to) any app-provided assets.
 
 ### 📚 Libraries
 
