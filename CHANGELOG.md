@@ -1,11 +1,12 @@
 # Changelog
 
-## v10.0.0-SNAPSHOT
+## v9.0.1 - 2024-08-01
 
 ### 📚 Libraries
 
-* type-fest `added @ 4.x` - ensure that apps have a recent version of this library installed as a dev dependency. It's
-  required to compile hoist-react typescript as part of the current combined Hoist + app build.
+* type-fest `added @ 4.x` - ensures that apps have a recent version of this library installed as a dev dependency.
+  (It's required to compile hoist-react typescript as part of the current combined Hoist + app build.)
+* webpack `5.92 → 5.93`
 
 ## v9.0.0 - 2024-06-25
 
