@@ -1,5 +1,17 @@
 # Changelog
 
+## v10.0.0-SNAPSHOT
+
+### 📚 Libraries
+
+* babel-loader `9.1 → 9.2`
+* rimraf `5.0 → 6.0`
+* sass-embedded `1.77 → 1.82` (swaps out sass for sass-embedded)
+* sass-loader `14.2 → 16.0`
+* webpack `5.93 → 5.97`
+* webpack-dev-server `5.0 → 5.1`
+* webpackbar `6.0 → 7.0`
+
 ## v9.0.1 - 2024-08-01
 
 ### 📚 Libraries
