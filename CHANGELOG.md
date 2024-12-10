@@ -2,6 +2,11 @@
 
 ## v10.0.0-SNAPSHOT
 
+### 💥 Breaking Changes
+
+* Requires Hoist-React v70.1+ with workaround for SASS/CSS processing issue caused by bad syntax in the `react-dates`
+  library, which started throwing an error after the updates to sass in this dev-utils release.
+
 ### 📚 Libraries
 
 * babel-loader `9.1 → 9.2`
