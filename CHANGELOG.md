@@ -4,17 +4,18 @@
 
 ### 💥 Breaking Changes
 
-* Requires Hoist-React v70.1+ with workaround for SASS/CSS processing issue caused by bad syntax in the `react-dates`
+* Requires `hoist-react >= 71.0` with workaround for SASS/CSS processing issue caused by bad syntax in the `react-dates`
   library, which started throwing an error after the updates to sass in this dev-utils release.
 
 ### 📚 Libraries
 
 * babel-loader `9.1 → 9.2`
 * rimraf `5.0 → 6.0`
-* sass-embedded `1.77 → 1.82` (swaps out sass for sass-embedded)
+* sass-embedded `1.77 → 1.83` (swaps out sass for sass-embedded)
 * sass-loader `14.2 → 16.0`
 * webpack `5.93 → 5.97`
-* webpack-dev-server `5.0 → 5.1`
+* webpack-cli `5.1 → 6.0`
+* webpack-dev-server `5.0 → 5.2`
 * webpackbar `6.0 → 7.0`
 
 ## v9.0.1 - 2024-08-01
@@ -29,8 +30,8 @@
 
 ### 💥 Breaking Changes
 
-* Requires Hoist-React v64.1+ with updated static assets within a new `/public` directory. These are now copied at build
-  time to the `/public/` output directory, alongside (and deferring to) any app-provided assets.
+* Requires `hoist-react >= 64.1` with updated static assets within a new `/public` directory. These are now copied at 
+  build time to the `/public/` output directory, alongside (and deferring to) any app-provided assets.
 
 ### 📚 Libraries
 
