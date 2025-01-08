@@ -1,5 +1,7 @@
 # Changelog
 
+## v11.0.0-SNAPSHOT - unreleased
+
 ## v10.0.0 - 2025-01-08
 
 ### 💥 Breaking Changes
