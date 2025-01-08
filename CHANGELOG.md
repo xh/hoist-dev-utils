@@ -1,6 +1,6 @@
 # Changelog
 
-## v10.0.0-SNAPSHOT
+## v10.0.0 - 2025-01-07
 
 ### 💥 Breaking Changes
 
