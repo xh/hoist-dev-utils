@@ -19,6 +19,7 @@ const _ = require('lodash'),
     TerserPlugin = require('terser-webpack-plugin'),
     WebpackBar = require('webpackbar'),
     DuplicatePackageCheckerPlugin = require('@cerner/duplicate-package-checker-webpack-plugin'),
+    TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin'),
     parseChangelogMarkdown = require('changelog-parser'),
     babelCorePkg = require('@babel/core/package'),
     devUtilsPkg = require('./package'),
@@ -362,6 +363,7 @@ async function configureWebpack(env) {
 
         resolve: {
             alias: resolveAliases,
+            plugins: [new TsconfigPathsPlugin({configFile: path.resolve(basePath, 'tsconfig.json')})],
             // Add JSX to support imports from .jsx source w/o needing to add the extension.
             // Include "*" to continue supporting other imports that *do* specify an extension
             // within the import statement (i.e. `import './foo.png'`). Yes, it's confusing.

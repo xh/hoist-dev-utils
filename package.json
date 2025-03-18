@@ -55,6 +55,7 @@
     "webpackbar": "~7.0.0"
   },
   "devDependencies": {
-    "prettier": "3.x"
+    "prettier": "3.x",
+    "tsconfig-paths-webpack-plugin": "^4.2.0"
   }
 }
