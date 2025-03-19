@@ -362,8 +362,8 @@ async function configureWebpack(env) {
         },
 
         resolve: {
-            alias: resolveAliases,
             plugins: [new TsconfigPathsPlugin({configFile: path.resolve(basePath, 'tsconfig.json')})],
+            alias: resolveAliases,
             // Add JSX to support imports from .jsx source w/o needing to add the extension.
             // Include "*" to continue supporting other imports that *do* specify an extension
             // within the import statement (i.e. `import './foo.png'`). Yes, it's confusing.
