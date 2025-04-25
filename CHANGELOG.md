@@ -4,7 +4,15 @@
 
 ### 🎁 New Features
 
-* added new `env` option: `devServerOptions` to spread any option onto / override defaults passed to the devServer.
+* Added new `devServerOptions` config to override defaults passed to the Webpack `devServer`.
+
+### 📚 Libraries
+
+* babel-loader `9.2 → 10.0`
+* copy-webpack-plugin `12.0 → 13.0`
+* postcss `8.4 → 8.5`
+* sass-embedded `1.83 → 1.87`
+* webpack `5.97 → 5.99`
 
 ## v10.0.0 - 2025-01-08
 
