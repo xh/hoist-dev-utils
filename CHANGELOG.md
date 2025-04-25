@@ -2,6 +2,10 @@
 
 ## v11.0.0-SNAPSHOT - unreleased
 
+### 🎁 New Features
+
+* added new `env` option: `devServerOptions` to spread any option onto / override defaults passed to the devServer.
+
 ## v10.0.0 - 2025-01-08
 
 ### 💥 Breaking Changes

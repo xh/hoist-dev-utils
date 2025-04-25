@@ -108,6 +108,7 @@ try {
  *  @param {(boolean|Object)} [env.devHttps] - `true` to run webpack-dev-server locally over SSL w/o providing a cert
  *      (browser will warn). Or provide an object that will be passed to `devServer.server.options` to enable SSL and
  *      while specifying a custom cert/key. Default `false` runs locally over HTTP only. Dev-mode only.
+ *  @param {Object} [env.devServerOptions] - options to spread onto / override defaults passed here to the devServer.
  */
 async function configureWebpack(env) {
     if (!env.appCode) throw 'Missing required "appCode" config - cannot proceed';
@@ -132,6 +133,7 @@ async function configureWebpack(env) {
         devHttps = prodBuild ? null : _.isPlainObject(env.devHttps) ? env.devHttps : !!env.devHttps,
         devGrailsPort = env.devGrailsPort || 8080,
         devWebpackPort = env.devWebpackPort || 3000,
+        devServerOptions = env.devServerOptions || {},
         baseUrl = env.baseUrl || (prodBuild ? '/api/' : `//${devHost}:${devGrailsPort}/`),
         babelIncludePaths = env.babelIncludePaths || [],
         babelExcludePaths = env.babelExcludePaths || [],
@@ -750,7 +752,8 @@ async function configureWebpack(env) {
                               to: `/${appName}/index.html?_=${Date.now()}`
                           };
                       })
-                  }
+                  },
+                ...devServerOptions
               }
     };
 }
