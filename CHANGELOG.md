@@ -8,6 +8,7 @@
 
 ### 📚 Libraries
 
+* @babel/* `7.24 → 7.27`
 * babel-loader `9.2 → 10.0`
 * copy-webpack-plugin `12.0 → 13.0`
 * postcss `8.4 → 8.5`
