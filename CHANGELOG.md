@@ -6,8 +6,8 @@
 
 * Requires `hoist-react >= 73.0`
 * Upgrade from @xh/eslint-config v6.0 to v7.0 requires changes to Hoist Applications' `eslint` configurations. 
-  Rename the `.eslintrc` file to `eslint.client.js` and use the configuration found in Toolbox's 
-  `eslint.client.js` as the new base example `eslint` configuration.
+  Rename the `.eslintrc` file to `eslint.config.js` and use the configuration found in Toolbox's 
+  `eslint.config.js` as the new base example `eslint` configuration.
 
 ### 📚 Libraries
 
