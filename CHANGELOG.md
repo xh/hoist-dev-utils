@@ -1,5 +1,16 @@
 # Changelog
 
+## v11.0.0-SNAPSHOT NOT YET RELEASED
+
+### 💥 Breaking Changes
+
+* Requires `hoist-react >= 73.0`
+* Apps must rename their .eslintrc file to eslint.client.cjs and copy the configuration found in Toolbox.
+
+### 📚 Libraries
+
+@xh/eslint-config `6.0 -> 7.0`
+
 ## v10.1.0 - 2025-05-01
 
 ### 🎁 New Features
