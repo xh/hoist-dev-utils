@@ -1,5 +1,18 @@
 # Changelog
 
+## v11.0.0 - 2025-05-15
+
+### 💥 Breaking Changes
+
+* Requires `hoist-react >= 73.0`
+* Upgrade from @xh/eslint-config v6.0 to v7.0 requires changes to Hoist Applications' `eslint` configurations. 
+  Rename the `.eslintrc` file to `eslint.client.js` and use the configuration found in Toolbox's 
+  `eslint.client.js` as the new base example `eslint` configuration.
+
+### 📚 Libraries
+
+@xh/eslint-config `6.0 -> 7.0`
+
 ## v10.1.0 - 2025-05-01
 
 ### 🎁 New Features
