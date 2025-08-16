@@ -43,7 +43,7 @@ try {
  * applications.
  *
  * Sample commands to run configurations produced by this method include:
- *      `webpack --env.prodBuild --env appVersion=1.2.3` to trigger a build at version 1.2.3
+ *      `webpack --env prodBuild --env appVersion=1.2.3` to trigger a build at version 1.2.3
  *      `webpack-dev-server --env inlineHoist` to run dev server w/hoist-react in inline mode
  *
  * @param {Object} env - config passed in from app webpack config or the CLI via --env flags.
