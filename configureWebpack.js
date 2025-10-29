@@ -237,7 +237,6 @@ async function configureWebpack(env) {
         resolveAliases['react'] = path.resolve('./node_modules/react');
         // Also ensure a single instance of ag-Grid when Hoist is inline, needed to support use of
         // `useGridMenuItem` hook.
-        resolveAliases['ag-grid-community'] = path.resolve('./node_modules/ag-grid-community');
         resolveAliases['ag-grid-react'] = path.resolve('./node_modules/ag-grid-react');
     }
 
