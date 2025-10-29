@@ -1,10 +1,10 @@
 # Changelog
 
-## v12.0-SNAPSHOT
+## v11.0.1 - 2025-10-29
 
-### 🎁 New Features
+### ⚙️ Technical
 
-* Added new resolution rule when developing Hoist inline to ensure AG Grid hooks only resolve to a single instance.
+* Updated resolution rule needed when developing Hoist inline to ensure AG Grid hooks only resolve to a single instance.
 
 ## v11.0.0 - 2025-05-15
 
