@@ -1,5 +1,16 @@
 # Changelog
 
+## v11.1.0 - 2026-01-02
+
+### 📚 Libraries
+
+* postcss-loader `8.1 → 8.2`
+* rimraf `6.0 → 6.1`
+* sass-embedded `1.87 → 1.97`
+* type-fest `4.41 → 5.3`
+* webpack `5.99 → 5.104`
+* webpack-bundle-analyzer `4.10 → 5.1`
+
 ## v11.0.1 - 2025-10-29
 
 ### ⚙️ Technical
@@ -11,9 +22,9 @@
 ### 💥 Breaking Changes
 
 * Requires `hoist-react >= 73.0`
-* Upgrade from @xh/eslint-config v6.0 to v7.0 requires changes to Hoist Applications' `eslint` configurations. 
-  Rename the `.eslintrc` file to `eslint.config.js` and use the configuration found in Toolbox's 
-  `eslint.config.js` as the new base example `eslint` configuration.
+* Upgrade from `@xh/eslint-config` v6.0 to v7.0 requires changes to Hoist Applications' `eslint` configurations:
+  Rename the `.eslintrc` file to `eslint.config.js` and use the configuration found in Toolbox's `eslint.config.js` as
+  a new baseline example
 
 ### 📚 Libraries
 
@@ -64,7 +75,7 @@
 
 ### 💥 Breaking Changes
 
-* Requires `hoist-react >= 64.1` with updated static assets within a new `/public` directory. These are now copied at 
+* Requires `hoist-react >= 64.1` with updated static assets within a new `/public` directory. These are now copied at
   build time to the `/public/` output directory, alongside (and deferring to) any app-provided assets.
 
 ### 📚 Libraries
