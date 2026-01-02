@@ -896,4 +896,4 @@ plugin we had been using in favor of `core-js@3` for polyfills (as of 7.5).
 
 ☎️ info@xh.io | <https://xh.io>
 
-Copyright © 2024 Extremely Heavy Industries Inc.
+Copyright © 2026 Extremely Heavy Industries Inc.
