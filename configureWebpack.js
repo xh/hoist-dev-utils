@@ -18,7 +18,6 @@ const _ = require('lodash'),
     HtmlWebpackTagsPlugin = require('html-webpack-tags-plugin'),
     TerserPlugin = require('terser-webpack-plugin'),
     WebpackBar = require('webpackbar'),
-    DuplicatePackageCheckerPlugin = require('@cerner/duplicate-package-checker-webpack-plugin'),
     parseChangelogMarkdown = require('changelog-parser'),
     babelCorePkg = require('@babel/core/package'),
     devUtilsPkg = require('./package'),
@@ -61,10 +60,6 @@ try {
  *      when running the dev server.
  * @param {Object} [env.resolveAliases] - object mapping for custom webpack module resolution.
  *      When inlineHoist=true, a mapping between @xh/hoist and the local path will be added.
- * @param {boolean} [env.checkForDupePackages=true] - true to run build throughDuplicatePackageCheckerPlugin and output
- *      a build-time warning if duplicate packages have been resolved due to non-overlapping dependencies.
- * @param {string[]} [env.dupePackageCheckExcludes] - optional list of string package names to exclude from dupe package
- *      checking. Defaults to ['tslib'].
  * @param {string} [env.baseUrl] - root path prepended to all relative URLs called via FetchService. Defaults to
  *      `/api/` in production mode to work with proxy-based deployments and to `$devHost:$devGrailsPort` in dev mode.
  * @param {string[]} [env.babelIncludePaths] - additional paths to pass Babel for transpiling via settings shared with
@@ -122,8 +117,6 @@ async function configureWebpack(env) {
         reactProdMode = prodBuild || env.reactProdMode === true,
         resolveAliases = Object.assign({}, env.resolveAliases),
         analyzeBundles = env.analyzeBundles === true,
-        checkForDupePackages = env.checkForDupePackages !== false,
-        dupePackageCheckExcludes = env.dupePackageCheckExcludes || ['tslib'],
         devClientOverlay = env.devClientOverlay ?? {
             errors: true,
             warnings: false,
@@ -703,16 +696,6 @@ async function configureWebpack(env) {
             analyzeBundles
                 ? new BundleAnalyzerPlugin({
                       analyzerMode: 'server'
-                  })
-                : undefined,
-
-            // Warn on dupe package included in bundle due to multiple, conflicting versions.
-            checkForDupePackages
-                ? new DuplicatePackageCheckerPlugin({
-                      verbose: true,
-                      showHelp: false,
-                      strict: false,
-                      exclude: instance => dupePackageCheckExcludes.includes(instance.name)
                   })
                 : undefined,
 

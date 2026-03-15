@@ -53,8 +53,26 @@ into the app's `node_modules`. Changes take effect immediately.
 ### Versioning
 
 - `develop` branch for feature work, `master` for releases
-- Version follows `MAJOR.MINOR.PATCH-SNAPSHOT` pattern between releases
-- Breaking changes are documented in `CHANGELOG.md`
+- Version in `package.json` follows `MAJOR.MINOR.PATCH-SNAPSHOT` between releases
+
+### Changelog
+
+All notable changes are documented in `CHANGELOG.md`. The topmost entry covers unreleased work and
+uses the SNAPSHOT version as its heading with no date (e.g. `## v12.0.0-SNAPSHOT`). The actual
+release version may differ. At release time, the heading is updated to the final version with a date
+(e.g. `## v11.2.0 - 2026-03-15`).
+
+Entries use categorized sections with emoji headings as needed:
+- `### 💥 Breaking Changes` — incompatible changes, note required hoist-react version
+- `### 🎁 New Features` — new configureWebpack options or capabilities
+- `### ⚙️ Technical` — internal changes, refactors, config adjustments
+- `### 🐞 Bug Fixes`
+- `### 📚 Libraries` — dependency version updates
+
+The `📚 Libraries` section lists packages as `* package-name \`oldMajor.oldMinor → newMajor.newMinor\``,
+`added @ version` for new deps, and `removed` for dropped deps. Prose context can precede the list
+when helpful (e.g. explaining a tooling swap). Major library upgrades that require app-level changes
+should also be noted under `💥 Breaking Changes`.
 
 ## Code Style
 

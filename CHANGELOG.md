@@ -1,5 +1,13 @@
 # Changelog
 
+## v12.0.0-SNAPSHOT
+
+### ⚙️ Technical
+
+* Removed `@cerner/duplicate-package-checker-webpack-plugin` dependency. This plugin is no longer
+  maintained (Cerner GitHub org archived) and provided limited value. The `checkForDupePackages` and
+  `dupePackageCheckExcludes` config options are no longer supported.
+
 ## v11.1.0 - 2026-01-02
 
 ### 📚 Libraries
