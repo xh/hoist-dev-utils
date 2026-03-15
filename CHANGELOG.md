@@ -8,6 +8,17 @@
   maintained (Cerner GitHub org archived) and provided limited value. The `checkForDupePackages` and
   `dupePackageCheckExcludes` config options are no longer supported.
 
+### 📚 Libraries
+
+* babel-loader `10.0 → 10.1`
+* copy-webpack-plugin `13.0 → 14.0`
+* mini-css-extract-plugin `2.9 → 2.10`
+* sass-embedded `1.97 → 1.98`
+* terser-webpack-plugin `5.3 → 5.4`
+* webpack `5.104 → 5.105`
+* webpack-bundle-analyzer `5.1 → 5.2`
+* webpack-cli `6.0 → 7.0`
+
 ## v11.1.0 - 2026-01-02
 
 ### 📚 Libraries
