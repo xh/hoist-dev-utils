@@ -41,10 +41,21 @@ jobs:
         - name: Install dependencies
           run: yarn install --frozen-lockfile
 
-        - name: Prepare snapshot version
+        - name: Read current version from package.json
+          if: inputs.version == ''
+          id: current-version
+          run: echo "current-version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+        - name: Resolve snapshot version
+          id: snapshot
           uses: ./.github/actions/set-validate-snapshot-version
           with:
-              version: ${{ inputs.version }}
+              version: ${{ inputs.version || steps.current-version.outputs.current-version }}
+
+        - name: Set snapshot version in package.json
+          env:
+              VERSION: ${{ steps.snapshot.outputs.snapshot-version }}
+          run: npm version --no-git-tag-version --new-version "$VERSION"
 
         - name: Publish snapshot to npm
           env:

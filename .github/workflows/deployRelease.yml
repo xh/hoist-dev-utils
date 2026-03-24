@@ -35,6 +35,7 @@ jobs:
               fetch-depth: 0
               fetch-tags: true
 
+        # Checkout is required to be called with `fetch-depth: 0` and `fetch-tags: true`.
         - name: Validate release version
           uses: ./.github/actions/validate-release-version
           with:
