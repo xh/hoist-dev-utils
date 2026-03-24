@@ -16,7 +16,7 @@ setup_repo() {
     local tmpdir
     tmpdir=$(mktemp -d)
     git -C "$tmpdir" init -q
-    git -C "$tmpdir" commit --allow-empty -m "init" -q
+    git -C "$tmpdir" -c user.email="test@test.com" -c user.name="Test" commit --allow-empty -m "init" -q
     echo "$tmpdir"
 }
 
