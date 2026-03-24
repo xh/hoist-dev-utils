@@ -19,6 +19,10 @@ on:
                 default: false
                 type: boolean
 
+concurrency:
+    group: deploy-release
+    cancel-in-progress: false
+
 jobs:
     build:
         # Guards against accidental release from develop. Requires master for standard

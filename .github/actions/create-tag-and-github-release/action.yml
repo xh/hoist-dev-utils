@@ -45,11 +45,12 @@ runs:
                   MAJOR=$(echo "$VERSION" | cut -d. -f1)
                   PREV_TAG=$(git tag -l "v${MAJOR}.*" \
                       | grep -E "^v[0-9]+\.[0-9]+\.[0-9]+$" \
+                      | sed 's/^v//' \
                       | sort -t. -k1,1n -k2,2n -k3,3n \
-                      | grep -v "^v${VERSION}$" \
+                      | grep -v "^${VERSION}$" \
                       | tail -1) || true
                   if [ -n "$PREV_TAG" ]; then
-                      NOTES_FLAG="--generate-notes --notes-start-tag $PREV_TAG"
+                      NOTES_FLAG="--generate-notes --notes-start-tag v$PREV_TAG"
                   fi
               fi
               gh release create "v$VERSION" \
