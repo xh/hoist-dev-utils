@@ -1,8 +1,8 @@
-name: Test GitHub Actions
+name: Test Validate Release Version Script
 
 on:
     pull_request:
-        paths: ['.github/actions/**']
+        paths: ['.github/actions/validate-release-version/**']
     workflow_dispatch:
 
 jobs:
