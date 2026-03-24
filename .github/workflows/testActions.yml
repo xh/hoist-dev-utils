@@ -1,0 +1,16 @@
+name: Test GitHub Actions
+
+on:
+    push:
+        paths: ['.github/actions/**']
+    pull_request:
+        paths: ['.github/actions/**']
+    workflow_dispatch:
+
+jobs:
+    test-validate-release-version:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - name: Test validate-release-version
+              run: bash .github/actions/validate-release-version/test-validate-release-version.sh
