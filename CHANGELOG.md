@@ -2,6 +2,15 @@
 
 ## v12.0.0-SNAPSHOT
 
+### 💥 Breaking Changes
+
+* The webpack dev server now proxies API requests to the Grails backend, serving client resources
+  and API responses from the same port. The default `baseUrl` in dev mode changed from the
+  cross-origin `//devHost:devGrailsPort/` to `/api/` (matching production). Requests to `/api/...`
+  are proxied to Grails with the prefix stripped. This mirrors the production nginx setup, avoids
+  CORS issues, and simplifies local development. Apps with an explicit `baseUrl` are unaffected.
+  Requires `@xh/hoist` v84+ for WebSocket compatibility.
+
 ### ⚙️ Technical
 
 * Removed `@cerner/duplicate-package-checker-webpack-plugin` dependency. This plugin is no longer

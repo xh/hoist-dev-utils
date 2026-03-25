@@ -61,7 +61,7 @@ try {
  * @param {Object} [env.resolveAliases] - object mapping for custom webpack module resolution.
  *      When inlineHoist=true, a mapping between @xh/hoist and the local path will be added.
  * @param {string} [env.baseUrl] - root path prepended to all relative URLs called via FetchService. Defaults to
- *      `/api/` in production mode to work with proxy-based deployments and to `$devHost:$devGrailsPort` in dev mode.
+ *      `/api/`. In dev mode, requests to this path are proxied to the Grails backend at `devHost:devGrailsPort`.
  * @param {string[]} [env.babelIncludePaths] - additional paths to pass Babel for transpiling via settings shared with
  *      app-level and @xh/hoist code. Intended for custom packages.
  * @param {string[]} [env.babelExcludePaths] - paths to exclude from Babel transpiling. An example use would be a local
@@ -127,7 +127,7 @@ async function configureWebpack(env) {
         devGrailsPort = env.devGrailsPort || 8080,
         devWebpackPort = env.devWebpackPort || 3000,
         devServerOptions = env.devServerOptions || {},
-        baseUrl = env.baseUrl || (prodBuild ? '/api/' : `//${devHost}:${devGrailsPort}/`),
+        baseUrl = env.baseUrl || '/api/',
         babelIncludePaths = env.babelIncludePaths || [],
         babelExcludePaths = env.babelExcludePaths || [],
         contextRoot = env.contextRoot || '/',
@@ -160,6 +160,7 @@ async function configureWebpack(env) {
     logSep();
     if (prodBuild) logMsg('🚀  Production build enabled');
     if (!prodBuild) logMsg('💻  Development mode enabled');
+    if (!prodBuild) logMsg(`🔀  Dev proxy → ${devHttps ? 'https' : 'http'}://${devHost}:${devGrailsPort}`);
     if (inlineHoist) logMsg('🏗️   Inline Hoist enabled');
     if (reactProdMode) logMsg('⚛️   React Production mode enabled');
     if (analyzeBundles) logMsg('🎁  Bundle analysis enabled');
@@ -738,6 +739,17 @@ async function configureWebpack(env) {
                           };
                       })
                   },
+                  // Proxy API requests to the Grails backend, mirroring the production nginx setup.
+                  proxy: [
+                      {
+                          context: '/api',
+                          target: `${devHttps ? 'https' : 'http'}://${devHost}:${devGrailsPort}`,
+                          pathRewrite: {'^/api': ''},
+                          changeOrigin: true,
+                          secure: false,
+                          ws: true
+                      }
+                  ],
                 ...devServerOptions
               }
     };
