@@ -61,7 +61,7 @@ try {
  * @param {Object} [env.resolveAliases] - object mapping for custom webpack module resolution.
  *      When inlineHoist=true, a mapping between @xh/hoist and the local path will be added.
  * @param {string} [env.baseUrl] - root path prepended to all relative URLs called via FetchService. Defaults to
- *      `/api/`. In dev mode, requests to this path are proxied to the Grails backend at `devHost:devGrailsPort`.
+ *      `/api/`, a root path that will cause the request to be proxied to the Grails backend at `devHost:devGrailsPort`.
  * @param {string[]} [env.babelIncludePaths] - additional paths to pass Babel for transpiling via settings shared with
  *      app-level and @xh/hoist code. Intended for custom packages.
  * @param {string[]} [env.babelExcludePaths] - paths to exclude from Babel transpiling. An example use would be a local
