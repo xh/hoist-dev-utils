@@ -1,0 +1,21 @@
+name: Unit Test Github Actions
+
+on:
+    pull_request:
+        paths: ['.github/actions/**']
+    workflow_dispatch:
+
+jobs:
+    test-validate-release-version:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v6
+            - name: Test validate-release-version
+              run: bash .github/actions/validate-release-version/validate-release-version.test.sh
+
+    test-validate-release-version:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v6
+            - name: Test validate-release-version
+              run: bash .github/actions/validate-release-version/validate-release-version.test.sh

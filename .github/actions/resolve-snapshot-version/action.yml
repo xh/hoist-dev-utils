@@ -1,11 +1,11 @@
-# Set & Validate Snapshot Version — Reusable composite action that validates a SNAPSHOT version.
+# Resolve Snapshot Version — Reusable composite action that ensures a SNAPSHOT version is valid.
 #
 # Ensures the provided version contains the -SNAPSHOT suffix (appending it if missing),
 # and optionally appends a timestamp for uniqueness (required for NPM, rejected by Maven Central).
 # Does NOT modify any project files — callers are responsible for applying the resolved version.
 
-name: Set & Validate Snapshot Version
-description: Validates a SNAPSHOT version, optionally appending a timestamp for uniqueness.
+name: Resolve Snapshot Version
+description: Outputs a valid 'snapshot-version', optionally appending a timestamp for uniqueness.
 
 inputs:
     version:
@@ -18,13 +18,13 @@ inputs:
 
 outputs:
     snapshot-version:
-        description: 'The final validated SNAPSHOT version.'
+        description: 'The resolved SNAPSHOT version.'
         value: ${{ steps.validate.outputs.snapshot-version }}
 
 runs:
     using: composite
     steps:
-        - name: Validate SNAPSHOT version
+        - name: Resolve SNAPSHOT version
           id: validate
           shell: bash
           env:

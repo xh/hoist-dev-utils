@@ -1,7 +1,7 @@
-# Create Tag & GitHub Release — Reusable composite action for tagging and releasing.
+# Create Tag & GitHub Release — Reusable composite action for tagging and creating github "release" artifacts.
 #
 # Tags the current commit, pushes the tag, and creates a GitHub release with auto-generated
-# notes. For hotfix releases, scopes the notes to the relevant major version line and marks
+# notes. For hotfix releases, scopes the notes to the relevant previous release and marks
 # the release as non-latest.
 #
 # Prerequisites: The calling workflow must checkout with fetch-depth: 0 and fetch-tags: true
