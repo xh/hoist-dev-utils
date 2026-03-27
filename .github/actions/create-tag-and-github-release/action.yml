@@ -1,0 +1,55 @@
+# Create Tag & GitHub Release — Reusable composite action.
+#
+# Tags the current commit, pushes the tag, and creates a GitHub release with auto-generated
+# notes. Uses find-latest-version.sh to scope release notes to the semver-previous tag.
+# Hotfix releases are marked as non-latest.
+#
+# Prerequisites: The calling workflow must checkout with fetch-depth: 0 and fetch-tags: true
+# so that all git tags are available locally.
+
+name: Create Tag & GitHub Release
+description: Tags the commit, pushes the tag, and creates a GitHub release with auto-generated notes.
+
+inputs:
+    version:
+        description: 'The release version (e.g. 12.0.0).'
+        required: true
+    is-hotfix:
+        description: 'Set to true for hotfix releases. Marks the release as non-latest.'
+        required: false
+        default: 'false'
+
+runs:
+    using: composite
+    steps:
+        - name: Tag release
+          shell: bash
+          env:
+              VERSION: ${{ inputs.version }}
+          run: |
+              git tag "v$VERSION"
+              git push origin "v$VERSION"
+
+        - name: Create GitHub release
+          shell: bash
+          env:
+              VERSION: ${{ inputs.version }}
+              IS_HOTFIX: ${{ inputs.is-hotfix }}
+          run: |
+              LATEST_FLAG="--latest"
+              # Hotfix releases are not latest.
+              if [ "$IS_HOTFIX" = "true" ]; then
+                  LATEST_FLAG="--latest=false"
+              fi
+              # Always scope release notes to the semver-previous tag so that
+              # hotfix tags created out of order don't skew the range.
+              NOTES_FLAG="--generate-notes"
+              PREV_TAG=$("$GITHUB_WORKSPACE/.github/scripts/find-latest-version.sh" "$VERSION") || true
+              if [ -n "$PREV_TAG" ]; then
+                  NOTES_FLAG="--generate-notes --notes-start-tag v$PREV_TAG"
+              fi
+
+              gh release create "v$VERSION" \
+                  --title "v$VERSION" \
+                  $NOTES_FLAG \
+                  "$LATEST_FLAG"

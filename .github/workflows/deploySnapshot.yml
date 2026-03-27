@@ -1,0 +1,54 @@
+# Deploy Snapshot — Publishes a SNAPSHOT build to npm on every push to develop.
+#
+# Snapshots are mutable development builds (version from package.json, e.g. 8.0.0-SNAPSHOT).
+# They are published with the `next` dist-tag so they don't affect `latest`. For numbered
+# releases, see Deploy Release.
+
+name: Deploy Snapshot
+
+on:
+    push:
+        branches: [ "develop" ]
+    workflow_dispatch:
+        inputs:
+            version:
+                description: '(Optional) Snapshot version to override default in package.json. Note that the suffix "-SNAPSHOT" will be automatically appended if not present.'
+                required: false
+                default: ''
+                type: string
+
+# Debounce builds by branch. Newer runs from a branch will cancel the current run and start over.
+concurrency:
+    group: deploy-snapshot-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    build:
+
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+
+        steps:
+        - uses: actions/checkout@v6
+
+        - name: Setup Node.js
+          uses: actions/setup-node@v6
+          with:
+              node-version-file: '.nvmrc'
+              registry-url: 'https://registry.npmjs.org'
+              cache: 'yarn'
+
+        - name: Install dependencies
+          run: yarn install --frozen-lockfile
+
+        - name: Prepare snapshot version
+          id: snapshot
+          uses: ./.github/actions/prepare-npm-snapshot-version
+          with:
+              version: ${{ inputs.version }}
+
+        - name: Publish snapshot to npm
+          env:
+              NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          run: npm publish --tag next
