@@ -19,6 +19,7 @@ on:
                 default: false
                 type: boolean
 
+# Run all release builds one-by-one, but never cancel a release build due to another one.
 concurrency:
     group: deploy-release
     cancel-in-progress: false
