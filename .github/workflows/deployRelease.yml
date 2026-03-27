@@ -1,8 +1,8 @@
 # Deploy Release — Publishes a numbered release to npm.
 #
-# Manually triggered from the master branch. Validates the version input, publishes to npm,
-# tags the commit, and creates a GitHub release with auto-generated notes. For snapshot
-# builds, see Deploy Snapshot.
+# Manually triggered. Standard releases run from master; hotfixes run from a dedicated
+# branch. Validates the version input, publishes to npm, tags the commit, and creates a
+# GitHub release with auto-generated notes. For snapshot builds, see Deploy Snapshot.
 
 name: Deploy Release
 

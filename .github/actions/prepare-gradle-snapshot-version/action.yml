@@ -1,0 +1,62 @@
+# Prepare Gradle Snapshot Version — Reads, resolves, and sets a SNAPSHOT version in gradle.properties.
+#
+# If no version override is provided, reads the current version from gradle.properties
+# using the specified property name. Ensures the version has a -SNAPSHOT suffix and
+# writes the resolved version back to gradle.properties.
+
+name: Prepare Gradle Snapshot Version
+description: Prepares a SNAPSHOT version and sets it in gradle.properties.
+
+inputs:
+    version:
+        description: 'Override version. If empty, reads from gradle.properties. The suffix "-SNAPSHOT" will be appended if not present.'
+        required: false
+        default: ''
+    version-prop:
+        description: 'The property name in gradle.properties that holds the version (e.g. xhReleaseVersion, xhAppVersion).'
+        required: true
+    append-timestamp:
+        description: 'Append a millisecond timestamp for uniqueness. Defaults to false as it must be false for Maven Central.'
+        required: false
+        default: 'false'
+
+outputs:
+    snapshot-version:
+        description: 'The resolved SNAPSHOT version.'
+        value: ${{ steps.resolve.outputs.snapshot-version }}
+
+runs:
+    using: composite
+    steps:
+        - name: Prepare and set SNAPSHOT version
+          id: resolve
+          shell: bash
+          env:
+              VERSION: ${{ inputs.version }}
+              VERSION_PROP: ${{ inputs.version-prop }}
+              APPEND_TIMESTAMP: ${{ inputs.append-timestamp }}
+          run: |
+              # Read from gradle.properties if no override provided.
+              if [ -z "$VERSION" ]; then
+                  VERSION=$(grep "^${VERSION_PROP}=" gradle.properties | cut -d'=' -f2)
+                  if [ -z "$VERSION" ]; then
+                      echo "::error::Property '$VERSION_PROP' not found in gradle.properties."
+                      exit 1
+                  fi
+              fi
+
+              # Ensure -SNAPSHOT suffix.
+              if [[ ! "$VERSION" == *-SNAPSHOT ]]; then
+                  VERSION="$VERSION-SNAPSHOT"
+              fi
+
+              # Append timestamp for uniqueness.
+              if [[ "$APPEND_TIMESTAMP" == "true" ]]; then
+                  VERSION="$VERSION.$(date +%s%3N)"
+              fi
+
+              # Write resolved version to gradle.properties.
+              sed -i "s/^${VERSION_PROP}=.*/${VERSION_PROP}=$VERSION/" gradle.properties
+
+              echo "Prepared snapshot version: $VERSION"
+              echo "snapshot-version=$VERSION" >> "$GITHUB_OUTPUT"

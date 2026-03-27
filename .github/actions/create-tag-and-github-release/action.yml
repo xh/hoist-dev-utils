@@ -1,8 +1,8 @@
-# Create Tag & GitHub Release — Reusable composite action for tagging and creating github "release" artifacts.
+# Create Tag & GitHub Release — Reusable composite action.
 #
 # Tags the current commit, pushes the tag, and creates a GitHub release with auto-generated
-# notes. For hotfix releases, scopes the notes to the relevant previous release and marks
-# the release as non-latest.
+# notes. Uses find-latest-version.sh to scope release notes to the semver-previous tag.
+# Hotfix releases are marked as non-latest.
 #
 # Prerequisites: The calling workflow must checkout with fetch-depth: 0 and fetch-tags: true
 # so that all git tags are available locally.
@@ -15,7 +15,7 @@ inputs:
         description: 'The release version (e.g. 12.0.0).'
         required: true
     is-hotfix:
-        description: 'Set to true for hotfix releases. Scopes notes to the major version line and marks as non-latest.'
+        description: 'Set to true for hotfix releases. Marks the release as non-latest.'
         required: false
         default: 'false'
 
@@ -37,22 +37,18 @@ runs:
               IS_HOTFIX: ${{ inputs.is-hotfix }}
           run: |
               LATEST_FLAG="--latest"
-              NOTES_FLAG="--generate-notes"
-              # For hotfixes, mark as non-latest and scope release notes to only
-              # include changes since the previous tag in the same major version line.
+              # Hotfix releases are not latest.
               if [ "$IS_HOTFIX" = "true" ]; then
                   LATEST_FLAG="--latest=false"
-                  MAJOR=$(echo "$VERSION" | cut -d. -f1)
-                  PREV_TAG=$(git tag -l "v${MAJOR}.*" \
-                      | grep -E "^v[0-9]+\.[0-9]+\.[0-9]+$" \
-                      | sed 's/^v//' \
-                      | sort -t. -k1,1n -k2,2n -k3,3n \
-                      | grep -v "^${VERSION}$" \
-                      | tail -1) || true
-                  if [ -n "$PREV_TAG" ]; then
-                      NOTES_FLAG="--generate-notes --notes-start-tag v$PREV_TAG"
-                  fi
               fi
+              # Always scope release notes to the semver-previous tag so that
+              # hotfix tags created out of order don't skew the range.
+              NOTES_FLAG="--generate-notes"
+              PREV_TAG=$("$GITHUB_WORKSPACE/.github/scripts/find-latest-version.sh" "$VERSION") || true
+              if [ -n "$PREV_TAG" ]; then
+                  NOTES_FLAG="--generate-notes --notes-start-tag v$PREV_TAG"
+              fi
+
               gh release create "v$VERSION" \
                   --title "v$VERSION" \
                   $NOTES_FLAG \

@@ -1,8 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SCRIPT="$SCRIPT_DIR/validate-release-version.sh"
+# Tests for validate-release-version.sh (and transitively find-latest-version.sh).
+# Each test creates a temporary git repo with specific tags and asserts that the
+# validation script accepts or rejects a given version.
+#
+# Usage:
+#   bash .github/test/validate-release-version.test.sh
+
+TEST_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT="$TEST_DIR/../scripts/validate-release-version.sh"
 
 PASS=0
 FAIL=0

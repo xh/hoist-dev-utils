@@ -1,8 +1,8 @@
 # Validate Release Version — Reusable composite action for semver validation.
 #
-# Checks that a proposed release version is valid semver, has not already been tagged,
-# and is a strict single increment from the latest relevant tag. Supports hotfix releases
-# to older version lines.
+# Delegates to .github/scripts/validate-release-version.sh to check that a proposed
+# release version is valid semver, has not already been tagged, and is a strict single
+# increment from the latest relevant tag. Supports hotfix releases to older version lines.
 #
 # Prerequisites: The calling workflow must checkout with fetch-depth: 0 and fetch-tags: true
 # so that all git tags are available locally.
@@ -27,4 +27,4 @@ runs:
           env:
               VERSION: ${{ inputs.version }}
               IS_HOTFIX: ${{ inputs.is-hotfix }}
-          run: bash "${{ github.action_path }}/validate-release-version.sh"
+          run: bash "$GITHUB_WORKSPACE/.github/scripts/validate-release-version.sh"
