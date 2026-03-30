@@ -136,6 +136,31 @@ This example file:
 If required, rules and other settings extended from this base configuration can be overridden at the
 app level.
 
+## Shared GitHub Actions
+
+This repository provides a set of reusable [composite GitHub Actions](https://docs.github.com/en/actions/sharing-automations/creating-actions/creating-a-composite-action)
+for CI/CD across the Hoist ecosystem. These actions standardize release validation, snapshot
+versioning, and tag/release creation for all `xh` repositories — including npm-based projects
+(hoist-react, hoist-dev-utils) and Gradle-based projects (hoist-core).
+
+Available actions under `.github/actions/`:
+
+* **`validate-release-version`** — Ensures a proposed release version is valid semver and a strict
+  single increment from the latest tag. Supports hotfix releases.
+* **`prepare-npm-snapshot-version`** — Resolves and writes a SNAPSHOT version to `package.json`
+  with an optional uniqueness timestamp.
+* **`prepare-gradle-snapshot-version`** — Resolves and writes a SNAPSHOT version to
+  `gradle.properties` for Java/Grails projects.
+* **`create-tag-and-github-release`** — Tags a commit, pushes the tag, and creates a GitHub Release
+  with auto-generated notes.
+
+Because this is a public repository, these actions can be referenced by any GitHub repository.
+They are used by Hoist ecosystem projects and are available to any Hoist application or library.
+Consuming repos reference them at `xh/hoist-dev-utils/.github/actions/<name>@master`. Changes to these actions will be
+documented in `CHANGELOG.md` and reflected in semantic versioning alongside other updates to this
+package. See [`.github/README.md`](.github/README.md) for full documentation, inputs/outputs, and
+usage examples.
+
 ## Hoist Dev Utils Development
 
 To develop improvements to this library, clone its repo into your workspace alongside a project
