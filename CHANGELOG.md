@@ -1,6 +1,6 @@
 # Changelog
 
-## v12.0.0-SNAPSHOT
+## v11.2.0 - 2026-03-27
 
 ### 💥 Breaking Changes
 
@@ -16,6 +16,8 @@
 * Removed `@cerner/duplicate-package-checker-webpack-plugin` dependency. This plugin is no longer
   maintained (Cerner GitHub org archived) and provided limited value. The `checkForDupePackages` and
   `dupePackageCheckExcludes` config options are no longer supported.
+* Added GitHub Actions deployment scripts for CI/CD.
+* Added `CLAUDE.md` and MCP server configs for AI-assisted development.
 
 ### 📚 Libraries
 

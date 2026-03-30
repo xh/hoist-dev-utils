@@ -1,0 +1,54 @@
+# Prepare NPM Snapshot Version — Reads, prepares, and sets a SNAPSHOT version in package.json.
+#
+# If no version override is provided, reads the current version from package.json.
+# Ensures the version has a -SNAPSHOT suffix, optionally appends a timestamp for
+# uniqueness, and writes the prepared version back to package.json.
+
+name: Prepare NPM Snapshot Version
+description: Prepares a SNAPSHOT version and sets it in package.json.
+
+inputs:
+    version:
+        description: 'Override version. If empty, reads from package.json. The suffix "-SNAPSHOT" will be appended if not present.'
+        required: false
+        default: ''
+    append-timestamp:
+        description: 'Append a millisecond timestamp for uniqueness. Defaults to true as it is required for NPM snapshots.'
+        required: false
+        default: 'true'
+
+outputs:
+    snapshot-version:
+        description: 'The resolved SNAPSHOT version.'
+        value: ${{ steps.resolve.outputs.snapshot-version }}
+
+runs:
+    using: composite
+    steps:
+        - name: Prepare and set SNAPSHOT version
+          id: resolve
+          shell: bash
+          env:
+              VERSION: ${{ inputs.version }}
+              APPEND_TIMESTAMP: ${{ inputs.append-timestamp }}
+          run: |
+              # Read from package.json if no override provided.
+              if [ -z "$VERSION" ]; then
+                  VERSION=$(node -p "require('./package.json').version")
+              fi
+
+              # Ensure -SNAPSHOT suffix.
+              if [[ ! "$VERSION" == *-SNAPSHOT ]]; then
+                  VERSION="$VERSION-SNAPSHOT"
+              fi
+
+              # Append timestamp for uniqueness.
+              if [[ "$APPEND_TIMESTAMP" == "true" ]]; then
+                  VERSION="$VERSION.$(date +%s%3N)"
+              fi
+
+              # Write resolved version to package.json.
+              npm version --no-git-tag-version --new-version "$VERSION"
+
+              echo "Prepared snapshot version: $VERSION"
+              echo "snapshot-version=$VERSION" >> "$GITHUB_OUTPUT"
