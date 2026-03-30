@@ -9,7 +9,8 @@ reflected in semantic versioning.
 
 ## Reusable Composite Actions
 
-Reference these from any workflow in the `xh` organization:
+Reference these from any workflow, including from Hoist application builds, if public Github.com actions are 
+accessible and suitable for your project:
 
 ```yaml
 uses: xh/hoist-dev-utils/.github/actions/<action-name>@master
