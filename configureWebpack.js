@@ -160,7 +160,6 @@ async function configureWebpack(env) {
     logSep();
     if (prodBuild) logMsg('🚀  Production build enabled');
     if (!prodBuild) logMsg('💻  Development mode enabled');
-    if (!prodBuild) logMsg(`🔀  Dev proxy → ${devHttps ? 'https' : 'http'}://${devHost}:${devGrailsPort}`);
     if (inlineHoist) logMsg('🏗️   Inline Hoist enabled');
     if (reactProdMode) logMsg('⚛️   React Production mode enabled');
     if (analyzeBundles) logMsg('🎁  Bundle analysis enabled');
@@ -740,16 +739,20 @@ async function configureWebpack(env) {
                       })
                   },
                   // Proxy API requests to the Grails backend, mirroring the production nginx setup.
-                  proxy: [
-                      {
-                          context: '/api',
-                          target: `${devHttps ? 'https' : 'http'}://${devHost}:${devGrailsPort}`,
-                          pathRewrite: {'^/api': ''},
-                          changeOrigin: true,
-                          secure: false,
-                          ws: true
-                      }
-                  ],
+                  // Only needed when baseUrl is a relative path (default '/api/') — if baseUrl is
+                  // an absolute URL, the app will call the remote server directly.
+                  proxy: baseUrl.startsWith('/')
+                      ? [
+                            {
+                                context: baseUrl.slice(0, -1),
+                                target: `http://${devHost}:${devGrailsPort}`,
+                                pathRewrite: {[`^${baseUrl.slice(0, -1)}`]: ''},
+                                changeOrigin: true,
+                                secure: false,
+                                ws: true
+                            }
+                        ]
+                      : [],
                 ...devServerOptions
               }
     };
