@@ -1,5 +1,7 @@
 # Changelog
 
+## v13.0.0-SNAPSHOT - unreleased
+
 ## v12.0.0 - 2026-03-31
 
 ### 💥 Breaking Changes - requires hoist-react v83.0.2 or higher.
