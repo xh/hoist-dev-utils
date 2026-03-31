@@ -4,8 +4,9 @@
 # release version is valid semver, has not already been tagged, and is a strict single
 # increment from the latest relevant tag. Supports hotfix releases to older version lines.
 #
-# Prerequisites: The calling workflow must checkout with fetch-depth: 0 and fetch-tags: true
-# so that all git tags are available locally.
+# Prerequisites:
+#   - Release tags must follow the convention "v{X.Y.Z}" (e.g. v12.0.0).
+#   - The calling workflow must checkout with `fetch-depth: 0` and `fetch-tags: true` so that all git tags are available locally.
 
 name: Validate Release Version
 description: Validates that a release version is valid semver and a strict increment from the latest tag.
