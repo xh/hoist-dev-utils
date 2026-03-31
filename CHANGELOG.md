@@ -1,5 +1,17 @@
 # Changelog
 
+## v12.0.0 - 2026-03-31
+
+### 💥 Breaking Changes - requires hoist-react v83.0.2 or higher.
+
+* The webpack dev server now proxies API requests to the Grails backend, serving client resources
+  and API responses from the same port. The default `baseUrl` in dev mode changed from the
+  cross-origin `//devHost:devGrailsPort/` to `/api/` (matching production). Requests to `/api/...`
+  are proxied to Grails with the prefix stripped. This mirrors the production nginx setup, avoids
+  CORS issues, and simplifies local development. Apps with an explicit `baseUrl` are unaffected.
+  Requires `@xh/hoist` v84+ for WebSocket compatibility.
+
+
 ## v11.2.0 - 2026-03-27
 
 ### ⚙️ Technical
