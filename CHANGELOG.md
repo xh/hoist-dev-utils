@@ -4,15 +4,14 @@
 
 ## v12.0.0 - 2026-03-31
 
-### 💥 Breaking Changes - requires hoist-react v83.0.2 or higher.
+### 💥 Breaking Changes
 
+* Requires `hoist-react >= 83.0.2`.
 * The webpack dev server now proxies API requests to the Grails backend, serving client resources
   and API responses from the same port. The default `baseUrl` in dev mode changed from the
   cross-origin `//devHost:devGrailsPort/` to `/api/` (matching production). Requests to `/api/...`
   are proxied to Grails with the prefix stripped. This mirrors the production nginx setup, avoids
   CORS issues, and simplifies local development. Apps with an explicit `baseUrl` are unaffected.
-  Requires `@xh/hoist` v84+ for WebSocket compatibility.
-
 
 ## v11.2.0 - 2026-03-27
 
@@ -56,10 +55,10 @@
 
 ### 💥 Breaking Changes
 
-* Requires `hoist-react >= 73.0`
+* Requires `hoist-react >= 73.0`.
 * Upgrade from `@xh/eslint-config` v6.0 to v7.0 requires changes to Hoist Applications' `eslint` configurations:
   Rename the `.eslintrc` file to `eslint.config.js` and use the configuration found in Toolbox's `eslint.config.js` as
-  a new baseline example
+  a new baseline example.
 
 ### 📚 Libraries
 
