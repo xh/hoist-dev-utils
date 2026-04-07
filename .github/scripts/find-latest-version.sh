@@ -3,6 +3,9 @@ set -euo pipefail
 
 # Find the latest semver release tag, or the latest tag before a given version for the current git repo.
 #
+# Expects release tags to follow the convention "v{X.Y.Z}" (e.g. v12.1.0). Tags that do not match
+# this pattern are ignored.
+#
 # Usage:
 #   find-latest-version.sh            # prints the globally latest version (e.g. 12.1.0)
 #   find-latest-version.sh 11.2.0     # prints the highest version before 11.2.0 (e.g. 11.1.0)

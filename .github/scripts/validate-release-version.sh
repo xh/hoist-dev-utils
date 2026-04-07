@@ -4,6 +4,9 @@ set -euo pipefail
 # Validates a release version, ensuring it is either a new latest release or a hotfix release for the current git repo.
 # Prints an error and exits 1 if validation fails.
 #
+# Expects release tags to follow the convention "v{X.Y.Z}" (e.g. v12.0.0). The VERSION input should
+# be a bare version string without the "v" prefix.
+#
 # Env variables:
 #  VERSION    - The new semantic version number (X.Y.Z).
 #  IS_HOTFIX  - If false, must be exactly one increment ahead of the globally latest tag.
