@@ -44,7 +44,7 @@ runs:
               # Always scope release notes to the semver-previous tag so that
               # hotfix tags created out of order don't skew the range.
               NOTES_FLAG="--generate-notes"
-              PREV_TAG=$("$GITHUB_WORKSPACE/.github/scripts/find-latest-version.sh" "$VERSION") || true
+              PREV_TAG=$("$GITHUB_ACTION_PATH/../../scripts/find-latest-version.sh" "$VERSION") || true
               if [ -n "$PREV_TAG" ]; then
                   NOTES_FLAG="--generate-notes --notes-start-tag v$PREV_TAG"
               fi

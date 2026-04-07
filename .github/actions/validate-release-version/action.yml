@@ -27,4 +27,4 @@ runs:
           env:
               VERSION: ${{ inputs.version }}
               IS_HOTFIX: ${{ inputs.is-hotfix }}
-          run: bash "$GITHUB_WORKSPACE/.github/scripts/validate-release-version.sh"
+          run: bash "$GITHUB_ACTION_PATH/../../scripts/validate-release-version.sh"

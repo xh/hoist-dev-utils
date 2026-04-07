@@ -2,6 +2,10 @@
 
 ## v12.0.0-SNAPSHOT
 
+### 🐞 Bug Fixes
+
+  * Fixed bug in release-related GitHub actions that prevented them from working when used in other repos.
+
 ### ⚙️ Technical
 
 * Removed `@cerner/duplicate-package-checker-webpack-plugin` dependency. This plugin is no longer
