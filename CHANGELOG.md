@@ -13,6 +13,10 @@
   are proxied to Grails with the prefix stripped. This mirrors the production nginx setup, avoids
   CORS issues, and simplifies local development. Apps with an explicit `baseUrl` are unaffected.
 
+### 🐞 Bug Fixes
+
+* Fixed bug in release-related GitHub actions that prevented them from working when used in other repos.
+
 ## v11.2.0 - 2026-03-27
 
 ### ⚙️ Technical
