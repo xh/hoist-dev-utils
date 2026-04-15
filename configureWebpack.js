@@ -442,6 +442,7 @@ async function configureWebpack(env) {
                                                 // (Note these plugins are all generally bundled with preset-env.)
                                                 include: [
                                                     'transform-class-properties',
+                                                    'transform-class-static-block',
                                                     'transform-nullish-coalescing-operator',
                                                     'transform-optional-chaining',
                                                     'transform-private-methods',
