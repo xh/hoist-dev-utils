@@ -462,10 +462,14 @@ async function configureWebpack(env) {
                                             {allowDeclareFields: true, isTSX: true}
                                         ],
 
-                                        // Support our current decorator syntax, for MobX and Hoist decorators.
-                                        // See notes @ https://babeljs.io/docs/en/babel-plugin-proposal-decorators#legacy
-                                        // and https://mobx.js.org/enabling-decorators.html#babel-7
-                                        ['@babel/plugin-proposal-decorators', {version: 'legacy'}],
+                                        // Support TC39 Stage 3 (2023-05 / 2022.3) decorators, used by hoist-react
+                                        // v85+ and compatible apps. See:
+                                        //   https://babeljs.io/docs/babel-plugin-proposal-decorators
+                                        //   https://mobx.js.org/enabling-decorators.html
+                                        // Apps upgrading from hoist-react < 85 must also add the `accessor`
+                                        // keyword to `@observable` / `@bindable` fields and remove
+                                        // `makeObservable(this)` calls — see the v85 upgrade notes.
+                                        ['@babel/plugin-proposal-decorators', {version: '2023-05'}],
 
                                         // Avoid importing every FA icon ever made.
                                         // See https://github.com/FortAwesome/react-fontawesome/issues/70
