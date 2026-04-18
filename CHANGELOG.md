@@ -1,6 +1,14 @@
 # Changelog
 
-## v13.0.0-SNAPSHOT - unreleased
+## v12.0.1 - 2026-04-18
+
+### 📚 Libraries
+
+* autoprefixer `10.4 → 10.5`
+* lodash `4.17 → 4.x (allows update to 4.18 w/security fixes and future)`
+* sass-embedded `1.98 → 1.99`
+* webpack `5.105 → 5.106`
+* webpack-bundle-analyzer `5.2 → 5.3`
 
 ## v12.0.0 - 2026-03-31
 
