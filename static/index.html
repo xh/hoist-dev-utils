@@ -9,6 +9,15 @@
     <% } %>
     <title><%= htmlWebpackPlugin.options.title %></title>
     <%= styleTags %>
+    <style>
+        @keyframes xh-preload-spin { to { transform: rotate(360deg); } }
+        #xh-preload-spinner svg {
+            width: 50px;
+            height: 50px;
+            animation: xh-preload-spin 2s linear infinite;
+            transform-origin: center;
+        }
+    </style>
 </head>
 <body class="xh-app" style="margin: 0">
 
@@ -17,7 +26,9 @@
 </noscript>
 
 <div id="xh-preload-spinner" style="height: 100vh; width: 100vw; display: flex; align-items: center; justify-content: center; background-color: <%= preloadBackgroundColor %>">
-    <img src="<%= webpackConfig.output.publicPath %>public/spinner.png" style="width: 50px; height: 50px;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="<%= preloadSpinnerColor %>" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="9" stroke-dasharray="42 56"/>
+    </svg>
 </div>
 
 <div id="xh-root"></div>

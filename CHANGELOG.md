@@ -1,5 +1,15 @@
 # Changelog
 
+## v12.1.0 - 2026-04-29
+
+### 🎁 New Features
+
+* Replaced the animated PNG on the static loader page with an inline SVG that visually matches
+  Hoist React's in-app `Spinner` component (FA `spinner-third` with a CSS rotation). Eliminates a
+  style discontinuity at the JS-bundle handoff.
+* New `preloadSpinnerColor` config controls the stroke color of the loader spinner. Defaults to
+  `#888`. Pairs with the existing `preloadBackgroundColor`.
+
 ## v12.0.1 - 2026-04-18
 
 ### 📚 Libraries

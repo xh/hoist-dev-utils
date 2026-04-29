@@ -77,6 +77,7 @@ try {
  *      adding a mobile app to a device home screen, as well as "installing" an app via Chrome's "create shortcut"
  *      option. See https://developer.mozilla.org/en-US/docs/Web/Manifest for options.
  * @param {string} [env.preloadBackgroundColor] - background color to use for the preloader spinner. Defaults to white.
+ * @param {string} [env.preloadSpinnerColor] - stroke color for the preloader spinner SVG. Defaults to a neutral gray (#888).
  * @param {string[]} [env.targetBrowsers] - array of browserslist queries specifying target browsers for Babel and CSS
  *      transpiling and processing.
  * @param {Object} [env.babelPresetEnvOptions] - options to spread onto / override defaults passed here to the Babel
@@ -136,6 +137,7 @@ async function configureWebpack(env) {
         favicon = env.favicon || null,
         manifestConfig = env.manifestConfig || {},
         preloadBackgroundColor = env.preloadBackgroundColor || 'white',
+        preloadSpinnerColor = env.preloadSpinnerColor || '#888',
         stats = env.stats || 'errors-only',
         infrastructureLoggingLevel = env.infrastructureLoggingLevel || 'error',
         targetBrowsers = env.targetBrowsers || [
@@ -657,7 +659,8 @@ async function configureWebpack(env) {
                             styleTags,
                             scriptTags,
                             clientAppName,
-                            preloadBackgroundColor
+                            preloadBackgroundColor,
+                            preloadSpinnerColor
                         };
                     },
                     // No need to minify the HTML itself
