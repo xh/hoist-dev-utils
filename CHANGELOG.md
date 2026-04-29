@@ -10,6 +10,10 @@
 * New `preloadSpinnerColor` config controls the stroke color of the loader spinner. Defaults to
   `#888`. Pairs with the existing `preloadBackgroundColor`.
 
+### 📚 Libraries
+
+* terser-webpack-plugin `5.4 → 5.5`
+
 ## v12.0.1 - 2026-04-18
 
 ### 📚 Libraries
