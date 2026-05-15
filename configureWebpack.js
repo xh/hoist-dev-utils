@@ -15,7 +15,6 @@ const _ = require('lodash'),
     CopyWebpackPlugin = require('copy-webpack-plugin'),
     MiniCssExtractPlugin = require('mini-css-extract-plugin'),
     HtmlWebpackPlugin = require('html-webpack-plugin'),
-    HtmlWebpackTagsPlugin = require('html-webpack-tags-plugin'),
     TerserPlugin = require('terser-webpack-plugin'),
     WebpackBar = require('webpackbar'),
     parseChangelogMarkdown = require('changelog-parser'),
@@ -660,7 +659,10 @@ async function configureWebpack(env) {
                             scriptTags,
                             clientAppName,
                             preloadBackgroundColor,
-                            preloadSpinnerColor
+                            preloadSpinnerColor,
+                            // Compilation hash used to cache-bust the (unbundled) preflight script
+                            // copied in from hoist-react via CopyWebpackPlugin.
+                            preflightHash: compilation.hash
                         };
                     },
                     // No need to minify the HTML itself
@@ -685,14 +687,6 @@ async function configureWebpack(env) {
                     icons: manifestIcons,
                     ...manifestConfig
                 });
-            }),
-
-            // Insert a script tag for the (unbundled) preflight script, before all other scripts.
-            new HtmlWebpackTagsPlugin({
-                // Script available at this path via CopyWebpackPlugin above.
-                scripts: ['public/preflight.js'],
-                append: false,
-                hash: true
             }),
 
             // Support an optional post-build/run interactive treemap of output bundles and their sizes / contents.

@@ -37,6 +37,11 @@ Key behaviors:
 There is no build step — the package ships `configureWebpack.js` and `static/**/*` directly.
 There are no tests in this repo.
 
+**Package manager: yarn (classic, v1.x).** `yarn.lock` is the source of truth — do not invoke
+`npm install` or create a `package-lock.json`. If you need to inspect transitive-dep deprecation
+warnings (which yarn 1.x suppresses), use `yarn why <pkg>` or `npm ls <pkg>` in read-only fashion
+without reinstalling.
+
 ### Commands
 
 ```bash

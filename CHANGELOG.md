@@ -1,5 +1,20 @@
 # Changelog
 
+## v13.0.0-SNAPSHOT
+
+### ⚙️ Technical
+
+* Removed `html-webpack-tags-plugin` dependency. It was used in a single spot to inject the
+  `preflight.js` script tag and has been unmaintained since 2021, pulling in deprecated
+  transitive deps (`glob@7`, `inflight`) that surfaced as warnings on install. The preflight
+  tag is now emitted directly from the `static/index.html` template, with a `preflightHash`
+  template parameter (sourced from the webpack compilation hash) preserving cache-busting.
+
+### 📚 Libraries
+
+* html-webpack-tags-plugin `3.0 → removed`
+* terser-webpack-plugin `5.5 → 5.6`
+
 ## v12.1.0 - 2026-04-29
 
 ### 🎁 New Features
@@ -12,7 +27,7 @@
 
 ### 📚 Libraries
 
-* terser-webpack-plugin `5.4 → 5.5`
+* terser-webpack-plugin `5.4 → 5.5`we u
 
 ## v12.0.1 - 2026-04-18
 
