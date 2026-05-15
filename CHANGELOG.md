@@ -13,6 +13,31 @@
 
 ## v13.0.0-SNAPSHOT - unreleased
 
+
+## v12.1.0 - 2026-04-29
+
+### 🎁 New Features
+
+* Replaced the animated PNG on the static loader page with an inline SVG that visually matches
+  Hoist React's in-app `Spinner` component (FA `spinner-third` with a CSS rotation). Eliminates a
+  style discontinuity at the JS-bundle handoff.
+* New `preloadSpinnerColor` config controls the stroke color of the loader spinner. Defaults to
+  `#888`. Pairs with the existing `preloadBackgroundColor`.
+
+### 📚 Libraries
+
+* terser-webpack-plugin `5.4 → 5.5`
+
+## v12.0.1 - 2026-04-18
+
+### 📚 Libraries
+
+* autoprefixer `10.4 → 10.5`
+* lodash `4.17 → 4.x (allows update to 4.18 w/security fixes and future)`
+* sass-embedded `1.98 → 1.99`
+* webpack `5.105 → 5.106`
+* webpack-bundle-analyzer `5.2 → 5.3`
+
 ## v12.0.0 - 2026-03-31
 
 ### 💥 Breaking Changes
