@@ -1,6 +1,6 @@
 # Changelog
 
-## v13.0.0-SNAPSHOT
+## v12.1.1 - 2026-05-19
 
 ### ⚙️ Technical
 
