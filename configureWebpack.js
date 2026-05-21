@@ -718,7 +718,7 @@ async function configureWebpack(env) {
             : {
                   host: devHost,
                   port: devWebpackPort,
-                  hot: true,
+                  hot: true, // Hot module replacement is only supported for SCSS. JS/TS files trigger live reload.
                   client: {overlay: devClientOverlay},
                   server:
                       devHttps === true
