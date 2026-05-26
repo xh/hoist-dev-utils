@@ -1,6 +1,6 @@
 # Changelog
 
-## v13.0.0-SNAPSHOT - unreleased
+## 12.2.0 - 2026-05-26
 
 ### 🎁 New Features
 
