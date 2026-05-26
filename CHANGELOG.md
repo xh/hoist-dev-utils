@@ -1,5 +1,13 @@
 # Changelog
 
+## v13.0.0-SNAPSHOT - unreleased
+
+### 🎁 New Features
+
+* Enabled webpack Hot Module Replacement for CSS/SCSS in development. Style edits now apply in
+  place without a full page reload, preserving scroll position and in-app state. JS/TS edits
+  continue to trigger a full reload.
+
 ## v12.1.1 - 2026-05-19
 
 ### ⚙️ Technical

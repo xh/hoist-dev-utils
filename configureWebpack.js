@@ -527,7 +527,9 @@ async function configureWebpack(env) {
                                 // 3) Production builds use MiniCssExtractPlugin to break built styles into dedicated output files
                                 //    (vs. tags injected into DOM) for production builds. Note relies on MiniCssExtractPlugin being
                                 //    called within the prod plugins section.
-                                prodBuild ? MiniCssExtractPlugin.loader : 'style-loader',
+                                prodBuild
+                                    ? MiniCssExtractPlugin.loader
+                                    : {loader: 'style-loader', options: {esModule: false}},
 
                                 // 2) Resolve @imports within CSS, similar to module support in JS.
                                 {
@@ -716,7 +718,7 @@ async function configureWebpack(env) {
             : {
                   host: devHost,
                   port: devWebpackPort,
-                  hot: false, // Hot module replacement is not currently supported by Hoist, but live reload is.
+                  hot: true, // Hot module replacement is only supported for SCSS. JS/TS files trigger live reload.
                   client: {overlay: devClientOverlay},
                   server:
                       devHttps === true
