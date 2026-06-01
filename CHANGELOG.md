@@ -1,5 +1,19 @@
 # Changelog
 
+## v13.0.0-SNAPSHOT
+
+### ⚙️ Technical
+
+* Declared a minimum Node version of `>=22.11.0` via the `engines` field in `package.json`. This
+  reflects the floor now required by build dependencies (notably `sass-loader` 17) and matches the
+  `lts/*` Node policy already used across Hoist repos.
+
+### 📚 Libraries
+
+* sass-embedded `1.99 → 1.100`
+* sass-loader `16.0 → 17.0`
+* webpack `5.106 → 5.107`
+
 ## 12.2.0 - 2026-05-26
 
 ### 🎁 New Features
