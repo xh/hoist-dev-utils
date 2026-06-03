@@ -66,9 +66,10 @@ try {
  * @param {string[]} [env.babelExcludePaths] - paths to exclude from Babel transpiling. An example use would be a local
  *      package with a nested node_modules folder.
  * @param {Object[]} [env.extraModuleRules] - additional Webpack module rules, inserted into the build's `oneOf` list
- *      immediately before the catch-all `asset/resource` rule. Use to handle app-specific file types, or to override
- *      default asset handling for a given extension (e.g. process `.svg` via `@svgr/webpack`). Since `oneOf` is
- *      first-match-wins, rules here take precedence over the catch-all but not over the built-in JS/TS/CSS/image rules.
+ *      before the built-in markdown and catch-all asset rules. Use to handle app-specific file types, or to override
+ *      default asset handling for a given extension (e.g. process `.svg` via `@svgr/webpack`, or `.md` via a markdown
+ *      loader). Since `oneOf` is first-match-wins, rules here take precedence over the markdown and catch-all asset
+ *      rules, but not over the built-in JS/TS/CSS/image rules.
  * @param {string} [env.contextRoot] - root path from which app will be served, used as the base path for static files.
  * @param {boolean} [env.copyPublicAssets=true] - true to copy the /client-app/public contents into the root of the
  *      build. Note that files within this directory will not be processed, named with a hash, etc. Use for static
@@ -571,9 +572,27 @@ async function configureWebpack(env) {
                             ]
                         },
 
-                        // App-supplied rules, ahead of the catch-all so they can claim specific
-                        // file types (or override default asset handling) before it does.
+                        // App-supplied rules, ahead of the built-in markdown and catch-all rules so
+                        // they can claim specific file types (or override default asset handling).
                         ...extraModuleRules,
+
+                        //------------------------
+                        // Markdown
+                        // Import resolves to the file's raw text content (asset/source), so it can be
+                        // rendered directly - e.g. via Hoist's `markdown` component - without a fetch.
+                        // Append `?url` to a specific import to get an emitted-file URL instead (e.g.
+                        // for a large doc to be loaded lazily): `import url from './big.md?url'`.
+                        //------------------------
+                        {
+                            test: /\.md$/,
+                            resourceQuery: /url/,
+                            type: 'asset/resource',
+                            generator: {filename: 'static/media/[name].[hash:8][ext]'}
+                        },
+                        {
+                            test: /\.md$/,
+                            type: 'asset/source'
+                        },
 
                         //------------------------
                         // Fall-through entry to emit all other assets (e.g. SVGs, fonts) as hashed
