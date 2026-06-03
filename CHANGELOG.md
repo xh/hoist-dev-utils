@@ -2,6 +2,18 @@
 
 ## v13.0.0-SNAPSHOT
 
+### 💥 Breaking Changes
+
+* `.md` imports now resolve to the file's raw **text content** (Webpack `asset/source`) rather than a
+  URL to an emitted file. Apps that previously fetched the imported value to read it
+  (`fetch(imported).then(r => r.text())`) should drop the fetch and use the import directly as the
+  markdown string (e.g. pass it straight to Hoist's `markdown` component). This aligns the build with
+  the `*.md` module declaration (`const content: string`) hoist-react already ships; hoist-react
+  itself requires no change, so taking v13 is a strong recommendation for consistency rather than a
+  hard requirement.
+    * To opt a specific import back into the old URL behavior — for instance a large document loaded
+      lazily — append `?url` to the request: `import url from './big.md?url'`.
+
 ### 🎁 New Features
 
 * New `extraModuleRules` config allows apps to add their own Webpack module rules — or override the
