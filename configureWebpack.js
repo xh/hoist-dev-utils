@@ -545,14 +545,13 @@ async function configureWebpack(env) {
                                     }
                                 },
 
-                                // 1) Pre-process CSS to install flexbox bug workarounds + vendor-specific prefixes for the configured browsers
+                                // 1) Pre-process CSS to install vendor-specific prefixes for the configured browsers.
                                 //    Note that the "post" in the loader name refers to http://postcss.org/ - NOT the processing order within Webpack.
                                 {
                                     loader: 'postcss-loader',
                                     options: {
                                         postcssOptions: {
                                             plugins: [
-                                                require('postcss-flexbugs-fixes'), // Inclusion of postcss-flexbugs-fixes is from CRA.
                                                 [
                                                     'autoprefixer',
                                                     {

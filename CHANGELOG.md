@@ -18,10 +18,15 @@
 * Declared a minimum Node version of `>=22.11.0` via the `engines` field in `package.json`. This
   reflects the floor now required by build dependencies (notably `sass-loader` 17) and matches the
   `lts/*` Node policy already used across Hoist repos.
+* Removed two no-longer-needed build dependencies: `rimraf` (build output cleaning is handled by
+  Webpack's `output.clean`) and `postcss-flexbugs-fixes` (its flexbox workarounds target IE / old
+  browsers outside our supported set).
 
 ### 📚 Libraries
 
 * file-loader `removed`
+* postcss-flexbugs-fixes `removed`
+* rimraf `removed`
 * sass-embedded `1.99 → 1.100`
 * sass-loader `16.0 → 17.0`
 * url-loader `removed`
