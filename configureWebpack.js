@@ -65,10 +65,14 @@ try {
  *      app-level and @xh/hoist code. Intended for custom packages.
  * @param {string[]} [env.babelExcludePaths] - paths to exclude from Babel transpiling. An example use would be a local
  *      package with a nested node_modules folder.
+ * @param {Object[]} [env.extraModuleRules] - additional Webpack module rules, inserted into the build's `oneOf` list
+ *      immediately before the catch-all `asset/resource` rule. Use to handle app-specific file types, or to override
+ *      default asset handling for a given extension (e.g. process `.svg` via `@svgr/webpack`). Since `oneOf` is
+ *      first-match-wins, rules here take precedence over the catch-all but not over the built-in JS/TS/CSS/image rules.
  * @param {string} [env.contextRoot] - root path from which app will be served, used as the base path for static files.
  * @param {boolean} [env.copyPublicAssets=true] - true to copy the /client-app/public contents into the root of the
  *      build. Note that files within this directory will not be processed, named with a hash, etc. Use for static
- *      assets you wish to link to without using an import to run through the url or file-loader. Required for favicons.
+ *      assets you wish to link to without using an import to run through Webpack's asset modules. Required for favicons.
  * @param {boolean} [env.parseChangelog=true] - true to parse a `CHANGELOG.md` file in the project root directory into
  *      JSON and make available for import by `XH.changelogService`.
  * @param {string} [env.favicon] - relative path to a primary favicon source image.
@@ -130,6 +134,7 @@ async function configureWebpack(env) {
         baseUrl = env.baseUrl || '/api/',
         babelIncludePaths = env.babelIncludePaths || [],
         babelExcludePaths = env.babelExcludePaths || [],
+        extraModuleRules = env.extraModuleRules || [],
         contextRoot = env.contextRoot || '/',
         copyPublicAssets = env.copyPublicAssets !== false,
         parseChangelog = env.parseChangelog !== false,
@@ -400,15 +405,14 @@ async function configureWebpack(env) {
 
                         //------------------------
                         // Image processing
-                        // Encodes `url()` references directly when small enough.
+                        // Inline as a data URI when small enough, otherwise emit a hashed file.
+                        // Uses Webpack 5 asset modules (replaces the deprecated url-loader).
                         //------------------------
                         {
                             test: [/\.bmp$/, /\.gif$/, /\.jpe?g$/, /\.png$/],
-                            loader: 'url-loader',
-                            options: {
-                                limit: 10000,
-                                name: 'static/media/[name].[hash:8].[ext]'
-                            }
+                            type: 'asset',
+                            parser: {dataUrlCondition: {maxSize: 10000}},
+                            generator: {filename: 'static/media/[name].[hash:8][ext]'}
                         },
 
                         //------------------------
@@ -568,16 +572,19 @@ async function configureWebpack(env) {
                             ]
                         },
 
+                        // App-supplied rules, ahead of the catch-all so they can claim specific
+                        // file types (or override default asset handling) before it does.
+                        ...extraModuleRules,
+
                         //------------------------
-                        // Fall-through entry to process all other assets via a file-loader.
+                        // Fall-through entry to emit all other assets (e.g. SVGs, fonts) as hashed
+                        // files. Uses Webpack 5 asset modules (replaces the deprecated file-loader).
                         // (Exclude config here is from CRA source config - commented there, but didn't understand).
                         //------------------------
                         {
                             exclude: [/\.jsx?$/, /\.html$/, /\.json$/],
-                            loader: 'file-loader',
-                            options: {
-                                name: 'static/media/[name].[hash:8].[ext]'
-                            }
+                            type: 'asset/resource',
+                            generator: {filename: 'static/media/[name].[hash:8][ext]'}
                         }
                     ]
                 }
@@ -752,7 +759,7 @@ async function configureWebpack(env) {
                             }
                         ]
                       : [],
-                ...devServerOptions
+                  ...devServerOptions
               }
     };
 }

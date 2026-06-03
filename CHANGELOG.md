@@ -2,16 +2,29 @@
 
 ## v13.0.0-SNAPSHOT
 
+### 🎁 New Features
+
+* New `extraModuleRules` config allows apps to add their own Webpack module rules — or override the
+  default handling for a given file type (e.g. process `.svg` via `@svgr/webpack`). Rules are
+  inserted just before the catch-all asset rule, so they win over it but not over the built-in
+  JS/TS/CSS/image rules.
+
 ### ⚙️ Technical
 
+* Migrated image and fall-through asset handling from the deprecated `url-loader` / `file-loader` to
+  Webpack 5's built-in asset modules (`type: 'asset'` / `'asset/resource'`). Behavior is unchanged:
+  small images (< 10kB) still inline as data URIs and all other assets (SVGs, fonts) emit as hashed
+  files under `static/media/`.
 * Declared a minimum Node version of `>=22.11.0` via the `engines` field in `package.json`. This
   reflects the floor now required by build dependencies (notably `sass-loader` 17) and matches the
   `lts/*` Node policy already used across Hoist repos.
 
 ### 📚 Libraries
 
+* file-loader `removed`
 * sass-embedded `1.99 → 1.100`
 * sass-loader `16.0 → 17.0`
+* url-loader `removed`
 * webpack `5.106 → 5.107`
 
 ## 12.2.0 - 2026-05-26
