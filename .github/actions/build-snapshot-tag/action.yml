@@ -11,7 +11,8 @@
 #
 # Snap the timestamp once and read both outputs in the calling `prepare` job, then pass
 # app-build to the build (xhAppBuild / --env appBuild) and image-tag to the image push +
-# promote. Delegates to .github/scripts/build-tag.sh (unit-tested by build-tag.test.sh).
+# promote. Also writes a job-summary table of the locked-in identifiers for quick reference.
+# Delegates to .github/scripts/build-tag.sh (unit-tested by build-tag.test.sh).
 
 name: Build Snapshot Tag
 description: Emits app-build and image-tag identifiers for a snapshot Docker build.
@@ -33,7 +34,18 @@ runs:
           run: |
               ts=$(date -u +'%Y-%m-%dT%H:%MZ')
               script="$GITHUB_ACTION_PATH/../../scripts/build-tag.sh"
+              app_build=$(BUILD_TS="$ts" bash "$script" app)
+              image_tag=$(BUILD_TS="$ts" bash "$script" image)
               {
-                  echo "app-build=$(BUILD_TS="$ts" bash "$script" app)"
-                  echo "image-tag=$(BUILD_TS="$ts" bash "$script" image)"
+                  echo "app-build=$app_build"
+                  echo "image-tag=$image_tag"
               } >> "$GITHUB_OUTPUT"
+              # Surface the locked-in identifiers in the run summary for quick reference.
+              {
+                  echo "### Snapshot build identifiers"
+                  echo ""
+                  echo "| | locked-in value |"
+                  echo "| --- | --- |"
+                  echo "| \`app-build\` — baked into \`appBuild\` (client + server) | \`$app_build\` |"
+                  echo "| \`image-tag\` — immutable ECR image tag | \`$image_tag\` |"
+              } >> "$GITHUB_STEP_SUMMARY"
