@@ -1,6 +1,6 @@
 # Changelog
 
-## v13.0.0-SNAPSHOT
+## 13.0.0 - 2026-06-10
 
 ### 💥 Breaking Changes
 
@@ -13,6 +13,9 @@
   hard requirement.
     * To opt a specific import back into the old URL behavior — for instance a large document loaded
       lazily — append `?url` to the request: `import url from './big.md?url'`.
+* Declared a minimum Node version of `>=22.11.0` via the `engines` field in `package.json`. This
+  reflects the floor now required by build dependencies (notably `sass-loader` 17) and matches the
+  `lts/*` Node policy already used across Hoist repos.
 
 ### 🎁 New Features
 
@@ -27,9 +30,6 @@
   Webpack 5's built-in asset modules (`type: 'asset'` / `'asset/resource'`). Behavior is unchanged:
   small images (< 10kB) still inline as data URIs and all other assets (SVGs, fonts) emit as hashed
   files under `static/media/`.
-* Declared a minimum Node version of `>=22.11.0` via the `engines` field in `package.json`. This
-  reflects the floor now required by build dependencies (notably `sass-loader` 17) and matches the
-  `lts/*` Node policy already used across Hoist repos.
 * Removed two no-longer-needed build dependencies: `rimraf` (build output cleaning is handled by
   Webpack's `output.clean`) and `postcss-flexbugs-fixes` (its flexbox workarounds target IE / old
   browsers outside our supported set).
