@@ -1,5 +1,14 @@
 # Changelog
 
+## 13.0.1 - 2026-06-10
+
+### 🐞 Bug Fixes
+
+* Added a `'process.env': '{}'` fallback to the Webpack `DefinePlugin` config, so libraries that
+  ship raw `process.env.X` references in their published browser builds no longer throw at runtime.
+  Notably fixes `DashCanvas` drag/resize, broken by `react-draggable` 4.6.0 (a transitive dep of
+  `react-grid-layout`). The existing `process.env.NODE_ENV` define still resolves as before.
+
 ## 13.0.0 - 2026-06-10
 
 ### 💥 Breaking Changes

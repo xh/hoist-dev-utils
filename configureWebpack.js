@@ -621,6 +621,12 @@ async function configureWebpack(env) {
             // Inject global constants at compile time.
             new webpack.DefinePlugin({
                 'process.env.NODE_ENV': JSON.stringify(process.env.REACT_NODE_ENV),
+                // Fallback for any other `process.env.*` reference - some libraries (e.g.
+                // react-draggable >= 4.5) ship raw `process.env.X` debug gates in their published
+                // browser builds, which otherwise throw a ReferenceError at runtime (browsers
+                // have no `process` global). Most-specific keys win, so NODE_ENV above still
+                // resolves to its real value.
+                'process.env': '{}',
                 xhAppCode: JSON.stringify(appCode),
                 xhAppName: JSON.stringify(appName),
                 xhAppVersion: JSON.stringify(appVersion),
