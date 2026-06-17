@@ -1,0 +1,51 @@
+# Build Snapshot Tag — Reusable composite action that emits the two build identifiers
+# for a snapshot Docker build, derived from a SINGLE snapped timestamp so they correspond.
+#
+# Outputs:
+#   app-build — readable value baked into appBuild on client + server and shown in-app
+#               (<ref>_<sha>_<timestamp>, colon preserved). Client and server must carry
+#               the same value; that is what Hoist's version-skew check compares.
+#   image-tag — immutable ECR image tag (snap_<ref>_<sha>_<ts>). A total function: a valid
+#               Docker/ECR image tag for any git ref. Container-tag constraints live here
+#               only — they never touch the displayed app-build value.
+#
+# Snap the timestamp once and read both outputs in the calling `prepare` job, then pass
+# app-build to the build (xhAppBuild / --env appBuild) and image-tag to the image push +
+# promote. Also writes a job-summary table of the locked-in identifiers for quick reference.
+# Delegates to .github/scripts/build-tag.sh (unit-tested by build-tag.test.sh).
+
+name: Build Snapshot Tag
+description: Emits app-build and image-tag identifiers for a snapshot Docker build.
+
+outputs:
+    app-build:
+        description: 'Readable build identifier baked into appBuild (client + server).'
+        value: ${{ steps.tag.outputs.app-build }}
+    image-tag:
+        description: 'Immutable, sanitized, snap_-prefixed ECR image tag.'
+        value: ${{ steps.tag.outputs.image-tag }}
+
+runs:
+    using: composite
+    steps:
+        - name: Generate build identifiers
+          id: tag
+          shell: bash
+          run: |
+              ts=$(date -u +'%Y-%m-%dT%H:%MZ')
+              script="$GITHUB_ACTION_PATH/../../scripts/build-tag.sh"
+              app_build=$(BUILD_TS="$ts" bash "$script" app)
+              image_tag=$(BUILD_TS="$ts" bash "$script" image)
+              {
+                  echo "app-build=$app_build"
+                  echo "image-tag=$image_tag"
+              } >> "$GITHUB_OUTPUT"
+              # Surface the locked-in identifiers in the run summary for quick reference.
+              {
+                  echo "### Snapshot build identifiers"
+                  echo ""
+                  echo "| | locked-in value |"
+                  echo "| --- | --- |"
+                  echo "| \`app-build\` — baked into \`appBuild\` (client + server) | \`$app_build\` |"
+                  echo "| \`image-tag\` — immutable ECR image tag | \`$image_tag\` |"
+              } >> "$GITHUB_STEP_SUMMARY"

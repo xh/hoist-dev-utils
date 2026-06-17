@@ -11,8 +11,82 @@
   build of dev-utils will silently break all `@observable` and `@bindable` fields. See the
   hoist-react v85 upgrade notes for the codemod required in app code.
 
-## v13.0.0-SNAPSHOT - unreleased
 
+## 13.0.1 - 2026-06-10
+
+### 🐞 Bug Fixes
+
+* Added a `'process.env': '{}'` fallback to the Webpack `DefinePlugin` config, so libraries that
+  ship raw `process.env.X` references in their published browser builds no longer throw at runtime.
+  Notably fixes `DashCanvas` drag/resize, broken by `react-draggable` 4.6.0 (a transitive dep of
+  `react-grid-layout`). The existing `process.env.NODE_ENV` define still resolves as before.
+
+## 13.0.0 - 2026-06-10
+
+### 💥 Breaking Changes
+
+* `.md` imports now resolve to the file's raw **text content** (Webpack `asset/source`) rather than a
+  URL to an emitted file. Apps that previously fetched the imported value to read it
+  (`fetch(imported).then(r => r.text())`) should drop the fetch and use the import directly as the
+  markdown string (e.g. pass it straight to Hoist's `markdown` component). This aligns the build with
+  the `*.md` module declaration (`const content: string`) hoist-react already ships; hoist-react
+  itself requires no change, so taking v13 is a strong recommendation for consistency rather than a
+  hard requirement.
+    * To opt a specific import back into the old URL behavior — for instance a large document loaded
+      lazily — append `?url` to the request: `import url from './big.md?url'`.
+* Declared a minimum Node version of `>=22.11.0` via the `engines` field in `package.json`. This
+  reflects the floor now required by build dependencies (notably `sass-loader` 17) and matches the
+  `lts/*` Node policy already used across Hoist repos.
+
+### 🎁 New Features
+
+* New `extraModuleRules` config allows apps to add their own Webpack module rules — or override the
+  default handling for a given file type (e.g. process `.svg` via `@svgr/webpack`). Rules are
+  inserted just before the catch-all asset rule, so they win over it but not over the built-in
+  JS/TS/CSS/image rules.
+
+### ⚙️ Technical
+
+* Migrated image and fall-through asset handling from the deprecated `url-loader` / `file-loader` to
+  Webpack 5's built-in asset modules (`type: 'asset'` / `'asset/resource'`). Behavior is unchanged:
+  small images (< 10kB) still inline as data URIs and all other assets (SVGs, fonts) emit as hashed
+  files under `static/media/`.
+* Removed two no-longer-needed build dependencies: `rimraf` (build output cleaning is handled by
+  Webpack's `output.clean`) and `postcss-flexbugs-fixes` (its flexbox workarounds target IE / old
+  browsers outside our supported set).
+
+### 📚 Libraries
+
+* file-loader `removed`
+* postcss-flexbugs-fixes `removed`
+* rimraf `removed`
+* sass-embedded `1.99 → 1.100`
+* sass-loader `16.0 → 17.0`
+* url-loader `removed`
+* webpack `5.106 → 5.107`
+
+## 12.2.0 - 2026-05-26
+
+### 🎁 New Features
+
+* Enabled webpack Hot Module Replacement for CSS/SCSS in development. Style edits now apply in
+  place without a full page reload, preserving scroll position and in-app state. JS/TS edits
+  continue to trigger a full reload.
+
+## v12.1.1 - 2026-05-19
+
+### ⚙️ Technical
+
+* Removed `html-webpack-tags-plugin` dependency. It was used in a single spot to inject the
+  `preflight.js` script tag and has been unmaintained since 2021, pulling in deprecated
+  transitive deps (`glob@7`, `inflight`) that surfaced as warnings on install. The preflight
+  tag is now emitted directly from the `static/index.html` template, with a `preflightHash`
+  template parameter (sourced from the webpack compilation hash) preserving cache-busting.
+
+### 📚 Libraries
+
+* html-webpack-tags-plugin `3.0 → removed`
+* terser-webpack-plugin `5.5 → 5.6`
 
 ## v12.1.0 - 2026-04-29
 
@@ -26,7 +100,7 @@
 
 ### 📚 Libraries
 
-* terser-webpack-plugin `5.4 → 5.5`
+* terser-webpack-plugin `5.4 → 5.5`we u
 
 ## v12.0.1 - 2026-04-18
 

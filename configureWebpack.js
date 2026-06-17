@@ -15,7 +15,6 @@ const _ = require('lodash'),
     CopyWebpackPlugin = require('copy-webpack-plugin'),
     MiniCssExtractPlugin = require('mini-css-extract-plugin'),
     HtmlWebpackPlugin = require('html-webpack-plugin'),
-    HtmlWebpackTagsPlugin = require('html-webpack-tags-plugin'),
     TerserPlugin = require('terser-webpack-plugin'),
     WebpackBar = require('webpackbar'),
     parseChangelogMarkdown = require('changelog-parser'),
@@ -66,10 +65,15 @@ try {
  *      app-level and @xh/hoist code. Intended for custom packages.
  * @param {string[]} [env.babelExcludePaths] - paths to exclude from Babel transpiling. An example use would be a local
  *      package with a nested node_modules folder.
+ * @param {Object[]} [env.extraModuleRules] - additional Webpack module rules, inserted into the build's `oneOf` list
+ *      before the built-in markdown and catch-all asset rules. Use to handle app-specific file types, or to override
+ *      default asset handling for a given extension (e.g. process `.svg` via `@svgr/webpack`, or `.md` via a markdown
+ *      loader). Since `oneOf` is first-match-wins, rules here take precedence over the markdown and catch-all asset
+ *      rules, but not over the built-in JS/TS/CSS/image rules.
  * @param {string} [env.contextRoot] - root path from which app will be served, used as the base path for static files.
  * @param {boolean} [env.copyPublicAssets=true] - true to copy the /client-app/public contents into the root of the
  *      build. Note that files within this directory will not be processed, named with a hash, etc. Use for static
- *      assets you wish to link to without using an import to run through the url or file-loader. Required for favicons.
+ *      assets you wish to link to without using an import to run through Webpack's asset modules. Required for favicons.
  * @param {boolean} [env.parseChangelog=true] - true to parse a `CHANGELOG.md` file in the project root directory into
  *      JSON and make available for import by `XH.changelogService`.
  * @param {string} [env.favicon] - relative path to a primary favicon source image.
@@ -131,6 +135,7 @@ async function configureWebpack(env) {
         baseUrl = env.baseUrl || '/api/',
         babelIncludePaths = env.babelIncludePaths || [],
         babelExcludePaths = env.babelExcludePaths || [],
+        extraModuleRules = env.extraModuleRules || [],
         contextRoot = env.contextRoot || '/',
         copyPublicAssets = env.copyPublicAssets !== false,
         parseChangelog = env.parseChangelog !== false,
@@ -401,15 +406,14 @@ async function configureWebpack(env) {
 
                         //------------------------
                         // Image processing
-                        // Encodes `url()` references directly when small enough.
+                        // Inline as a data URI when small enough, otherwise emit a hashed file.
+                        // Uses Webpack 5 asset modules (replaces the deprecated url-loader).
                         //------------------------
                         {
                             test: [/\.bmp$/, /\.gif$/, /\.jpe?g$/, /\.png$/],
-                            loader: 'url-loader',
-                            options: {
-                                limit: 10000,
-                                name: 'static/media/[name].[hash:8].[ext]'
-                            }
+                            type: 'asset',
+                            parser: {dataUrlCondition: {maxSize: 10000}},
+                            generator: {filename: 'static/media/[name].[hash:8][ext]'}
                         },
 
                         //------------------------
@@ -533,7 +537,9 @@ async function configureWebpack(env) {
                                 // 3) Production builds use MiniCssExtractPlugin to break built styles into dedicated output files
                                 //    (vs. tags injected into DOM) for production builds. Note relies on MiniCssExtractPlugin being
                                 //    called within the prod plugins section.
-                                prodBuild ? MiniCssExtractPlugin.loader : 'style-loader',
+                                prodBuild
+                                    ? MiniCssExtractPlugin.loader
+                                    : {loader: 'style-loader', options: {esModule: false}},
 
                                 // 2) Resolve @imports within CSS, similar to module support in JS.
                                 {
@@ -545,14 +551,13 @@ async function configureWebpack(env) {
                                     }
                                 },
 
-                                // 1) Pre-process CSS to install flexbox bug workarounds + vendor-specific prefixes for the configured browsers
+                                // 1) Pre-process CSS to install vendor-specific prefixes for the configured browsers.
                                 //    Note that the "post" in the loader name refers to http://postcss.org/ - NOT the processing order within Webpack.
                                 {
                                     loader: 'postcss-loader',
                                     options: {
                                         postcssOptions: {
                                             plugins: [
-                                                require('postcss-flexbugs-fixes'), // Inclusion of postcss-flexbugs-fixes is from CRA.
                                                 [
                                                     'autoprefixer',
                                                     {
@@ -572,16 +577,37 @@ async function configureWebpack(env) {
                             ]
                         },
 
+                        // App-supplied rules, ahead of the built-in markdown and catch-all rules so
+                        // they can claim specific file types (or override default asset handling).
+                        ...extraModuleRules,
+
                         //------------------------
-                        // Fall-through entry to process all other assets via a file-loader.
+                        // Markdown
+                        // Import resolves to the file's raw text content (asset/source), so it can be
+                        // rendered directly - e.g. via Hoist's `markdown` component - without a fetch.
+                        // Append `?url` to a specific import to get an emitted-file URL instead (e.g.
+                        // for a large doc to be loaded lazily): `import url from './big.md?url'`.
+                        //------------------------
+                        {
+                            test: /\.md$/,
+                            resourceQuery: /url/,
+                            type: 'asset/resource',
+                            generator: {filename: 'static/media/[name].[hash:8][ext]'}
+                        },
+                        {
+                            test: /\.md$/,
+                            type: 'asset/source'
+                        },
+
+                        //------------------------
+                        // Fall-through entry to emit all other assets (e.g. SVGs, fonts) as hashed
+                        // files. Uses Webpack 5 asset modules (replaces the deprecated file-loader).
                         // (Exclude config here is from CRA source config - commented there, but didn't understand).
                         //------------------------
                         {
                             exclude: [/\.jsx?$/, /\.html$/, /\.json$/],
-                            loader: 'file-loader',
-                            options: {
-                                name: 'static/media/[name].[hash:8].[ext]'
-                            }
+                            type: 'asset/resource',
+                            generator: {filename: 'static/media/[name].[hash:8][ext]'}
                         }
                     ]
                 }
@@ -600,6 +626,12 @@ async function configureWebpack(env) {
             // Inject global constants at compile time.
             new webpack.DefinePlugin({
                 'process.env.NODE_ENV': JSON.stringify(process.env.REACT_NODE_ENV),
+                // Fallback for any other `process.env.*` reference - some libraries (e.g.
+                // react-draggable >= 4.5) ship raw `process.env.X` debug gates in their published
+                // browser builds, which otherwise throw a ReferenceError at runtime (browsers
+                // have no `process` global). Most-specific keys win, so NODE_ENV above still
+                // resolves to its real value.
+                'process.env': '{}',
                 xhAppCode: JSON.stringify(appCode),
                 xhAppName: JSON.stringify(appName),
                 xhAppVersion: JSON.stringify(appVersion),
@@ -665,7 +697,10 @@ async function configureWebpack(env) {
                             scriptTags,
                             clientAppName,
                             preloadBackgroundColor,
-                            preloadSpinnerColor
+                            preloadSpinnerColor,
+                            // Compilation hash used to cache-bust the (unbundled) preflight script
+                            // copied in from hoist-react via CopyWebpackPlugin.
+                            preflightHash: compilation.hash
                         };
                     },
                     // No need to minify the HTML itself
@@ -690,14 +725,6 @@ async function configureWebpack(env) {
                     icons: manifestIcons,
                     ...manifestConfig
                 });
-            }),
-
-            // Insert a script tag for the (unbundled) preflight script, before all other scripts.
-            new HtmlWebpackTagsPlugin({
-                // Script available at this path via CopyWebpackPlugin above.
-                scripts: ['public/preflight.js'],
-                append: false,
-                hash: true
             }),
 
             // Support an optional post-build/run interactive treemap of output bundles and their sizes / contents.
@@ -727,7 +754,7 @@ async function configureWebpack(env) {
             : {
                   host: devHost,
                   port: devWebpackPort,
-                  hot: false, // Hot module replacement is not currently supported by Hoist, but live reload is.
+                  hot: true, // Hot module replacement is only supported for SCSS. JS/TS files trigger live reload.
                   client: {overlay: devClientOverlay},
                   server:
                       devHttps === true
@@ -761,7 +788,7 @@ async function configureWebpack(env) {
                             }
                         ]
                       : [],
-                ...devServerOptions
+                  ...devServerOptions
               }
     };
 }

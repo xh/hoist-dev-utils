@@ -48,5 +48,9 @@
             "mcp__jetbrains__search_in_files_by_regex",
             "mcp__jetbrains__search_in_files_by_text"
         ]
+    },
+    "attribution": {
+        "commit": "",
+        "pr": ""
     }
 }

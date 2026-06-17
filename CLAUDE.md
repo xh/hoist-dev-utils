@@ -37,6 +37,11 @@ Key behaviors:
 There is no build step — the package ships `configureWebpack.js` and `static/**/*` directly.
 There are no tests in this repo.
 
+**Package manager: yarn (classic, v1.x).** `yarn.lock` is the source of truth — do not invoke
+`npm install` or create a `package-lock.json`. If you need to inspect transitive-dep deprecation
+warnings (which yarn 1.x suppresses), use `yarn why <pkg>` or `npm ls <pkg>` in read-only fashion
+without reinstalling.
+
 ### Commands
 
 ```bash
@@ -80,3 +85,33 @@ Prettier config (`.prettierrc.json`):
 - 4-space indent, 100 char print width
 - Single quotes, no bracket spacing, no trailing commas
 - Arrow parens: avoid
+
+## MCP Servers
+
+### GitHub MCP Server (opt-in)
+
+A Docker-based server providing GitHub API tools (issues, PRs, code search, etc.) via the
+official `github-mcp-server` image. Configured in `.mcp.json` but **not enabled by default** —
+it requires Docker and an authenticated GitHub CLI, which not every developer keeps running.
+
+**To enable:**
+
+1. Install and start **Docker**.
+2. Install the **GitHub CLI** (`brew install gh`) and authenticate with `gh auth login`. The
+   server invokes `gh auth token` at startup to fetch a token from the macOS Keychain (or
+   `gh`'s credential store on other platforms), so no plaintext token needs to live in your
+   shell environment.
+3. Add `"github"` to `enabledMcpjsonServers` in `.claude/settings.local.json` (local settings
+   merge with the shared `settings.json` — enabling locally does not affect other developers):
+   ```json
+   {
+     "enabledMcpjsonServers": ["github"]
+   }
+   ```
+
+If Docker is not running or `gh` is not authenticated when the server is enabled, Claude Code
+may show errors on startup — remove `"github"` from your local settings to resolve.
+
+**Fallback when not enabled:** The `gh` CLI provides functionally equivalent access to the same
+operations (`gh pr view`, `gh issue list`, `gh api`, `gh pr create`, etc.). Prefer `gh` over
+crafting raw `curl` calls to the GitHub API.
