@@ -4,12 +4,12 @@
 
 ### 💥 Breaking Changes
 
-* Requires `hoist-react >= 85.0`.
+* Requires `hoist-react >= 87.0`.
 * Flipped `@babel/plugin-proposal-decorators` from `{version: 'legacy'}` to `{version: '2023-05'}`
-  to align with hoist-react v85's migration to TC39 Stage 3 modern decorators. Consuming apps must
+  to align with hoist-react v87's migration to TC39 Stage 3 modern decorators. Consuming apps must
   upgrade `@xh/hoist` and `@xh/hoist-dev-utils` together — mixing a legacy-decorator app with this
   build of dev-utils will silently break all `@observable` and `@bindable` fields. See the
-  hoist-react v85 upgrade notes for the codemod required in app code.
+  hoist-react v87 upgrade notes for the codemod required in app code.
 
 
 ## 13.0.1 - 2026-06-10
