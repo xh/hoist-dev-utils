@@ -25,6 +25,9 @@
 * Declared a minimum Node version of `>=22.11.0` via the `engines` field in `package.json`. This
   reflects the floor now required by build dependencies (notably `sass-loader` 17) and matches the
   `lts/*` Node policy already used across Hoist repos.
+* If your app uses `flex: 1 1 0` or `flex-basis: 0` you should visually verify that the flex layouts
+  continue to work as expected and add an explicit unit if they do not
+  (e.g. `flex: 1 1 0%` or `flex-basis: 0%`).
 
 ### 🎁 New Features
 
