@@ -1,5 +1,14 @@
 # Changelog
 
+## 14.0.0-SNAPSHOT - unreleased
+
+### 🐞 Bug Fixes
+
+* `inlineHoist` mode now aliases `react-dom` (alongside the existing `react` alias) to the app's
+  own copy, ensuring both packages resolve to matching versions. React 19 throws at runtime if
+  `react` and `react-dom` versions differ at all, so a patch-level drift between the app and
+  hoist-react checkouts would previously break inline development.
+
 ## 13.0.1 - 2026-06-10
 
 ### 🐞 Bug Fixes

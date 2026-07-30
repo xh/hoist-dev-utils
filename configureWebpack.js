@@ -235,6 +235,8 @@ async function configureWebpack(env) {
         // was imported from is different than the instance that was used to render the component
         // (which will always be the instance hoist-react has when using element factories)
         resolveAliases['react'] = path.resolve('./node_modules/react');
+        resolveAliases['react-dom'] = path.resolve('./node_modules/react-dom');
+
         // Also ensure a single instance of ag-Grid when Hoist is inline, needed to support use of
         // `useGridMenuItem` hook.
         resolveAliases['ag-grid-react'] = path.resolve('./node_modules/ag-grid-react');
