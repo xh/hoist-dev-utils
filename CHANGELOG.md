@@ -2,12 +2,33 @@
 
 ## 14.0.0-SNAPSHOT - unreleased
 
+### ⚙️ Technical
+
+* `configureWebpack()` no longer assumes a flat, physically-hoisted `node_modules` layout, making
+  the generated build config compatible with symlink/isolation-based package managers such as pnpm
+  (in addition to yarn classic and npm, which continue to work unchanged):
+    * All built-in loaders, Babel presets, and Babel plugins are now resolved to absolute paths via
+      `require.resolve()` from this package's own dependencies, rather than by bare name from the
+      consuming app's `node_modules`.
+    * The `@xh/hoist` package path (and any `babelIncludePaths`/`babelExcludePaths` entries) are
+      resolved through `fs.realpathSync()`, so Babel `include`/`exclude` rules match the real
+      module paths Webpack produces when `node_modules` entries are symlinks.
+    * The dev-utils package now locates its own bundled static assets via `__dirname`, and the
+      startup version logging for `@xh/hoist` and `react` resolves those packages from the app's
+      directory rather than relying on undeclared sibling resolution.
+
 ### 🐞 Bug Fixes
 
 * `inlineHoist` mode now aliases `react-dom` (alongside the existing `react` alias) to the app's
   own copy, ensuring both packages resolve to matching versions. React 19 throws at runtime if
   `react` and `react-dom` versions differ at all, so a patch-level drift between the app and
   hoist-react checkouts would previously break inline development.
+
+### 📚 Libraries
+
+* @babel/plugin-transform-typescript `added @ 7.28` (previously referenced as a transitive
+  dependency of @babel/preset-typescript - now declared directly, as `configureWebpack()`
+  `require.resolve()`s it)
 
 ## 13.0.1 - 2026-06-10
 
