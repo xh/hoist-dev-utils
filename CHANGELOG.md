@@ -32,10 +32,25 @@
     * The dev-utils package now locates its own bundled static assets via `__dirname`, and the
       startup version logging for `@xh/hoist` and `react` resolves those packages from the app's
       directory rather than relying on undeclared sibling resolution.
-    * Note for apps supplying `extraModuleRules` with loaders referenced by bare name: such
-      loaders must be declared as devDependencies of the app itself. This has always been the
-      supported pattern, but isolated layouts (e.g. pnpm) now enforce it - loaders that previously
-      happened to resolve via hoisting from a transitive dependency will no longer be found.
+    * **Important for apps adopting pnpm: declare every package your app imports directly.**
+      Under yarn/npm's flat layout, apps could import packages they never declared - most commonly
+      deps that hoist-react happened to carry (`@fortawesome/*` icon packages, `classnames`,
+      `filesize`, `ag-charts-community` via ag-grid, etc.) - because hoisting placed them at the
+      top of `node_modules`. pnpm's isolated layout resolves only declared dependencies, so each
+      such "phantom" import surfaces as a webpack `Can't resolve '<pkg>'` build error. The fix is
+      mechanical: add the package to the app's own `package.json`, with a version spec matching
+      what hoist-react (or the relevant intermediate) declares to avoid duplicate copies.
+    * The same applies to type-only packages checked by `tsc`: in particular, apps must declare
+      `@types/lodash` directly. It was previously hoisted from this package's own dependencies -
+      without it, lodash imports silently lose their types and produce confusing downstream type
+      errors (failed type-guard narrowing, `unknown` from collection helpers) in both app code and
+      hoist-react's raw TypeScript source.
+    * Loaders referenced by bare name in `extraModuleRules` must likewise be declared as
+      devDependencies of the app itself. This has always been the supported pattern, but isolated
+      layouts now enforce it - loaders that previously happened to resolve via hoisting from a
+      transitive dependency will no longer be found.
+    * None of the above affects apps remaining on yarn classic or npm, which continue to work
+      unchanged with their existing (possibly undeclared) resolution behavior.
 * This repo itself now uses pnpm for package management (pinned via the `packageManager` field in
   `package.json` for corepack), replacing yarn classic. `pnpm-lock.yaml` replaces `yarn.lock` as
   the source of truth. No impact on consuming apps - lockfiles are not published - but
