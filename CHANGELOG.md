@@ -2,72 +2,54 @@
 
 ## 14.0.0-SNAPSHOT - unreleased
 
+This release adds support for [pnpm](https://pnpm.io) as the package manager for Hoist apps.
+Apps that wish to adopt pnpm must take this release - v13 and earlier rely on `node_modules`
+layout assumptions that do not hold under pnpm. Apps remaining on yarn classic or npm can also
+take v14 freely: it is fully compatible with those package managers, and the resolution changes
+below are no-ops on their flat layouts.
+
+**Use with `hoist-react >= 87`** (the React 19 baseline). Apps on earlier hoist-react / React 18
+should remain on dev-utils v13.
+
 ### 💥 Breaking Changes
 
-* Minimum Node version raised from 22.11 to 22.15, required by webpack-dev-server 6. Repos
-  tracking `lts/*` (the XH standard) are already well past this floor.
-* webpack-dev-server updated to v6. No changes are required to app run scripts (the
-  `webpack-dev-server` binary and `--env` flags continue to work), and the built-in config
-  produced by `configureWebpack()` is fully compatible. Apps passing custom `devServerOptions`
-  should review the [v6 migration guide](https://github.com/webpack/webpack-dev-server/blob/main/migration-v6.md)
-  for removed options - notably the SockJS transport, the `spdy` HTTP/2 backend, and the proxy
-  `bypass` option. Internals moved to Express 5 and http-proxy-middleware 4, which also clears
-  the audit finding against the transitive `sockjs > uuid` dependency (GHSA-w5hq-g745-h8pq).
-* `@types/react` and `@types/react-dom` updated to 19.x, matching the React 19 baseline
-  established by hoist-react v87. Use this dev-utils release with hoist-react >= 87 - apps on
-  earlier hoist-react (React 18) should remain on dev-utils v13.
+* **Apps adopting pnpm must declare every package they import directly** - including
+  `@types/lodash` (required by hoist-react's raw TypeScript source, previously hoisted from this
+  package) and any loaders referenced by bare name in `extraModuleRules`. Under flat layouts,
+  apps could import undeclared packages that hoist-react happened to carry (`@fortawesome/*`,
+  `classnames`, `filesize`, etc.); under pnpm these surface as webpack `Can't resolve` errors or
+  missing-type errors from `tsc`. Declare each in the app's own `package.json`, with a spec
+  matching hoist-react's to avoid duplicate copies. Apps remaining on yarn classic or npm are
+  unaffected.
+* webpack-dev-server updated to v6, raising the minimum Node version from 22.11 to 22.15 (repos
+  tracking `lts/*` are already well past this). App run scripts and the built-in config are
+  unaffected, but apps passing custom `devServerOptions` should review the
+  [v6 migration guide](https://github.com/webpack/webpack-dev-server/blob/main/migration-v6.md)
+  for removed options (SockJS transport, `spdy` HTTP/2 backend, proxy `bypass`).
+* `@types/react` and `@types/react-dom` updated to 19.x, matching hoist-react v87's React 19
+  baseline (see version note above).
 
 ### ⚙️ Technical
 
 * `configureWebpack()` no longer assumes a flat, physically-hoisted `node_modules` layout, making
-  the generated build config compatible with symlink/isolation-based package managers such as pnpm
-  (in addition to yarn classic and npm, which continue to work unchanged):
-    * All built-in loaders, Babel presets, and Babel plugins are now resolved to absolute paths via
-      `require.resolve()` from this package's own dependencies, rather than by bare name from the
-      consuming app's `node_modules`.
-    * The `@xh/hoist` package path (in both packaged and `inlineHoist` modes, and any
-      `babelIncludePaths`/`babelExcludePaths` entries) are resolved through `fs.realpathSync()`,
-      so Babel `include`/`exclude` rules match the real module paths Webpack produces when
-      `node_modules` entries (or checked-out project paths) are symlinks.
-    * The dev-utils package now locates its own bundled static assets via `__dirname`, and the
-      startup version logging for `@xh/hoist` and `react` resolves those packages from the app's
-      directory rather than relying on undeclared sibling resolution.
-    * **Important for apps adopting pnpm: declare every package your app imports directly.**
-      Under yarn/npm's flat layout, apps could import packages they never declared - most commonly
-      deps that hoist-react happened to carry (`@fortawesome/*` icon packages, `classnames`,
-      `filesize`, `ag-charts-community` via ag-grid, etc.) - because hoisting placed them at the
-      top of `node_modules`. pnpm's isolated layout resolves only declared dependencies, so each
-      such "phantom" import surfaces as a webpack `Can't resolve '<pkg>'` build error. The fix is
-      mechanical: add the package to the app's own `package.json`, with a version spec matching
-      what hoist-react (or the relevant intermediate) declares to avoid duplicate copies.
-    * The same applies to type-only packages checked by `tsc`: in particular, apps must declare
-      `@types/lodash` directly. It was previously hoisted from this package's own dependencies -
-      without it, lodash imports silently lose their types and produce confusing downstream type
-      errors (failed type-guard narrowing, `unknown` from collection helpers) in both app code and
-      hoist-react's raw TypeScript source.
-    * Loaders referenced by bare name in `extraModuleRules` must likewise be declared as
-      devDependencies of the app itself. This has always been the supported pattern, but isolated
-      layouts now enforce it - loaders that previously happened to resolve via hoisting from a
-      transitive dependency will no longer be found.
-    * None of the above affects apps remaining on yarn classic or npm, which continue to work
-      unchanged with their existing (possibly undeclared) resolution behavior.
-* This repo itself now uses pnpm for package management (pinned via the `packageManager` field in
-  `package.json` for corepack), replacing yarn classic. `pnpm-lock.yaml` replaces `yarn.lock` as
-  the source of truth. No impact on consuming apps - lockfiles are not published - but
-  contributors should use `pnpm install` / `pnpm link` going forward.
+  the generated build config compatible with isolation-based package managers such as pnpm. Yarn
+  classic and npm continue to work unchanged. Built-in loaders, Babel presets, and plugins are now
+  resolved via `require.resolve()` from this package's own dependencies, and Babel
+  `include`/`exclude` paths (including `@xh/hoist`, in both packaged and `inlineHoist` modes) are
+  symlink-resolved to match the real module paths Webpack produces.
+* This repo itself is now managed with pnpm: `pnpm-lock.yaml` replaces `yarn.lock`, with the pnpm
+  version pinned via the `packageManager` field. No impact on consuming apps.
 
 ### 🐞 Bug Fixes
 
 * `inlineHoist` mode now aliases `react-dom` (alongside the existing `react` alias) to the app's
-  own copy, ensuring both packages resolve to matching versions. React 19 throws at runtime if
-  `react` and `react-dom` versions differ at all, so a patch-level drift between the app and
-  hoist-react checkouts would previously break inline development.
+  own copy. React 19 throws at runtime if the two packages' versions differ at all, so patch-level
+  drift between the app and hoist-react checkouts would previously break inline development.
 
 ### 📚 Libraries
 
-* @babel/plugin-transform-typescript `added @ 7.28` (previously referenced as a transitive
-  dependency of @babel/preset-typescript - now declared directly, as `configureWebpack()`
-  `require.resolve()`s it)
+* @babel/plugin-transform-typescript `added @ 7.28` (now `require.resolve()`d directly - was a
+  transitive dep of @babel/preset-typescript)
 * @types/react `18.x → 19.x`
 * @types/react-dom `18.x → 19.x`
 * webpack `5.107 → 5.109`

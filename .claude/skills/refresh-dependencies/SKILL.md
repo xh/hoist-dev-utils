@@ -121,6 +121,10 @@ style of each entry** (see conventions below). After editing, run `pnpm install`
   that floor is *also* a `💥 Breaking Changes` item is a judgment call — if every app on this
   dev-utils release is already expected to be at/above the floor (the repos track `lts/*`), it's just
   documentation, not a break. Confirm with the user rather than assuming.
+- **Compatibility doc**: a changed Node floor or hoist-react minimum must also be reflected in the
+  hoist-react repo's `docs/version-compatibility.md` ("hoist-react ↔ hoist-dev-utils" section) -
+  see the "Version compatibility doc" section of this repo's CLAUDE.md. Flag it to the user as a
+  paired hoist-react change; don't leave the table stale.
 
 After spec edits:
 

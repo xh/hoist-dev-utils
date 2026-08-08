@@ -64,6 +64,24 @@ into the app's `node_modules`. Changes take effect immediately.
 - `develop` branch for feature work, `master` for releases
 - Version in `package.json` follows `MAJOR.MINOR.PATCH-SNAPSHOT` between releases
 
+### Version compatibility doc (maintained in hoist-react)
+
+The canonical hoist-react / hoist-dev-utils compatibility reference lives in the **hoist-react**
+repo at `docs/version-compatibility.md` (section "hoist-react ↔ hoist-dev-utils", with a reverse
+lookup table per dev-utils major). It is surfaced to developers and AI agents via hoist-react's
+docs MCP server and the Toolbox docs viewer.
+
+Whenever work here changes a compatibility fact, update that doc in a paired hoist-react PR:
+
+- a new minimum or recommended `hoist-react` version (check `💥 Breaking Changes` for
+  "Requires hoist-react >= X" entries)
+- a new Node floor (`engines.node` in `package.json`)
+- any new pairing constraint apps must know when upgrading (e.g. React/`@types/react` major,
+  package-manager support)
+
+A new dev-utils major should always add a row to the reverse lookup table there, even if
+requirements are unchanged.
+
 ### Changelog
 
 All notable changes are documented in `CHANGELOG.md`. The topmost entry covers unreleased work and
