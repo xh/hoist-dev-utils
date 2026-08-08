@@ -71,7 +71,9 @@ try {
  *      before the built-in markdown and catch-all asset rules. Use to handle app-specific file types, or to override
  *      default asset handling for a given extension (e.g. process `.svg` via `@svgr/webpack`, or `.md` via a markdown
  *      loader). Since `oneOf` is first-match-wins, rules here take precedence over the markdown and catch-all asset
- *      rules, but not over the built-in JS/TS/CSS/image rules.
+ *      rules, but not over the built-in JS/TS/CSS/image rules. Any loaders referenced by these rules should be
+ *      declared as devDependencies of the app itself - under isolated node_modules layouts (e.g. pnpm), loaders
+ *      not declared by the app will fail to resolve.
  * @param {string} [env.contextRoot] - root path from which app will be served, used as the base path for static files.
  * @param {boolean} [env.copyPublicAssets=true] - true to copy the /client-app/public contents into the root of the
  *      build. Note that files within this directory will not be processed, named with a hash, etc. Use for static
@@ -195,9 +197,11 @@ async function configureWebpack(env) {
     // Resolve symlinks (a no-op for flat layouts) so the path matches the real module paths
     // Webpack produces via its default resolve.symlinks behavior - required for the babel-loader
     // include below to match under symlinking package managers (e.g. pnpm).
-    const hoistPath = inlineHoist
-        ? path.resolve(basePath, '../../hoist-react')
-        : safeRealpath(path.resolve(basePath, 'node_modules/@xh/hoist'));
+    const hoistPath = safeRealpath(
+        inlineHoist
+            ? path.resolve(basePath, '../../hoist-react')
+            : path.resolve(basePath, 'node_modules/@xh/hoist')
+    );
 
     // Check for and resolve standard/expected favicons.
     const manifestIcons = [];
@@ -493,7 +497,7 @@ async function configureWebpack(env) {
                                         // Avoid importing every FA icon ever made.
                                         // See https://github.com/FortAwesome/react-fontawesome/issues/70
                                         [
-                                            require('babel-plugin-transform-imports'),
+                                            require.resolve('babel-plugin-transform-imports'),
                                             {
                                                 '@fortawesome/pro-light-svg-icons': {
                                                     transform:

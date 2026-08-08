@@ -10,12 +10,17 @@
     * All built-in loaders, Babel presets, and Babel plugins are now resolved to absolute paths via
       `require.resolve()` from this package's own dependencies, rather than by bare name from the
       consuming app's `node_modules`.
-    * The `@xh/hoist` package path (and any `babelIncludePaths`/`babelExcludePaths` entries) are
-      resolved through `fs.realpathSync()`, so Babel `include`/`exclude` rules match the real
-      module paths Webpack produces when `node_modules` entries are symlinks.
+    * The `@xh/hoist` package path (in both packaged and `inlineHoist` modes, and any
+      `babelIncludePaths`/`babelExcludePaths` entries) are resolved through `fs.realpathSync()`,
+      so Babel `include`/`exclude` rules match the real module paths Webpack produces when
+      `node_modules` entries (or checked-out project paths) are symlinks.
     * The dev-utils package now locates its own bundled static assets via `__dirname`, and the
       startup version logging for `@xh/hoist` and `react` resolves those packages from the app's
       directory rather than relying on undeclared sibling resolution.
+    * Note for apps supplying `extraModuleRules` with loaders referenced by bare name: such
+      loaders must be declared as devDependencies of the app itself. This has always been the
+      supported pattern, but isolated layouts (e.g. pnpm) now enforce it - loaders that previously
+      happened to resolve via hoisting from a transitive dependency will no longer be found.
 
 ### 🐞 Bug Fixes
 
