@@ -3,9 +3,9 @@
 //
 // Why specs, not resolved versions: the CHANGELOG answers one question for an app dev taking a new
 // @xh/hoist-dev-utils release — "what does this release change for me?" The answer is exactly the
-// set of semver specs we newly allow or require. A `yarn upgrade` that bumps a dep *within* an
+// set of semver specs we newly allow or require. A `pnpm update` that bumps a dep *within* an
 // unchanged range (say a `5.x` dep going 5.6 → 5.7) is NOT something this release delivers — an app
-// could resolve that on its own with its own `yarn upgrade`. So that drift must NOT appear in the
+// could resolve that on its own with its own lockfile refresh. So that drift must NOT appear in the
 // CHANGELOG. Only a change to a spec in package.json does. That is what this script compares.
 //
 // "Before" defaults to the committed package.json (`git show HEAD:package.json`), which is the
@@ -27,7 +27,10 @@ const repoRoot = findRepoRoot(here);
 function findRepoRoot(start) {
     let dir = start;
     for (let i = 0; i < 10; i++) {
-        if (existsSync(resolve(dir, 'package.json')) && existsSync(resolve(dir, 'configureWebpack.js'))) {
+        if (
+            existsSync(resolve(dir, 'package.json')) &&
+            existsSync(resolve(dir, 'configureWebpack.js'))
+        ) {
             return dir;
         }
         const parent = dirname(dir);
@@ -52,7 +55,9 @@ function specToken(spec) {
 
 // Leading numeric major of a spec, for detecting major-version crossings.
 function specMajor(spec) {
-    return String(spec).replace(/^[\^~>=<\s]+/, '').split('.')[0];
+    return String(spec)
+        .replace(/^[\^~>=<\s]+/, '')
+        .split('.')[0];
 }
 
 let beforeText, afterText;
@@ -61,7 +66,10 @@ if (args.length === 2) {
     beforeText = readFileSync(args[0], 'utf8');
     afterText = readFileSync(args[1], 'utf8');
 } else {
-    beforeText = execFileSync('git', ['show', 'HEAD:package.json'], {cwd: repoRoot, encoding: 'utf8'});
+    beforeText = execFileSync('git', ['show', 'HEAD:package.json'], {
+        cwd: repoRoot,
+        encoding: 'utf8'
+    });
     afterText = readFileSync(resolve(repoRoot, 'package.json'), 'utf8');
 }
 
@@ -97,9 +105,13 @@ for (const name of names) {
 }
 
 console.log('=== CHANGELOG 📚 Libraries entries (spec changes — copy these) ===');
-console.log(changelog.length ? changelog.join('\n') : '(none — no spec changes; nothing to changelog)');
+console.log(
+    changelog.length ? changelog.join('\n') : '(none — no spec changes; nothing to changelog)'
+);
 
-console.log('\n=== ⚠️  MAJOR spec bumps — review breaking changes + note hoist-react/Node impact ===');
+console.log(
+    '\n=== ⚠️  MAJOR spec bumps — review breaking changes + note hoist-react/Node impact ==='
+);
 console.log(majors.length ? majors.join('\n') : '(none)');
 
 console.log('\n=== Spec edits below minor granularity (NOT changelogged) ===');

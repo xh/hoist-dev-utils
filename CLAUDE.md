@@ -37,22 +37,26 @@ Key behaviors:
 There is no build step — the package ships `configureWebpack.js` and `static/**/*` directly.
 There are no tests in this repo.
 
-**Package manager: yarn (classic, v1.x).** `yarn.lock` is the source of truth — do not invoke
-`npm install` or create a `package-lock.json`. If you need to inspect transitive-dep deprecation
-warnings (which yarn 1.x suppresses), use `yarn why <pkg>` or `npm ls <pkg>` in read-only fashion
-without reinstalling.
+**Package manager: pnpm.** `pnpm-lock.yaml` is the source of truth — do not invoke `npm install`
+or `yarn install`, and do not create a `package-lock.json` or `yarn.lock`. The required pnpm
+version is pinned via the `packageManager` field in `package.json`; if pnpm is not on the PATH,
+run it through corepack (`corepack pnpm <cmd>`). Use `pnpm why <pkg>` to inspect the dependency
+tree in read-only fashion without reinstalling.
 
 ### Commands
 
 ```bash
-yarn install          # Install dependencies
-yarn prettier --check .   # Check formatting
-yarn prettier --write .   # Fix formatting
+pnpm install          # Install dependencies
+pnpm prettier --check .   # Check formatting
+pnpm prettier --write .   # Fix formatting
+pnpm outdated             # List deps with newer versions than the lockfile / specs allow
+pnpm audit                # Check for known vulnerabilities
 ```
 
 ### Local development workflow
 
-Clone alongside a consuming app (e.g. Toolbox), then use `yarn link` to symlink this package
+Clone alongside a consuming app (e.g. Toolbox), then use your package manager's link command
+(`pnpm link` / `yarn link`, matching the app's own package manager) to symlink this package
 into the app's `node_modules`. Changes take effect immediately.
 
 ### Versioning

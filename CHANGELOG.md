@@ -2,6 +2,21 @@
 
 ## 14.0.0-SNAPSHOT - unreleased
 
+### 💥 Breaking Changes
+
+* Minimum Node version raised from 22.11 to 22.15, required by webpack-dev-server 6. Repos
+  tracking `lts/*` (the XH standard) are already well past this floor.
+* webpack-dev-server updated to v6. No changes are required to app run scripts (the
+  `webpack-dev-server` binary and `--env` flags continue to work), and the built-in config
+  produced by `configureWebpack()` is fully compatible. Apps passing custom `devServerOptions`
+  should review the [v6 migration guide](https://github.com/webpack/webpack-dev-server/blob/main/migration-v6.md)
+  for removed options - notably the SockJS transport, the `spdy` HTTP/2 backend, and the proxy
+  `bypass` option. Internals moved to Express 5 and http-proxy-middleware 4, which also clears
+  the audit finding against the transitive `sockjs > uuid` dependency (GHSA-w5hq-g745-h8pq).
+* `@types/react` and `@types/react-dom` updated to 19.x, matching the React 19 baseline
+  established by hoist-react v87. Use this dev-utils release with hoist-react >= 87 - apps on
+  earlier hoist-react (React 18) should remain on dev-utils v13.
+
 ### ⚙️ Technical
 
 * `configureWebpack()` no longer assumes a flat, physically-hoisted `node_modules` layout, making
@@ -21,6 +36,10 @@
       loaders must be declared as devDependencies of the app itself. This has always been the
       supported pattern, but isolated layouts (e.g. pnpm) now enforce it - loaders that previously
       happened to resolve via hoisting from a transitive dependency will no longer be found.
+* This repo itself now uses pnpm for package management (pinned via the `packageManager` field in
+  `package.json` for corepack), replacing yarn classic. `pnpm-lock.yaml` replaces `yarn.lock` as
+  the source of truth. No impact on consuming apps - lockfiles are not published - but
+  contributors should use `pnpm install` / `pnpm link` going forward.
 
 ### 🐞 Bug Fixes
 
@@ -34,6 +53,11 @@
 * @babel/plugin-transform-typescript `added @ 7.28` (previously referenced as a transitive
   dependency of @babel/preset-typescript - now declared directly, as `configureWebpack()`
   `require.resolve()`s it)
+* @types/react `18.x → 19.x`
+* @types/react-dom `18.x → 19.x`
+* webpack `5.107 → 5.109`
+* webpack-cli `7.0 → 7.2`
+* webpack-dev-server `5.2 → 6.0`
 
 ## 13.0.1 - 2026-06-10
 

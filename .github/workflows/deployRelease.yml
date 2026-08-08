@@ -47,15 +47,19 @@ jobs:
               version: ${{ inputs.version }}
               is-hotfix: ${{ inputs.is-hotfix }}
 
+        # Installs the pnpm version pinned via the packageManager field in package.json.
+        - name: Setup pnpm
+          uses: pnpm/action-setup@v4
+
         - name: Setup Node.js
           uses: actions/setup-node@v6
           with:
               node-version-file: '.nvmrc'
               registry-url: 'https://registry.npmjs.org'
-              cache: 'yarn'
+              cache: 'pnpm'
 
         - name: Install dependencies
-          run: yarn install --frozen-lockfile
+          run: pnpm install --frozen-lockfile
 
         - name: Set release version in package.json
           env:

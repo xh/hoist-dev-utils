@@ -15,7 +15,7 @@
         "static/**/*"
     ],
     "engines": {
-        "node": ">=22.11.0"
+        "node": ">=22.15.0"
     },
     "dependencies": {
         "@babel/core": "^7.28.5",
@@ -25,8 +25,8 @@
         "@babel/preset-react": "^7.28.5",
         "@babel/preset-typescript": "^7.28.5",
         "@types/lodash": "4.x",
-        "@types/react": "18.x",
-        "@types/react-dom": "18.x",
+        "@types/react": "19.x",
+        "@types/react-dom": "19.x",
         "@xh/eslint-config": "^7.0",
         "autoprefixer": "~10.5.0",
         "babel-loader": "~10.1.1",
@@ -46,13 +46,14 @@
         "style-loader": "~4.0.0",
         "terser-webpack-plugin": "~5.6.0",
         "type-fest": "5.x",
-        "webpack": "~5.107.2",
+        "webpack": "~5.109.2",
         "webpack-bundle-analyzer": "~5.3.0",
-        "webpack-cli": "~7.0.0",
-        "webpack-dev-server": "~5.2.0",
+        "webpack-cli": "~7.2.2",
+        "webpack-dev-server": "~6.0.0",
         "webpackbar": "~7.0.0"
     },
     "devDependencies": {
         "prettier": "3.x"
-    }
+    },
+    "packageManager": "pnpm@11.20.0+sha512.9a6f330a95b66446ea088faf1521405a8a01f07fde7124cc9958dfed52d4bb436737e65b08f85f37b46fcba375092558ac51262b816844b22f63406ed166bfee"
 }

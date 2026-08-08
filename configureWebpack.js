@@ -25,7 +25,7 @@ const _ = require('lodash'),
 // These are not deps of hoist-dev-utils but of the consuming app, so resolve them from the
 // app's own directory (basePath) - required under isolated/symlinked node_modules layouts
 // (e.g. pnpm), where this package cannot resolve undeclared siblings. Might still be undefined -
-// e.g. when running this script locally to debug via `yarn link`.
+// e.g. when running this script locally to debug via `pnpm link` / `yarn link`.
 let hoistReactPkg, reactPkg;
 try {
     hoistReactPkg = require(require.resolve('@xh/hoist/package.json', {paths: [basePath]}));

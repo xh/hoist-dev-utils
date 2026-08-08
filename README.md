@@ -164,8 +164,16 @@ usage examples.
 ## Hoist Dev Utils Development
 
 To develop improvements to this library, clone its repo into your workspace alongside a project
-that uses Hoist-React, like [Toolbox](https://github.com/xh/toolbox). Then follow the instructions for
-[yarn link](https://classic.yarnpkg.com/lang/en/docs/cli/link/) to symlink to this repo.
+that uses Hoist-React, like [Toolbox](https://github.com/xh/toolbox). Then link this repo into the
+app's `node_modules` with your package manager's link command - e.g.
+[pnpm link](https://pnpm.io/cli/link) or
+[yarn link](https://classic.yarnpkg.com/lang/en/docs/cli/link/), matching whichever package
+manager the app itself uses.
+
+This repo itself is managed with [pnpm](https://pnpm.io) - run `pnpm install` to install its
+dependencies. The required pnpm version is pinned via the `packageManager` field in `package.json`
+and will be provisioned automatically by [corepack](https://nodejs.org/api/corepack.html)
+(`corepack enable pnpm`) or by a standalone pnpm install of v10+.
 
 ------------------------------------------
 

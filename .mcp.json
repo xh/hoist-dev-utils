@@ -1,15 +1,15 @@
 {
-  "mcpServers": {
-    "github": {
-      "command": "bash",
-      "args": [
-        "-c",
-        "GITHUB_PERSONAL_ACCESS_TOKEN=\"$(gh auth token)\" exec docker run -i --rm -e GITHUB_PERSONAL_ACCESS_TOKEN ghcr.io/github/github-mcp-server"
-      ]
-    },
-    "jetbrains": {
-      "url": "http://localhost:${JETBRAINS_MCP_PORT:-64342}/sse",
-      "type": "sse"
+    "mcpServers": {
+        "github": {
+            "command": "bash",
+            "args": [
+                "-c",
+                "GITHUB_PERSONAL_ACCESS_TOKEN=\"$(gh auth token)\" exec docker run -i --rm -e GITHUB_PERSONAL_ACCESS_TOKEN ghcr.io/github/github-mcp-server"
+            ]
+        },
+        "jetbrains": {
+            "url": "http://localhost:${JETBRAINS_MCP_PORT:-64342}/sse",
+            "type": "sse"
+        }
     }
-  }
 }
