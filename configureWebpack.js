@@ -22,16 +22,18 @@ const _ = require('lodash'),
     devUtilsPkg = require('./package'),
     basePath = fs.realpathSync(process.cwd());
 
-// These are not direct deps of hoist-dev-utils, so might be undefined - e.g. when running
-// this script locally to debug via `yarn link`.
+// These are not deps of hoist-dev-utils but of the consuming app, so resolve them from the
+// app's own directory (basePath) - required under isolated/symlinked node_modules layouts
+// (e.g. pnpm), where this package cannot resolve undeclared siblings. Might still be undefined -
+// e.g. when running this script locally to debug via `yarn link`.
 let hoistReactPkg, reactPkg;
 try {
-    hoistReactPkg = require('@xh/hoist/package');
+    hoistReactPkg = require(require.resolve('@xh/hoist/package.json', {paths: [basePath]}));
 } catch (e) {
     hoistReactPkg = {version: 'NOT_FOUND'};
 }
 try {
-    reactPkg = require('react');
+    reactPkg = require(require.resolve('react/package.json', {paths: [basePath]}));
 } catch (e) {
     reactPkg = {version: 'NOT_FOUND'};
 }
@@ -69,7 +71,9 @@ try {
  *      before the built-in markdown and catch-all asset rules. Use to handle app-specific file types, or to override
  *      default asset handling for a given extension (e.g. process `.svg` via `@svgr/webpack`, or `.md` via a markdown
  *      loader). Since `oneOf` is first-match-wins, rules here take precedence over the markdown and catch-all asset
- *      rules, but not over the built-in JS/TS/CSS/image rules.
+ *      rules, but not over the built-in JS/TS/CSS/image rules. Any loaders referenced by these rules should be
+ *      declared as devDependencies of the app itself - under isolated node_modules layouts (e.g. pnpm), loaders
+ *      not declared by the app will fail to resolve.
  * @param {string} [env.contextRoot] - root path from which app will be served, used as the base path for static files.
  * @param {boolean} [env.copyPublicAssets=true] - true to copy the /client-app/public contents into the root of the
  *      build. Note that files within this directory will not be processed, named with a hash, etc. Use for static
@@ -133,8 +137,8 @@ async function configureWebpack(env) {
         devWebpackPort = env.devWebpackPort || 3000,
         devServerOptions = env.devServerOptions || {},
         baseUrl = env.baseUrl || '/api/',
-        babelIncludePaths = env.babelIncludePaths || [],
-        babelExcludePaths = env.babelExcludePaths || [],
+        babelIncludePaths = (env.babelIncludePaths || []).map(safeRealpath),
+        babelExcludePaths = (env.babelExcludePaths || []).map(safeRealpath),
         extraModuleRules = env.extraModuleRules || [],
         contextRoot = env.contextRoot || '/',
         copyPublicAssets = env.copyPublicAssets !== false,
@@ -185,12 +189,19 @@ async function configureWebpack(env) {
     const srcPath = path.resolve(basePath, 'src'),
         outPath = path.resolve(basePath, 'build'),
         publicAssetsPath = path.resolve(basePath, 'public'),
-        hoistDevUtilsPath = path.resolve(basePath, 'node_modules/@xh/hoist-dev-utils');
+        // This very file lives within the dev-utils package, wherever it has been installed or
+        // linked - avoids assuming the package is physically within the app's node_modules.
+        hoistDevUtilsPath = __dirname;
 
-    // Resolve Hoist as either a sibling (inline, checked-out) project or a downloaded package
-    const hoistPath = inlineHoist
-        ? path.resolve(basePath, '../../hoist-react')
-        : path.resolve(basePath, 'node_modules/@xh/hoist');
+    // Resolve Hoist as either a sibling (inline, checked-out) project or a downloaded package.
+    // Resolve symlinks (a no-op for flat layouts) so the path matches the real module paths
+    // Webpack produces via its default resolve.symlinks behavior - required for the babel-loader
+    // include below to match under symlinking package managers (e.g. pnpm).
+    const hoistPath = safeRealpath(
+        inlineHoist
+            ? path.resolve(basePath, '../../hoist-react')
+            : path.resolve(basePath, 'node_modules/@xh/hoist')
+    );
 
     // Check for and resolve standard/expected favicons.
     const manifestIcons = [];
@@ -374,9 +385,11 @@ async function configureWebpack(env) {
             extensions: ['*', '.js', '.ts', '.jsx', '.tsx', '.json']
         },
 
-        // Ensure Webpack can find loaders installed both within the top-level node_modules dir for
-        // an app that's building (standard case) or nested within dev-utils node_modules (in case
-        // of version conflict - triggered for us in Dec 2020 by postcss-loader version bump).
+        // Fallback resolution for any loaders referenced by bare name (e.g. via app-supplied
+        // extraModuleRules) - checks the app's top-level node_modules (standard case) and any
+        // nested dev-utils node_modules (in case of version conflict - triggered for us in Dec
+        // 2020 by postcss-loader version bump). Built-in loaders above are require.resolve()d to
+        // absolute paths and do not rely on this.
         resolveLoader: {
             modules: ['node_modules', devUtilsNodeModulesPath]
         },
@@ -425,13 +438,16 @@ async function configureWebpack(env) {
                         {
                             test: /\.(jsx?)$|\.(tsx?)$/,
                             use: {
-                                loader: 'babel-loader',
+                                // Loaders, presets and plugins below are deps of this package and
+                                // resolved from here via require.resolve() - apps do not get them
+                                // hoisted to their own node_modules under all layouts (e.g. pnpm).
+                                loader: require.resolve('babel-loader'),
                                 options: {
                                     presets: [
-                                        '@babel/preset-typescript',
-                                        '@babel/preset-react',
+                                        require.resolve('@babel/preset-typescript'),
+                                        require.resolve('@babel/preset-react'),
                                         [
-                                            '@babel/preset-env',
+                                            require.resolve('@babel/preset-env'),
                                             {
                                                 targets: targetBrowsers.join(', '),
 
@@ -466,19 +482,22 @@ async function configureWebpack(env) {
                                         // .js files for older JS apps. Typescript apps must use the .tsx extension for
                                         // any files containing JSX syntax.
                                         [
-                                            '@babel/plugin-transform-typescript',
+                                            require.resolve('@babel/plugin-transform-typescript'),
                                             {allowDeclareFields: true, isTSX: true}
                                         ],
 
                                         // Support our current decorator syntax, for MobX and Hoist decorators.
                                         // See notes @ https://babeljs.io/docs/en/babel-plugin-proposal-decorators#legacy
                                         // and https://mobx.js.org/enabling-decorators.html#babel-7
-                                        ['@babel/plugin-proposal-decorators', {version: 'legacy'}],
+                                        [
+                                            require.resolve('@babel/plugin-proposal-decorators'),
+                                            {version: 'legacy'}
+                                        ],
 
                                         // Avoid importing every FA icon ever made.
                                         // See https://github.com/FortAwesome/react-fontawesome/issues/70
                                         [
-                                            require('babel-plugin-transform-imports'),
+                                            require.resolve('babel-plugin-transform-imports'),
                                             {
                                                 '@fortawesome/pro-light-svg-icons': {
                                                     transform:
@@ -536,11 +555,14 @@ async function configureWebpack(env) {
                                 //    called within the prod plugins section.
                                 prodBuild
                                     ? MiniCssExtractPlugin.loader
-                                    : {loader: 'style-loader', options: {esModule: false}},
+                                    : {
+                                          loader: require.resolve('style-loader'),
+                                          options: {esModule: false}
+                                      },
 
                                 // 2) Resolve @imports within CSS, similar to module support in JS.
                                 {
-                                    loader: 'css-loader',
+                                    loader: require.resolve('css-loader'),
                                     options: {
                                         importLoaders: 2, // Indicate how many prior loaders (postCssLoader/sassLoader) to also run on @imported resources.
                                         sourceMap: true,
@@ -551,12 +573,12 @@ async function configureWebpack(env) {
                                 // 1) Pre-process CSS to install vendor-specific prefixes for the configured browsers.
                                 //    Note that the "post" in the loader name refers to http://postcss.org/ - NOT the processing order within Webpack.
                                 {
-                                    loader: 'postcss-loader',
+                                    loader: require.resolve('postcss-loader'),
                                     options: {
                                         postcssOptions: {
                                             plugins: [
                                                 [
-                                                    'autoprefixer',
+                                                    require.resolve('autoprefixer'),
                                                     {
                                                         // We still want to provide an array of target browsers
                                                         // that can be passed to / managed centrally by this script.
@@ -570,7 +592,7 @@ async function configureWebpack(env) {
                                 },
 
                                 // 0) Process source SASS -> CSS
-                                {loader: 'sass-loader'}
+                                {loader: require.resolve('sass-loader')}
                             ]
                         },
 
@@ -886,6 +908,18 @@ function getFileDependenciesByEntrypoint(compilation, clientAppName) {
         });
 
     return ret;
+}
+
+// Resolve any symlinks to a real path, falling back to the given path if it does not (yet)
+// exist. No-op for flat/hoisted node_modules layouts. Required so that paths used within
+// loader include/exclude rules match the real module paths produced by Webpack's default
+// resolve.symlinks behavior under symlinking package managers (e.g. pnpm).
+function safeRealpath(p) {
+    try {
+        return fs.realpathSync(p);
+    } catch (e) {
+        return p;
+    }
 }
 
 function logSep() {
