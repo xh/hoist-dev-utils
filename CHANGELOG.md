@@ -1,6 +1,6 @@
 # Changelog
 
-## 14.0.0-SNAPSHOT - unreleased
+## 14.0.0 - 2026-08-08
 
 This release adds support for [pnpm](https://pnpm.io) as the package manager for Hoist apps.
 Apps that wish to adopt pnpm must take this release - v13 and earlier rely on `node_modules`
@@ -25,7 +25,7 @@ should remain on dev-utils v13.
   tracking `lts/*` are already well past this). App run scripts and the built-in config are
   unaffected, but apps passing custom `devServerOptions` should review the
   [v6 migration guide](https://github.com/webpack/webpack-dev-server/blob/main/migration-v6.md)
-  for removed options (SockJS transport, `spdy` HTTP/2 backend, proxy `bypass`).
+  for removed options.
 * `@types/react` and `@types/react-dom` updated to 19.x, matching hoist-react v87's React 19
   baseline (see version note above).
 
