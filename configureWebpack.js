@@ -232,9 +232,9 @@ async function configureWebpack(env) {
         copyPublicAssets && fs.existsSync(path.resolve(publicAssetsPath, 'apple-touch-icon.png'));
     if (appleTouchIconExists) logMsg(`  > apple-touch-icon.png`);
 
-    // Resolve path to lightweight shim for Blueprint icons bundled with this project.
-    const bpIconStubsPath = path.resolve(hoistDevUtilsPath, 'static/requiredBlueprintIcons.js'),
-        loadAllBlueprintJsIcons = env.loadAllBlueprintJsIcons === true;
+    // Generate lightweight stub modules for Blueprint icons, unless app opts into the full set.
+    const loadAllBlueprintJsIcons = env.loadAllBlueprintJsIcons === true,
+        bpIconStubs = loadAllBlueprintJsIcons ? null : generateBlueprintIconStubs();
 
     // Tell webpack where to look for modules when resolving imports - this is the key to getting
     // inlineHoist mode to look in within the checked-out hoist-react project at hoistPath.
@@ -634,13 +634,24 @@ async function configureWebpack(env) {
         },
 
         plugins: [
-            // Load only the BlueprintJS icons used by Hoist-React components.
-            !loadAllBlueprintJsIcons
-                ? new webpack.NormalModuleReplacementPlugin(
-                      /.*\/@blueprintjs\/icons\/lib\/esm\/iconSvgPaths.*/,
-                      bpIconStubsPath
-                  )
-                : undefined,
+            // Load only the BlueprintJS icons used by Hoist-React components - swap the icon
+            // package entry and path barrels for generated stubs. See generateBlueprintIconStubs().
+            ...(bpIconStubs
+                ? [
+                      new webpack.NormalModuleReplacementPlugin(
+                          /@blueprintjs[\\/]icons[\\/]lib[\\/]esm[\\/]generated[\\/]index\.js$/,
+                          bpIconStubs.entry
+                      ),
+                      new webpack.NormalModuleReplacementPlugin(
+                          /@blueprintjs[\\/]icons[\\/]lib[\\/]esm[\\/]generated[\\/]16px[\\/]paths[\\/]index\.js$/,
+                          bpIconStubs.paths16
+                      ),
+                      new webpack.NormalModuleReplacementPlugin(
+                          /@blueprintjs[\\/]icons[\\/]lib[\\/]esm[\\/]generated[\\/]20px[\\/]paths[\\/]index\.js$/,
+                          bpIconStubs.paths20
+                      )
+                  ]
+                : []),
 
             // Inject global constants at compile time.
             new webpack.DefinePlugin({
@@ -852,6 +863,106 @@ class HoistManifestPlugin {
         });
     }
 }
+
+//------------------------------------------------------------------------------------
+// Blueprint icons
+//------------------------------------------------------------------------------------
+// Icons required by the Blueprint components used within Hoist React - the per-icon React
+// components imported internally by @blueprintjs/core, @blueprintjs/datetime, and
+// @blueprintjs/select (a transitive dep of datetime), plus the string-name icons those packages
+// render via `<Icon icon="..."/>`. PascalCase, per the @blueprintjs/icons naming convention.
+const requiredBlueprintIcons = [
+    'ArrowDown',
+    'ArrowLeft',
+    'ArrowRight',
+    'ArrowUp',
+    'CaretDown',
+    'CaretRight',
+    'ChevronDown',
+    'ChevronLeft',
+    'ChevronRight',
+    'ChevronUp',
+    'Cross',
+    'DoubleCaretVertical',
+    'Error',
+    'InfoSign',
+    'KeyCommand',
+    'KeyControl',
+    'KeyDelete',
+    'KeyEnter',
+    'KeyOption',
+    'KeyShift',
+    'Search',
+    'SmallCross',
+    'SmallTick',
+    'Square',
+    'Tick',
+    'WarningSign'
+];
+
+/**
+ * Generate stub modules that re-export only the Blueprint icons required by Hoist React
+ * components. Swapped in via NormalModuleReplacementPlugin for:
+ *
+ *   1) The @blueprintjs/icons package entry point (`lib/esm/generated/index.js`), which
+ *      statically re-exports all ~700 per-icon React components.
+ *   2) The 16px and 20px icon path barrels (`lib/esm/generated/{16px,20px}/paths/index.js`),
+ *      statically imported by the entry point via its `allPaths` re-export and dynamically
+ *      imported by the package's lazy path loaders.
+ *
+ * Without these stubs, the entire icon set (~2.4MB pre-minification) lands in the initial
+ * bundle of every app. Blueprint marks its JS side-effect-free, but this config disables
+ * webpack's `sideEffects`-based module pruning (see `optimization` above), so the unused
+ * re-exports ride the static import graph into the bundle.
+ *
+ * Stubs are generated at build time with absolute-path imports resolved against the app's own
+ * copy of @blueprintjs/icons, so they remain correct across package managers (including pnpm's
+ * isolated layout, where this package cannot resolve undeclared siblings) and across icon
+ * package versions. Any Blueprint component importing an icon outside the whitelist will fail
+ * the build loudly (`strictExportPresence`) - extend the list above, or have the app opt out
+ * via `env.loadAllBlueprintJsIcons`.
+ */
+const generateBlueprintIconStubs = () => {
+    let iconsPath;
+    try {
+        iconsPath = path.dirname(
+            require.resolve('@blueprintjs/icons/package.json', {paths: [basePath]})
+        );
+    } catch (e) {
+        logMsg('⚠️  Could not resolve @blueprintjs/icons - Blueprint icon stubs disabled.');
+        return null;
+    }
+
+    // Forward slashes in import specifiers, valid on all platforms.
+    const esmPath = p => path.join(iconsPath, 'lib/esm', p).split(path.sep).join('/'),
+        outDir = path.join(basePath, 'node_modules', '.cache', 'hoist-dev-utils'),
+        writeStub = (filename, lines) => {
+            const ret = path.join(outDir, filename);
+            fs.writeFileSync(ret, lines.join('\n') + '\n');
+            return ret;
+        };
+
+    fs.mkdirSync(outDir, {recursive: true});
+
+    const componentExports = requiredBlueprintIcons.map(it => {
+            const mod = esmPath(`generated/components/${_.kebabCase(it)}.js`);
+            return `export {${it}Icon, ${it}} from '${mod}';`;
+        }),
+        pathExports = size =>
+            requiredBlueprintIcons.map(it => {
+                const mod = esmPath(`generated/${size}/paths/${_.kebabCase(it)}.js`);
+                return `export {default as ${it}} from '${mod}';`;
+            });
+
+    return {
+        entry: writeStub('bpIconsEntryStub.mjs', [
+            `export * from '${esmPath('index.js')}';`,
+            ...componentExports
+        ]),
+        paths16: writeStub('bpIconsPaths16Stub.mjs', pathExports('16px')),
+        paths20: writeStub('bpIconsPaths20Stub.mjs', pathExports('20px'))
+    };
+};
 
 const extraPluginsProd = terserOptions => {
     return [

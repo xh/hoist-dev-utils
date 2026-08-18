@@ -1,5 +1,15 @@
 # Changelog
 
+## 14.0.1 - 2026-08-18
+
+### 🐞 Bug Fixes
+
+* Restored the Blueprint icon bundle-size optimization, silently broken since Blueprint 5 changed
+  its icon packaging - the full `@blueprintjs/icons` set (~0.5MB gzipped) was landing in the
+  initial bundle of every app. Build-time-generated stubs now limit that to the icons Hoist's
+  Blueprint components actually use, and an unexpected icon import fails the build rather than
+  rendering blank. Opt out with the existing `loadAllBlueprintJsIcons` flag.
+
 ## 14.0.0 - 2026-08-08
 
 This release adds support for [pnpm](https://pnpm.io) as the package manager for Hoist apps.

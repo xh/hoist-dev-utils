@@ -30,7 +30,10 @@ Key behaviors:
 
 **`static/`** contains assets bundled with the package:
 - `index.html` — Template for HtmlWebpackPlugin used by all Hoist apps
-- `requiredBlueprintIcons.js` — Minimal BlueprintJS icon shim to reduce bundle size
+
+BlueprintJS icon stubs (which strip the ~700-icon set down to the icons Hoist actually uses) are
+generated at build time by `generateBlueprintIconStubs()` in `configureWebpack.js` and swapped in
+via `NormalModuleReplacementPlugin` - apps opt out with `env.loadAllBlueprintJsIcons`.
 
 ## Development
 
