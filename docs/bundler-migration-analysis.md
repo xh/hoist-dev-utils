@@ -48,6 +48,28 @@ Goals, in priority order:
   Hoist app consumes, with the same ~30 escape-hatch options.
 - CI build speed is a bonus, not a driver.
 
+### The pnpm precedent
+
+This effort is consciously modeled on the yarn 1 → pnpm migration. There, the feared cost was
+absorbing an architectural change — yarn Berry's flagship bet (PnP virtual resolution) looked
+incompatible with our raw-TS source distribution, and that fear kept us on yarn 1 for years. The
+actual unlock was recognizing we could take the modern, faster, security-conscious option *without*
+the architecture bet: pnpm keeps a real `node_modules`, required only targeted compatibility work
+(the dev-utils v14 symlink/`require.resolve` overhaul), and paid off immediately.
+
+The bundler decision has the same shape, with the same trap and the same escape:
+
+- **Vite is the yarn-Berry-shaped option**: the flagship modern choice whose defining architectural
+  bet (unbundled ESM dev + dependency pre-bundling, HTML-as-input) is precisely the part that
+  collides with our raw-TS distribution and multi-app generation model.
+- **Rspack is the pnpm-shaped option**: the full modernization payoff (Rust speed, real HMR, an
+  ascendant ecosystem) while preserving the existing mental model (the webpack config surface),
+  requiring a port rather than a rearchitecture.
+
+The pnpm work has also already paid a down payment on this migration: v14's realpath'd include
+paths and `require.resolve()`d loaders are exactly the resolution discipline a replacement bundler
+needs under pnpm's isolated layout, and that hardening carries straight over.
+
 Counter-consideration, stated fairly: webpack 5 is not broken for us. We are on a current version
 (~5.109), the config is battle-tested across every customer app, and dev-utils v14 just completed
 a significant pnpm/symlink-resolution overhaul. The cost of *any* migration is re-validating that
@@ -210,6 +232,13 @@ Honest risks and open questions:
   for a later Vite move if the calculus changes.
 - **Single-vendor stewardship (ByteDance web-infra team).** Comparable in kind to Vite's
   Cloudflare/VoidZero situation; the Next.js partnership and MIT license mitigate.
+- **Supply-chain history.** In December 2024, `@rspack/core`/`@rspack/cli` 1.1.7 were published
+  with an XMRig cryptominer via a stolen npm token, delivered through a `postinstall` script;
+  the project unpublished and shipped a clean 1.1.8 the same day and rotated credentials. Two
+  mitigations already in place on our side: pnpm's default build-script blocking (our explicit
+  `onlyBuiltDependencies` allowlists) neutralizes exactly this postinstall vector, and our `~`
+  version ranges + lockfile discipline limit exposure windows. Not disqualifying — this attack
+  class has hit much of npm — but worth naming.
 - **Plugin-compat edges need a spike**, specifically: our `HtmlWebpackPlugin`
   `templateParameters`-function + EJS template (may be cleaner to move to Rspack's native
   `HtmlRspackPlugin` or generate tags ourselves), `NormalModuleReplacementPlugin` for Blueprint
@@ -288,5 +317,7 @@ and a future spike is warranted.**
 - webpack 2026 roadmap (webpack 6 targeted late 2027), 2026-02-04 — webpack.js.org/blog
 - CRA deprecation, 2025-02-14 — react.dev/blog/2025/02/14/sunsetting-create-react-app
 - npm trends: Vite passed webpack July 2025 — npmtrends.com/vite-vs-webpack
+- Rspack 1.1.7 supply-chain incident (2024-12-20, fixed same day in 1.1.8) —
+  bleepingcomputer.com, thehackernews.com, socket.dev coverage
 - Local facts: `configureWebpack.js` (dev-utils), `docs/compilation-notes.md` (hoist-react),
   hoist-react/toolbox `package.json` + `tsconfig.json` as of this branch date.
