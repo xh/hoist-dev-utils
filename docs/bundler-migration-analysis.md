@@ -10,11 +10,15 @@ consumer.
 **Recommended path: Rspack (likely via its Rsbuild wrapper), not Vite — and land the TC39
 modern-decorators migration first.**
 
-1. **Land modern decorators first** (hoist-react [#4333](https://github.com/xh/hoist-react/pull/4333)
-   + dev-utils [#66](https://github.com/xh/hoist-dev-utils/pull/66)). This is the single change
-   that unlocks Babel-free native Rust/Go transpilers, and MobX 7 (July 2026) has *removed*
-   legacy-decorator support entirely — the migration is a "when", not an "if". Do it before, and
-   independently of, any bundler change.
+1. **Sequence the TC39 modern-decorators migration deliberately** (hoist-react
+   [#4333](https://github.com/xh/hoist-react/pull/4333) + dev-utils
+   [#66](https://github.com/xh/hoist-dev-utils/pull/66)) — but note it is **not a blocker for the
+   bundler move in either direction** (see §8a). SWC handles legacy decorators natively (its
+   default mode, heavily battle-tested by the NestJS ecosystem), so Rspack works before or after
+   #4333. Decorators-first validates only one transpiler×decorator combination; bundler-first
+   spends far less app-facing change budget now. Either order is sound — the one hard rule is not
+   to ship both in the same release window. MobX 7 (July 2026) has *removed* legacy-decorator
+   support, so decorators remain a "when", not an "if".
 2. **Migrate the build to Rspack**, prototyping first with **Rsbuild** (its higher-level wrapper).
    Rspack is a Rust-based, webpack-API-compatible bundler: our config model, loaders, plugins,
    dev-server/proxy setup, and — critically — our "transpile raw hoist-react TS from node_modules
@@ -30,7 +34,8 @@ modern-decorators migration first.**
    tractable (see §7) and is worth a future spike, but it is not required for — and should not be
    coupled to — the bundler move.
 
-Confidence: high on the ordering (decorators → Rspack) and on "not Vite *today*"; medium on
+Confidence: high on Rspack-over-Vite-today and on the two projects being independent; the
+decorators/bundler ordering is a change-budget call, not a technical one (§8a); medium on
 Rsbuild vs. raw Rspack config (a spike question); the packaging question (§7) is deliberately left
 open.
 
@@ -287,6 +292,44 @@ and a future spike is warranted.**
   ecosystem-wide change.
 
 ## 8. Proposed sequencing
+
+### 8a. Decorators before or after? A change-budget call, not a technical dependency
+
+The bundler move does **not** require the decorators migration in either direction. SWC's legacy
+mode (`decoratorVersion: 'legacy'`, its default) exists precisely for TS `experimentalDecorators`
+compatibility and is exercised at enormous scale (the NestJS ecosystem runs on it) — arguably
+better-trodden today than SWC's `2023-11` mode. The honest ledger for each order:
+
+**Decorators-first** (the ordering below): validates only one transpiler×decorator combination
+(SWC×TC39); #4333/#66 ship as planned with no rework. Cost: spends a large app-facing breaking
+change — a codemod touching every model class in every app codebase — before delivering any speed
+payoff, on top of whatever change budget v87 has already consumed.
+
+**Bundler-first**: delivers the multiple-x dev-speed win while touching **zero app source** — the
+swap is a dev-utils major plus replacing each app's `webpack.config.js` with an equivalent config
+and updating npm scripts. The two projects largely spend from different budgets (tooling vs.
+app code). Costs and risks:
+
+- **Decorator behavior gets validated twice** (Babel-legacy→SWC-legacy now, SWC-legacy→SWC-TC39
+  later). Mitigation: #4333's Phase 0 spike runner and its 22 runtime gates are reusable as-is for
+  the SWC-legacy parity check.
+- **One real technical gate for the spike**: Babel↔SWC semantic parity for legacy decorators
+  interacting with class-field semantics (define-vs-set; tsconfig declares
+  `useDefineForClassFields: true` but Babel performs the emit today). SWC exposes equivalent
+  knobs — set them explicitly and prove `@bindable`/`@managed`/`@computed`/`@persist` behavior
+  via the spike gates, don't assume.
+- **PR shelf-life**: #4333 is codemod-generated, so regenerating against a moved target is cheap.
+  Dev-utils #66 (the Babel decorator flip) is largely superseded if Rspack lands first — the
+  eventual decorators flip becomes a one-line SWC config change in the new config function.
+
+Two rules that hold under either order: **never ship both changes in the same release window**
+(two transpiler-level variables at once makes app-side regressions unattributable — sequence as
+separate dev-utils majors with soak time between), and **don't let decorators drift indefinitely**
+(MobX 6 is now the legacy maintenance line; MobX 7 requires modern decorators and claims ~30%
+lower observable overhead, and deleting `makeObservable(this)` boilerplate is a real ergonomics
+win — a soft deadline, but a deadline).
+
+### 8b. Steps (decorators-first shown; swap 1 and 2 for bundler-first)
 
 1. **Now**: Land #4333 + dev-utils #66 (modern decorators, coordinated release — already planned).
    Optionally cherry-pick the cheap webpack win (React Fast Refresh plugin) into a dev-utils minor
