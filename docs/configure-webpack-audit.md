@@ -17,7 +17,7 @@ simplifiable · 🔴 obsolete / legacy noise - drop or fix, don't port.
 
 | Item | Bin | Notes |
 |---|---|---|
-| `@babel/preset-react` | 🟢 | JSX in `.tsx` app files is real (e.g. Toolbox `AppComponent.tsx`). Optional modernization: `runtime: 'automatic'` (jsx-runtime) instead of classic `createElement`. |
+| `@babel/preset-react` / JSX support generally | 🟢 | JSX stays a standard, always-on capability of the stack - some clients insist on it, and `.tsx`/`.jsx` handling is free in every candidate toolchain (SWC/Babel alike). Three separable tiers: JSX in `.tsx` (🟢 standard, e.g. Toolbox `AppComponent.tsx`), `.jsx` files (🟢 keep - default extension handling everywhere), JSX in plain `.js` (🟡 the nonstandard tier - see isTSX row; opt-in). Optional modernization: `runtime: 'automatic'` (jsx-runtime) instead of classic `createElement`. |
 | `@babel/plugin-proposal-decorators` (legacy) | 🟢 | Required until #4333 lands; then flips version. The bundler-spike equivalent is SWC `decoratorVersion`. |
 | `babel-plugin-transform-imports` (5 FontAwesome pkgs) | 🟢 | Real, large win while `sideEffects` pruning is disabled (see §4). Maps to SWC/Rsbuild `transformImport`. Could become unnecessary if tree-shaking is fixed - retest then. |
 | Forced `include`: `transform-class-properties`, `private-methods`, `private-property-in-object` | 🟢→🔴 | Required *interop* while legacy decorators are used (Babel must compile class elements it decorates). Obsolete the day #4333 lands - do not port past that point. |
@@ -25,7 +25,7 @@ simplifiable · 🔴 obsolete / legacy noise - drop or fix, don't port.
 | `@babel/preset-env` as a *syntax transpiler* | 🟡 | With last-2-evergreen targets it transpiles almost nothing. Its remaining jobs are (a) the polyfill entry rewrite and (b) hosting the forced includes above. Once both go, preset-env itself may have no job. `bugfixes: true` is default since Babel 8-era anyway. |
 | Polyfill layer: `useBuiltIns: 'entry'` + `corejs: {version 3, proposals: true}` + prepending hoist's `static/polyfills.js` to every entry + app-level `core-js` dep | 🟡 leaning 🔴 | For last-2-evergreen targets the entry rewrite emits a near-empty residue (only very newest features). `proposals: true` ships proposal polyfills to evergreen browsers - hard to justify. **Action: run one build with `debug: true` on preset-env, look at the actual emitted polyfill list, and most likely delete the entire layer** (polyfills.js, the entry prepend, core-js deps in hoist-react and apps). |
 | Stale comment: "core-js and regenerator-runtime both imported... in its polyfills.js" | 🔴 | `polyfills.js` is now a single `import 'core-js'`. regenerator-runtime is long gone (async/generators are native in targets; nothing transpiles them). Doc rot. |
-| `@babel/preset-typescript` **and** explicit `@babel/plugin-transform-typescript` (`isTSX: true`, `allowDeclareFields`) | 🟡 | Duplication - the preset wraps the same plugin. The explicit plugin exists to allow JSX-in-`.js` for "older JS apps". Zero `.jsx`/JS apps remain in Toolbox or hoist-react; decide consciously whether any *customer* JS-era app still needs this, otherwise collapse to one preset config. |
+| `@babel/preset-typescript` **and** explicit `@babel/plugin-transform-typescript` (`isTSX: true`, `allowDeclareFields`) | 🟡 | Duplication - the preset wraps the same plugin. Note JSX support *per se* is not in question - clients use it, and it stays standard (see JSX row below). The nonstandard part this arrangement enables is JSX inside plain `.js` files; make that an opt-in flag in the successor config rather than default-on, and collapse to one preset/parser config otherwise. |
 | `cacheDirectory` / `cacheCompression: false` | 🟢 | Correct for webpack today; moot after SWC. |
 
 ## 2. Module rules (non-JS)
@@ -37,7 +37,7 @@ simplifiable · 🔴 obsolete / legacy noise - drop or fix, don't port.
 | Markdown `asset/source` + `?url` variant | 🟢 | Product feature (Hoist `markdown` component). Port (Rspack: identical; Vite: `?raw`). |
 | Catch-all `asset/resource` with exclude list copied from CRA ("commented there, but didn't understand") | 🟡 | Works, but this is the literal definition of cargo cult - the config says so itself. Rewrite consciously at migration (a plain "everything else is a hashed asset" rule). |
 | `resolve.extensions` including `'*'` | 🔴 | Webpack-4-ism. In webpack 5, imports with explicit extensions always work; `'*'` does nothing. |
-| `resolve.extensions` including `.jsx` | 🟡 | Zero `.jsx` files in the ecosystem. Keep only if legacy customer JS apps are still a support target (same decision as the isTSX row above). |
+| `resolve.extensions` including `.jsx` | 🟢 | Keep - JSX is a supported first-class style for client apps (even though XH's own code has zero `.jsx` files), and `.jsx` is in every bundler's default extension set anyway. Only the JSX-in-`.js` tier moves to opt-in (isTSX row above). |
 | `strictExportPresence` | 🟢 | Good guard (it's what makes Blueprint icon-stub misses fail loudly). Note: deprecated spelling - modern form is `module.parser.javascript.exportsPresence: 'error'`. |
 
 ## 3. CSS pipeline
