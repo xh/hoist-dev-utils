@@ -1,5 +1,19 @@
 # Changelog
 
+## 15.0.0-SNAPSHOT
+
+Cleanup release per [#72](https://github.com/xh/hoist-dev-utils/issues/72) - sheds obsolete build
+config accumulated over years of webpack evolution, so that only config with a re-verified reason
+to exist carries forward. **Use with `hoist-react >= 87`.**
+
+### 💥 Breaking Changes
+
+* **Requires hoist-react >= 87.**
+
+### ⚙️ Technical
+
+### 📚 Libraries
+
 ## 14.0.1 - 2026-08-18
 
 ### 🐞 Bug Fixes
