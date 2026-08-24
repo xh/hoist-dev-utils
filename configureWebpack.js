@@ -632,12 +632,14 @@ async function configureWebpack(env) {
                         },
 
                         //------------------------
-                        // Fall-through entry to emit all other assets (e.g. SVGs, fonts) as hashed
-                        // files. Uses Webpack 5 asset modules (replaces the deprecated file-loader).
-                        // (Exclude config here is from CRA source config - commented there, but didn't understand).
+                        // Fall-through entry to emit everything not claimed by a rule above
+                        // (e.g. SVGs, fonts) as hashed asset files. Excludes script-type files -
+                        // anything falling through the babel rule (e.g. node_modules JS outside
+                        // its include paths) must get webpack's native JS handling rather than
+                        // become an asset URL - plus JSON (parsed natively by webpack) and HTML.
                         //------------------------
                         {
-                            exclude: [/\.jsx?$/, /\.html$/, /\.json$/],
+                            exclude: [/\.m?jsx?$/, /\.tsx?$/, /\.html$/, /\.json$/],
                             type: 'asset/resource',
                             generator: {filename: 'static/media/[name].[hash:8][ext]'}
                         }
