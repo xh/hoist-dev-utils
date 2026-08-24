@@ -326,8 +326,9 @@ async function configureWebpack(env) {
     // Build Webpack entry config, with keys for each JS app to be bundled.
     const appEntryPoints = {};
     clientApps.forEach(clientApp => {
-        // Ensure core-js and regenerator-runtime both imported for every app bundle - they are
-        // specified as dependencies by Hoist and imported once in its polyfills.js file.
+        // Prepend hoist-react's polyfills.js (a single core-js import) to every app bundle.
+        // With `useBuiltIns: 'entry'` in the preset-env config below, Babel rewrites that
+        // import into the specific polyfills needed for the configured target browsers.
         appEntryPoints[clientApp.name] = [
             path.resolve(hoistPath, 'static/polyfills.js'),
             clientApp.path
@@ -453,11 +454,17 @@ async function configureWebpack(env) {
                                             {
                                                 targets: targetBrowsers.join(', '),
 
-                                                // Specify use of corejs and allow it to polyfill proposals (e.g. object rest spread).
+                                                // Polyfill via core-js v3. (The `proposals` flag
+                                                // only affects `useBuiltIns: 'usage'` - with
+                                                // 'entry' below, what gets pulled in is governed
+                                                // by which core-js entry point polyfills.js
+                                                // imports.)
                                                 corejs: {version: 3, proposals: true},
 
-                                                // Note that we force import of core-js and regen-runtime in the `entry` config produced by this file.
-                                                // This should be replaced by a set of polyfills based on our target browsers as per this setting.
+                                                // Rewrite the core-js import in hoist-react's
+                                                // polyfills.js (prepended to every app entry
+                                                // above) into the polyfills needed for the
+                                                // configured target browsers.
                                                 useBuiltIns: 'entry',
 
                                                 // Recently (Mar 2020) added optimization to preset-env to further minimize transpilation to ES5 where
