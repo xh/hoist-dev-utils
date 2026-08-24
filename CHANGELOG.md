@@ -18,6 +18,8 @@ to exist carries forward. **Use with `hoist-react >= 87`.**
 * Dropped Terser `compress: {comparisons: false, collapse_vars: false}` overrides - workarounds
   for 2018-era bugs in Uglify/FontAwesome tooling long since gone. Terser defaults now apply
   (Toolbox: -183KB raw / -24KB gzipped).
+* Dropped `'*'` from `resolve.extensions` - a webpack-4-ism with no effect in webpack 5, where
+  imports specifying an explicit extension always resolve as written. Verified zero output diff.
 
 ### 📚 Libraries
 

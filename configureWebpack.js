@@ -379,10 +379,9 @@ async function configureWebpack(env) {
 
         resolve: {
             alias: resolveAliases,
-            // Add JSX to support imports from .jsx source w/o needing to add the extension.
-            // Include "*" to continue supporting other imports that *do* specify an extension
-            // within the import statement (i.e. `import './foo.png'`). Yes, it's confusing.
-            extensions: ['*', '.js', '.ts', '.jsx', '.tsx', '.json']
+            // Extensions tried, in order, for imports that do not specify one. Imports that
+            // *do* include an extension (e.g. `import './foo.png'`) always resolve as written.
+            extensions: ['.js', '.ts', '.jsx', '.tsx', '.json']
         },
 
         // Fallback resolution for any loaders referenced by bare name (e.g. via app-supplied
