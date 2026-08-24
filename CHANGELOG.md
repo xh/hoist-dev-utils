@@ -12,7 +12,8 @@ to exist carries forward. **Use with `hoist-react >= 87`.**
 * **TS-only app support**: `.jsx` files are no longer resolved or transpiled - apps on this
   release must be TypeScript, with JSX carried solely by `.tsx` files. (Plain `.js` remains
   transpiled - hoist-react's `polyfills.js` entry requires it.) Apps with remaining `.jsx`
-  files must rename them to `.tsx` before upgrading.
+  files must rename them to `.tsx` before upgrading - the build fails fast with an error
+  listing any found under `/src`.
 
 ### ⚙️ Technical
 

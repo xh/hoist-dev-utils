@@ -310,6 +310,20 @@ async function configureWebpack(env) {
     // Setup resolver alias to synthetic import path used by XH.changelogService.
     resolveAliases['@xh/app-changelog.json'] = clDestPath;
 
+    // TS-only support: fail fast with a clear error if the app still contains .jsx source.
+    // Without this check, .jsx files surface as cryptic module-resolution or parse errors.
+    const jsxFiles = fs
+        .readdirSync(srcPath, {recursive: true})
+        .filter(f => f.endsWith('.jsx'))
+        .map(f => path.join('src', f));
+    if (jsxFiles.length) {
+        throw (
+            `Found .jsx file(s) - not supported by hoist-dev-utils v15+, which builds TypeScript ` +
+            `apps only, with JSX carried by .tsx files. Rename to .tsx to proceed:\n` +
+            jsxFiles.map(f => `  > ${f}`).join('\n')
+        );
+    }
+
     // Resolve app entry points - one for each file within src/apps/ - to create bundles below.
     const appDirPath = path.resolve(srcPath, 'apps'),
         clientApps = fs
