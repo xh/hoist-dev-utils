@@ -12,6 +12,10 @@ to exist carries forward. **Use with `hoist-react >= 87`.**
 
 ### ⚙️ Technical
 
+* Dropped forced Babel transpilation of nullish-coalescing (`??`) and optional-chaining (`?.`)
+  operators - 2020-era guards, native in all target browsers for years. Measured on Toolbox:
+  -116KB raw / -26KB gzipped across bundles.
+
 ### 📚 Libraries
 
 ## 14.0.1 - 2026-08-18

@@ -462,12 +462,12 @@ async function configureWebpack(env) {
                                                 // not required. See https://babeljs.io/docs/en/babel-preset-env#bugfixes.
                                                 bugfixes: true,
 
-                                                // Ensure expected transform plugins are enabled for latest features.
-                                                // (Note these plugins are all generally bundled with preset-env.)
+                                                // Interop transforms required while legacy
+                                                // decorators are in use - Babel must compile the
+                                                // class elements it decorates. Remove when Hoist
+                                                // moves off `version: 'legacy'` decorators.
                                                 include: [
                                                     'transform-class-properties',
-                                                    'transform-nullish-coalescing-operator',
-                                                    'transform-optional-chaining',
                                                     'transform-private-methods',
                                                     'transform-private-property-in-object'
                                                 ],
