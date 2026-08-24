@@ -381,7 +381,8 @@ async function configureWebpack(env) {
             alias: resolveAliases,
             // Extensions tried, in order, for imports that do not specify one. Imports that
             // *do* include an extension (e.g. `import './foo.png'`) always resolve as written.
-            extensions: ['.js', '.ts', '.jsx', '.tsx', '.json']
+            // Note no `.jsx` - apps must be TS, with JSX carried solely by `.tsx` files.
+            extensions: ['.js', '.ts', '.tsx', '.json']
         },
 
         // Fallback resolution for any loaders referenced by bare name (e.g. via app-supplied
@@ -435,7 +436,10 @@ async function configureWebpack(env) {
                         // Transpile via Babel, with presets/plugins to support Hoist's use of modern / staged JS features.
                         //------------------------
                         {
-                            test: /\.(jsx?)$|\.(tsx?)$/,
+                            // Note `.js` is retained (without JSX parsing) - hoist-react's
+                            // `static/polyfills.js` entry and any stray plain-JS must still
+                            // transpile - but `.jsx` is not: apps must be TS, JSX via `.tsx`.
+                            test: /\.(js|ts|tsx)$/,
                             use: {
                                 // Loaders, presets and plugins below are deps of this package and
                                 // resolved from here via require.resolve() - apps do not get them
@@ -443,7 +447,6 @@ async function configureWebpack(env) {
                                 loader: require.resolve('babel-loader'),
                                 options: {
                                     presets: [
-                                        require.resolve('@babel/preset-typescript'),
                                         require.resolve('@babel/preset-react'),
                                         [
                                             require.resolve('@babel/preset-env'),
@@ -477,9 +480,13 @@ async function configureWebpack(env) {
                                         ]
                                     ],
                                     plugins: [
-                                        // Support Typescript via Babel. `isTSX` option allows use of JSX inline with
-                                        // .js files for older JS apps. Typescript apps must use the .tsx extension for
-                                        // any files containing JSX syntax.
+                                        // Strip TypeScript syntax. Must run as the *first root
+                                        // plugin* - not via @babel/preset-typescript - because
+                                        // root plugins run before presets, and the legacy
+                                        // decorators plugin below cannot handle TS constructs
+                                        // (e.g. `declare` class fields) that would otherwise
+                                        // reach it unstripped. Revisit when Hoist moves off
+                                        // legacy decorators.
                                         [
                                             require.resolve('@babel/plugin-transform-typescript'),
                                             {allowDeclareFields: true, isTSX: true}

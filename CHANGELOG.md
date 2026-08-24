@@ -9,6 +9,11 @@ to exist carries forward. **Use with `hoist-react >= 87`.**
 ### 💥 Breaking Changes
 
 * **Requires hoist-react >= 87.**
+* **TS-only app support**: `.jsx` files are no longer resolved or transpiled - apps on this
+  release must be TypeScript, with JSX carried solely by `.tsx` files. (Plain `.js` remains
+  transpiled - hoist-react's `polyfills.js` entry requires it.) No `.jsx` files exist anywhere
+  in the current app ecosystem; apps with legacy `.jsx` should rename to `.tsx` as part of their
+  TS migration before upgrading.
 
 ### ⚙️ Technical
 
@@ -20,8 +25,15 @@ to exist carries forward. **Use with `hoist-react >= 87`.**
   (Toolbox: -183KB raw / -24KB gzipped).
 * Dropped `'*'` from `resolve.extensions` - a webpack-4-ism with no effect in webpack 5, where
   imports specifying an explicit extension always resolve as written. Verified zero output diff.
+* Collapsed the duplicated TypeScript transform config: `@babel/preset-typescript` removed in
+  favor of the explicit `@babel/plugin-transform-typescript` already in place. Note the explicit
+  root plugin (not the preset) turns out to be load-bearing while Hoist remains on legacy
+  decorators - root plugins run before presets, and the decorators plugin cannot handle
+  unstripped TS constructs such as `declare` class fields. Verified zero output diff.
 
 ### 📚 Libraries
+
+* @babel/preset-typescript `removed`
 
 ## 14.0.1 - 2026-08-18
 
