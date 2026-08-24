@@ -15,6 +15,9 @@ to exist carries forward. **Use with `hoist-react >= 87`.**
 * Dropped forced Babel transpilation of nullish-coalescing (`??`) and optional-chaining (`?.`)
   operators - 2020-era guards, native in all target browsers for years. Measured on Toolbox:
   -116KB raw / -26KB gzipped across bundles.
+* Dropped Terser `compress: {comparisons: false, collapse_vars: false}` overrides - workarounds
+  for 2018-era bugs in Uglify/FontAwesome tooling long since gone. Terser defaults now apply
+  (Toolbox: -183KB raw / -24KB gzipped).
 
 ### 📚 Libraries
 

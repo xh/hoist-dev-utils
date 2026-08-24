@@ -982,12 +982,6 @@ const extraPluginsProd = terserOptions => {
                 // necessary w/mangling off, but leaving here as docs are a bit vague, and in case
                 // we re-enable. We want to maintain function/class names for error messages.
                 keep_fnames: true,
-
-                compress: {
-                    comparisons: false,
-                    // See https://fontawesome.com/how-to-use/with-the-api/other/tree-shaking
-                    collapse_vars: false
-                },
                 ...terserOptions
             }
         })
