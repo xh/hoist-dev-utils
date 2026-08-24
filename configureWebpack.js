@@ -576,8 +576,11 @@ async function configureWebpack(env) {
                                     }
                                 },
 
-                                // 1) Pre-process CSS to install vendor-specific prefixes for the configured browsers.
-                                //    Note that the "post" in the loader name refers to http://postcss.org/ - NOT the processing order within Webpack.
+                                // 1) Install vendor prefixes still required by the configured
+                                //    target browsers (e.g. Safari's -webkit-user-select), and
+                                //    strip stale hand-written prefixes from source styles.
+                                //    ("post" in the loader name refers to http://postcss.org/ -
+                                //    NOT the processing order within Webpack.)
                                 {
                                     loader: require.resolve('postcss-loader'),
                                     options: {
@@ -585,12 +588,7 @@ async function configureWebpack(env) {
                                             plugins: [
                                                 [
                                                     require.resolve('autoprefixer'),
-                                                    {
-                                                        // We still want to provide an array of target browsers
-                                                        // that can be passed to / managed centrally by this script.
-                                                        overrideBrowserslist: targetBrowsers,
-                                                        flexbox: 'no-2009'
-                                                    }
+                                                    {overrideBrowserslist: targetBrowsers}
                                                 ]
                                             ]
                                         }
