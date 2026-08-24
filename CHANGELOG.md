@@ -34,6 +34,9 @@ to exist carries forward. **Use with `hoist-react >= 87`.**
 ### 📚 Libraries
 
 * @babel/preset-typescript `removed`
+* sass-material-colors `removed` (consumed only by hoist-react's `vars.scss`; hoist-react >= 87
+  declares its own copy. A flat-layout app importing it directly in its own SCSS without
+  declaring it should add it to its own `package.json`.)
 
 ## 14.0.1 - 2026-08-18
 
