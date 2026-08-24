@@ -11,32 +11,28 @@ to exist carries forward. **Use with `hoist-react >= 87`.**
 * **Requires hoist-react >= 87.**
 * **TS-only app support**: `.jsx` files are no longer resolved or transpiled - apps on this
   release must be TypeScript, with JSX carried solely by `.tsx` files. (Plain `.js` remains
-  transpiled - hoist-react's `polyfills.js` entry requires it.) No `.jsx` files exist anywhere
-  in the current app ecosystem; apps with legacy `.jsx` should rename to `.tsx` as part of their
-  TS migration before upgrading.
+  transpiled - hoist-react's `polyfills.js` entry requires it.) Apps with remaining `.jsx`
+  files must rename them to `.tsx` before upgrading.
 
 ### ⚙️ Technical
 
 * Dropped forced Babel transpilation of nullish-coalescing (`??`) and optional-chaining (`?.`)
-  operators - 2020-era guards, native in all target browsers for years. Measured on Toolbox:
-  -116KB raw / -26KB gzipped across bundles.
+  operators - 2020-era guards, native in all target browsers for years. Bundles shrink slightly.
 * Dropped Terser `compress: {comparisons: false, collapse_vars: false}` overrides - workarounds
-  for 2018-era bugs in Uglify/FontAwesome tooling long since gone. Terser defaults now apply
-  (Toolbox: -183KB raw / -24KB gzipped).
-* Dropped `'*'` from `resolve.extensions` - a webpack-4-ism with no effect in webpack 5, where
-  imports specifying an explicit extension always resolve as written. Verified zero output diff.
+  for 2018-era bugs in tools long since gone. Terser compression defaults now apply.
+* Dropped `'*'` from `resolve.extensions` - a webpack-4-ism with no effect in webpack 5.
 * Collapsed the duplicated TypeScript transform config: `@babel/preset-typescript` removed in
-  favor of the explicit `@babel/plugin-transform-typescript` already in place. Note the explicit
-  root plugin (not the preset) turns out to be load-bearing while Hoist remains on legacy
-  decorators - root plugins run before presets, and the decorators plugin cannot handle
-  unstripped TS constructs such as `declare` class fields. Verified zero output diff.
+  favor of the explicit `@babel/plugin-transform-typescript`, which must remain a root plugin
+  (running ahead of the legacy decorators plugin) while Hoist is on legacy decorators.
+* Rewrote the catch-all asset rule's exclude list with a documented rationale, replacing config
+  copied from CRA with a comment admitting it wasn't understood.
 
 ### 📚 Libraries
 
 * @babel/preset-typescript `removed`
-* sass-material-colors `removed` (consumed only by hoist-react's `vars.scss`; hoist-react >= 87
-  declares its own copy. A flat-layout app importing it directly in its own SCSS without
-  declaring it should add it to its own `package.json`.)
+* sass-material-colors `removed` - consumed only by hoist-react's `vars.scss`, and hoist-react
+  \>= 87 declares its own copy. A flat-layout app importing it directly in its own SCSS should
+  declare it in its own `package.json`.
 
 ## 14.0.1 - 2026-08-18
 
