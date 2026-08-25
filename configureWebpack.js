@@ -576,11 +576,11 @@ async function configureWebpack(env) {
                                     }
                                 },
 
-                                // 1) Install vendor prefixes still required by the configured
-                                //    target browsers (e.g. Safari's -webkit-user-select), and
-                                //    strip stale hand-written prefixes from source styles.
-                                //    ("post" in the loader name refers to http://postcss.org/ -
-                                //    NOT the processing order within Webpack.)
+                                // 1) Install vendor prefixes still required by the configured target
+                                //    browsers (e.g. Safari's -webkit-user-select), and strip stale
+                                //    hand-written prefixes from source styles. ("post" in the loader
+                                //    name refers to http://postcss.org/ - NOT the processing order
+                                //    within Webpack.)
                                 {
                                     loader: require.resolve('postcss-loader'),
                                     options: {

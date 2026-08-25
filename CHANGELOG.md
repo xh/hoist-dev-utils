@@ -26,6 +26,13 @@ to exist carries forward. **Use with `hoist-react >= 87`.**
   the legacy decorators plugin, which cannot handle unstripped TS.
 * Rewrote the catch-all asset rule's exclude list - now covers all script-type extensions and
   documents why each exclusion exists.
+* Removed the 2020-era rule mapping `.mjs` files to webpack's `javascript/auto` module type - a
+  workaround for a stylis packaging bug (via react-select > emotion) fixed upstream years ago.
+  `.mjs` files now get standard ESM handling.
+* Removed autoprefixer's `flexbox: 'no-2009'` option - a guard against emitting 2009-spec flexbox
+  syntax for ancient mobile WebKit, a no-op for current targets. The autoprefixer stage itself
+  was re-verified and stays: Safari still requires `-webkit-` prefixes for several properties in
+  use, and the stage also strips stale hand-written prefixes.
 
 ### 📚 Libraries
 
