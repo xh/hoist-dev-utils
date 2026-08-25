@@ -324,9 +324,11 @@ async function configureWebpack(env) {
     // TS-only support: fail fast with a clear error if the app (or any custom package it asks us
     // to transpile) still contains .jsx source. Without this check, .jsx files surface as cryptic
     // module-resolution or parse errors.
-    const jsxFiles = [srcPath, ...babelIncludePaths].flatMap(root =>
-        findJsxFiles(root).map(f => path.join(path.basename(root), path.relative(root, f)))
-    );
+    const jsxFiles = [srcPath, ...babelIncludePaths]
+        .filter(root => fs.existsSync(root))
+        .flatMap(root =>
+            findJsxFiles(root).map(f => path.join(path.basename(root), path.relative(root, f)))
+        );
     if (jsxFiles.length) {
         throw (
             `Found .jsx file(s) - not supported by hoist-dev-utils v15+, which builds TypeScript ` +
