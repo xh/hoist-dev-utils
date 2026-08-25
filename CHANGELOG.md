@@ -10,10 +10,9 @@ to exist carries forward. **Use with `hoist-react >= 87`.**
 
 * **Requires hoist-react >= 87.**
 * **TS-only app support**: `.jsx` files are no longer resolved or transpiled - apps on this
-  release must be TypeScript, with JSX carried solely by `.tsx` files. (Plain `.js` remains
-  transpiled - hoist-react's `polyfills.js` entry requires it.) Apps with remaining `.jsx`
-  files must rename them to `.tsx` before upgrading - the build fails fast with an error
-  listing any found under `/src`.
+  release must be TypeScript, with JSX carried solely by `.tsx` files. Apps with remaining
+  `.jsx` files must rename them to `.tsx` before upgrading - the build fails fast with an
+  error listing any found under `/src`.
 
 ### ⚙️ Technical
 
@@ -21,19 +20,18 @@ to exist carries forward. **Use with `hoist-react >= 87`.**
   operators - 2020-era guards, native in all target browsers for years. Bundles shrink slightly.
 * Dropped Terser `compress: {comparisons: false, collapse_vars: false}` overrides - workarounds
   for 2018-era bugs in tools long since gone. Terser compression defaults now apply.
-* Dropped `'*'` from `resolve.extensions` - a webpack-4-ism with no effect in webpack 5.
 * Collapsed the duplicated TypeScript transform config: `@babel/preset-typescript` removed in
   favor of the explicit `@babel/plugin-transform-typescript`, which must remain a root plugin
   (running ahead of the legacy decorators plugin) while Hoist is on legacy decorators.
-* Rewrote the catch-all asset rule's exclude list with a documented rationale, replacing config
-  copied from CRA with a comment admitting it wasn't understood.
+* Rewrote the catch-all asset rule's exclude list - now covers all script-type extensions and
+  documents why each exclusion exists.
 
 ### 📚 Libraries
 
 * @babel/preset-typescript `removed`
 * sass-material-colors `removed` - consumed only by hoist-react's `vars.scss`, and hoist-react
-  \>= 87 declares its own copy. A flat-layout app importing it directly in its own SCSS should
-  declare it in its own `package.json`.
+  \>= 87 declares its own copy. Any app importing it directly in its own SCSS must declare it in
+  its own `package.json` (previously it could resolve via this package's copy).
 
 ## 14.0.1 - 2026-08-18
 
