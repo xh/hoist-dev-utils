@@ -477,8 +477,12 @@ async function configureWebpack(env) {
                                                 // configured target browsers.
                                                 useBuiltIns: 'entry',
 
-                                                // Recently (Mar 2020) added optimization to preset-env to further minimize transpilation to ES5 where
-                                                // not required. See https://babeljs.io/docs/en/babel-preset-env#bugfixes.
+                                                // Where a target browser has a buggy
+                                                // implementation of a modern feature (vs. lacking
+                                                // it entirely), transpile just the broken syntax
+                                                // to the closest working modern syntax, rather
+                                                // than down-leveling the whole feature group.
+                                                // Opt-in for Babel 7; default in Babel 8.
                                                 bugfixes: true,
 
                                                 // Interop transforms required while legacy
