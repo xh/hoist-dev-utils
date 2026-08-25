@@ -325,12 +325,7 @@ async function configureWebpack(env) {
     // to transpile) still contains .jsx source. Without this check, .jsx files surface as cryptic
     // module-resolution or parse errors.
     const jsxFiles = [srcPath, ...babelIncludePaths].flatMap(root =>
-        fs
-            .readdirSync(root, {recursive: true, withFileTypes: true})
-            .filter(e => e.isFile() && e.name.endsWith('.jsx'))
-            .map(e => path.relative(root, path.join(e.parentPath, e.name)))
-            .filter(rel => !rel.split(path.sep).includes('node_modules'))
-            .map(rel => path.join(path.basename(root), rel))
+        findJsxFiles(root).map(f => path.join(path.basename(root), path.relative(root, f)))
     );
     if (jsxFiles.length) {
         throw (
@@ -1054,6 +1049,17 @@ function getFileDependenciesByEntrypoint(compilation, clientAppName) {
         });
 
     return ret;
+}
+
+// Recursively find .jsx files under a directory, skipping symlinks (which can cycle, or lead
+// into package-manager stores) and nested node_modules (not the scanned package's own source).
+function findJsxFiles(dir) {
+    return fs.readdirSync(dir, {withFileTypes: true}).flatMap(e => {
+        if (e.isSymbolicLink() || e.name === 'node_modules') return [];
+        const p = path.join(dir, e.name);
+        if (e.isDirectory()) return findJsxFiles(p);
+        return e.isFile() && e.name.endsWith('.jsx') ? [p] : [];
+    });
 }
 
 // Resolve any symlinks to a real path, falling back to the given path if it does not (yet)
