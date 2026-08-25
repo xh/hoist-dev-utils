@@ -22,14 +22,14 @@ const _ = require('lodash'),
     devUtilsPkg = require('./package'),
     basePath = fs.realpathSync(process.cwd());
 
+// Minimum hoist-react major version supported by this release - review on each new major, and
+// keep in sync with CHANGELOG and hoist-react's docs/version-compatibility.md.
+const MIN_HOIST_REACT_VERSION = 87;
+
 // These are not deps of hoist-dev-utils but of the consuming app, so resolve them from the
 // app's own directory (basePath) - required under isolated/symlinked node_modules layouts
 // (e.g. pnpm), where this package cannot resolve undeclared siblings. Might still be undefined -
 // e.g. when running this script locally to debug via `pnpm link` / `yarn link`.
-// Minimum hoist-react major version supported by this release - review on each new major, and
-// keep in sync with CHANGELOG and hoist-react's docs/version-compatibility.md.
-const minHoistReactVersion = 87;
-
 let hoistReactPkg, reactPkg;
 try {
     hoistReactPkg = require(require.resolve('@xh/hoist/package.json', {paths: [basePath]}));
@@ -168,10 +168,10 @@ async function configureWebpack(env) {
     // letting version drift surface as cryptic downstream build errors. Skipped when
     // hoist-react is not resolvable or is a local inline checkout.
     const hoistReactMajor = parseInt(hoistReactPkg.version);
-    if (!inlineHoist && hoistReactMajor < minHoistReactVersion) {
+    if (!inlineHoist && hoistReactMajor < MIN_HOIST_REACT_VERSION) {
         throw (
             `hoist-dev-utils v${devUtilsPkg.version} requires hoist-react >= ` +
-            `${minHoistReactVersion} - found v${hoistReactPkg.version}. Upgrade @xh/hoist, ` +
+            `${MIN_HOIST_REACT_VERSION} - found v${hoistReactPkg.version}. Upgrade @xh/hoist, ` +
             `or remain on an earlier dev-utils release.`
         );
     }
