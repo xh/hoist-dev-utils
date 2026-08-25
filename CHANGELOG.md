@@ -4,11 +4,11 @@
 
 Cleanup release per [#72](https://github.com/xh/hoist-dev-utils/issues/72) - sheds obsolete build
 config accumulated over years of webpack evolution, so that only config with a re-verified reason
-to exist carries forward. **Use with `hoist-react >= 87`.**
+to exist carries forward. **Use with `hoist-react >= 87.1`.**
 
 ### 💥 Breaking Changes
 
-* **Requires hoist-react >= 87** - now enforced with a fail-fast error at build/startup.
+* **Requires hoist-react >= 87.1** - now enforced with a fail-fast error at build/startup.
 * **TS-only app support**: `.jsx` files are no longer resolved or transpiled - apps on this
   release must be TypeScript, with JSX carried solely by `.tsx` files. Apps with remaining
   `.jsx` files must rename them to `.tsx` before upgrading - the build fails fast with an
@@ -16,6 +16,10 @@ to exist carries forward. **Use with `hoist-react >= 87`.**
 
 ### ⚙️ Technical
 
+* Re-enabled package-declaration-based tree-shaking (`optimization.sideEffects: 'flag'`),
+  disabled for years over imports dropped seemingly at random - root-caused to hoist-react's own
+  incomplete `sideEffects` declaration, corrected in v87/v87.1 (the source of the version floor above).
+  Modules reachable only through unused barrel re-exports now drop out of bundles entirely.
 * Re-enabled Terser name-mangling in production builds, disabled for years over since-resolved
   issues with older library packaging. Bundles shrink substantially. Function and class names
   are preserved (`keep_classnames` / `keep_fnames`) for readable stack traces, error messages,

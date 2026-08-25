@@ -22,9 +22,9 @@ const _ = require('lodash'),
     devUtilsPkg = require('./package'),
     basePath = fs.realpathSync(process.cwd());
 
-// Minimum hoist-react major version supported by this release - review on each new major, and
-// keep in sync with CHANGELOG and hoist-react's docs/version-compatibility.md.
-const MIN_HOIST_REACT_VERSION = 87;
+// Minimum hoist-react version supported by this release, as 'major[.minor]' - review on each
+// new major, and keep in sync with CHANGELOG and hoist-react's docs/version-compatibility.md.
+const MIN_HOIST_REACT_VERSION = '87.1';
 
 // These are not deps of hoist-dev-utils but of the consuming app, so resolve them from the
 // app's own directory (basePath) - required under isolated/symlinked node_modules layouts
@@ -167,8 +167,13 @@ async function configureWebpack(env) {
     // Fail fast on an unsupported hoist-react pairing with the actual remedy, rather than
     // letting version drift surface as cryptic downstream build errors. Skipped when
     // hoist-react is not resolvable or is a local inline checkout.
-    const hoistReactMajor = parseInt(hoistReactPkg.version);
-    if (!inlineHoist && hoistReactMajor < MIN_HOIST_REACT_VERSION) {
+    const [minMajor, minMinor = 0] = MIN_HOIST_REACT_VERSION.split('.').map(Number),
+        [hrMajor, hrMinor = 0] = hoistReactPkg.version.split('.').map(Number);
+    if (
+        !inlineHoist &&
+        !isNaN(hrMajor) &&
+        (hrMajor < minMajor || (hrMajor === minMajor && hrMinor < minMinor))
+    ) {
         throw (
             `hoist-dev-utils v${devUtilsPkg.version} requires hoist-react >= ` +
             `${MIN_HOIST_REACT_VERSION} - found v${hoistReactPkg.version}. Upgrade @xh/hoist, ` +
@@ -396,9 +401,12 @@ async function configureWebpack(env) {
             // https://webpack.js.org/configuration/optimization/#optimizationremoveavailablemodules)
             removeAvailableModules: false,
 
-            // Disable package.json `sideEffects` based tree-shaking - was getting inconsistent
-            // results, with imports being dropped seemingly at random.
-            sideEffects: false,
+            // Prune modules whose package `sideEffects` declarations mark them pure when nothing
+            // imports their exports. 'flag' trusts declarations only, without webpack's deeper
+            // own-code analysis. Requires hoist-react >= 87 for its corrected declaration - the
+            // faulty prior one (styles + platform registration marked pure) was the root cause of
+            // the historical breakage that kept this disabled.
+            sideEffects: 'flag',
 
             // Produce chunks for any shared imports across JS apps.
             splitChunks: {

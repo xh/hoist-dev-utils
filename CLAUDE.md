@@ -67,7 +67,7 @@ into the app's `node_modules`. Changes take effect immediately.
 - `develop` branch for feature work, `master` for releases
 - Version in `package.json` follows `MAJOR.MINOR.PATCH-SNAPSHOT` between releases
 - `MIN_HOIST_REACT_VERSION` in `configureWebpack.js` enforces the minimum supported hoist-react
-  major with a fail-fast build error. Review on each new major and bump whenever a release
+  version ('major[.minor]') with a fail-fast build error. Review on each new major and bump whenever a release
   raises the floor, keeping it in sync with the CHANGELOG's "Requires hoist-react" entry and
   the version-compatibility doc below.
 
