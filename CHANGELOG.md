@@ -20,9 +20,10 @@ to exist carries forward. **Use with `hoist-react >= 87`.**
   operators - 2020-era guards, native in all target browsers for years. Bundles shrink slightly.
 * Dropped Terser `compress: {comparisons: false, collapse_vars: false}` overrides - workarounds
   for 2018-era bugs in tools long since gone. Terser compression defaults now apply.
-* Collapsed the duplicated TypeScript transform config: `@babel/preset-typescript` removed in
-  favor of the explicit `@babel/plugin-transform-typescript`, which must remain a root plugin
-  (running ahead of the legacy decorators plugin) while Hoist is on legacy decorators.
+* Collapsed the duplicated TypeScript transform config: `@babel/preset-typescript` removed; the
+  explicit `@babel/plugin-transform-typescript` now runs per-extension, so JSX parses only in
+  `.tsx` files and angle-bracket type assertions remain valid in plain `.ts`. It stays ahead of
+  the legacy decorators plugin, which cannot handle unstripped TS.
 * Rewrote the catch-all asset rule's exclude list - now covers all script-type extensions and
   documents why each exclusion exists.
 
