@@ -8,11 +8,11 @@ to exist carries forward. **Use with `hoist-react >= 87`.**
 
 ### 💥 Breaking Changes
 
-* **Requires hoist-react >= 87.**
+* **Requires hoist-react >= 87** - now enforced with a fail-fast error at build/startup.
 * **TS-only app support**: `.jsx` files are no longer resolved or transpiled - apps on this
   release must be TypeScript, with JSX carried solely by `.tsx` files. Apps with remaining
   `.jsx` files must rename them to `.tsx` before upgrading - the build fails fast with an
-  error listing any found under `/src`.
+  error listing any found under `/src` or in `babelIncludePaths` packages.
 
 ### ⚙️ Technical
 

@@ -160,6 +160,17 @@ async function configureWebpack(env) {
         sourceMaps = env.sourceMaps === undefined ? true : env.sourceMaps,
         buildDate = new Date();
 
+    // This release pairs with hoist-react >= 87 (see CHANGELOG) - fail fast with the actual
+    // remedy rather than letting version drift surface as cryptic downstream build errors.
+    // Skipped when hoist-react is not resolvable or is a local inline checkout.
+    const hoistReactMajor = parseInt(hoistReactPkg.version);
+    if (!inlineHoist && hoistReactMajor < 87) {
+        throw (
+            `hoist-dev-utils v${devUtilsPkg.version} requires hoist-react >= 87 - found ` +
+            `v${hoistReactPkg.version}. Upgrade @xh/hoist, or remain on dev-utils v14.`
+        );
+    }
+
     process.env.BABEL_ENV = prodBuild ? 'production' : 'development';
     process.env.NODE_ENV = prodBuild ? 'production' : 'development';
     process.env.REACT_NODE_ENV = reactProdMode ? 'production' : 'development';
@@ -310,12 +321,17 @@ async function configureWebpack(env) {
     // Setup resolver alias to synthetic import path used by XH.changelogService.
     resolveAliases['@xh/app-changelog.json'] = clDestPath;
 
-    // TS-only support: fail fast with a clear error if the app still contains .jsx source.
-    // Without this check, .jsx files surface as cryptic module-resolution or parse errors.
-    const jsxFiles = fs
-        .readdirSync(srcPath, {recursive: true, withFileTypes: true})
-        .filter(e => e.isFile() && e.name.endsWith('.jsx'))
-        .map(e => path.join('src', path.relative(srcPath, path.join(e.parentPath, e.name))));
+    // TS-only support: fail fast with a clear error if the app (or any custom package it asks us
+    // to transpile) still contains .jsx source. Without this check, .jsx files surface as cryptic
+    // module-resolution or parse errors.
+    const jsxFiles = [srcPath, ...babelIncludePaths].flatMap(root =>
+        fs
+            .readdirSync(root, {recursive: true, withFileTypes: true})
+            .filter(e => e.isFile() && e.name.endsWith('.jsx'))
+            .map(e => path.relative(root, path.join(e.parentPath, e.name)))
+            .filter(rel => !rel.split(path.sep).includes('node_modules'))
+            .map(rel => path.join(path.basename(root), rel))
+    );
     if (jsxFiles.length) {
         throw (
             `Found .jsx file(s) - not supported by hoist-dev-utils v15+, which builds TypeScript ` +
@@ -649,7 +665,7 @@ async function configureWebpack(env) {
                         // become an asset URL - plus JSON (parsed natively by webpack) and HTML.
                         //------------------------
                         {
-                            exclude: [/\.m?jsx?$/, /\.tsx?$/, /\.html$/, /\.json$/],
+                            exclude: [/\.[cm]?[jt]sx?$/, /\.html$/, /\.json$/],
                             type: 'asset/resource',
                             generator: {filename: 'static/media/[name].[hash:8][ext]'}
                         }
