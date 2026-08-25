@@ -1,5 +1,39 @@
 # Changelog
 
+## 15.0.0-SNAPSHOT
+
+Cleanup release per [#72](https://github.com/xh/hoist-dev-utils/issues/72) - sheds obsolete build
+config accumulated over years of webpack evolution, so that only config with a re-verified reason
+to exist carries forward. **Use with `hoist-react >= 87`.**
+
+### 💥 Breaking Changes
+
+* **Requires hoist-react >= 87** - now enforced with a fail-fast error at build/startup.
+* **TS-only app support**: `.jsx` files are no longer resolved or transpiled - apps on this
+  release must be TypeScript, with JSX carried solely by `.tsx` files. Apps with remaining
+  `.jsx` files must rename them to `.tsx` before upgrading - the build fails fast with an
+  error listing any found under `/src` or in `babelIncludePaths` packages.
+
+### ⚙️ Technical
+
+* Dropped forced Babel transpilation of nullish-coalescing (`??`) and optional-chaining (`?.`)
+  operators - 2020-era guards, native in all target browsers for years. Bundles shrink slightly.
+* Dropped Terser `compress: {comparisons: false, collapse_vars: false}` overrides - workarounds
+  for 2018-era bugs in tools long since gone. Terser compression defaults now apply.
+* Collapsed the duplicated TypeScript transform config: `@babel/preset-typescript` removed; the
+  explicit `@babel/plugin-transform-typescript` now runs per-extension, so JSX parses only in
+  `.tsx` files and angle-bracket type assertions remain valid in plain `.ts`. It stays ahead of
+  the legacy decorators plugin, which cannot handle unstripped TS.
+* Rewrote the catch-all asset rule's exclude list - now covers all script-type extensions and
+  documents why each exclusion exists.
+
+### 📚 Libraries
+
+* @babel/preset-typescript `removed`
+* sass-material-colors `removed` - consumed only by hoist-react's `vars.scss`, and hoist-react
+  \>= 87 declares its own copy. Any app importing it directly in its own SCSS must declare it in
+  its own `package.json` (previously it could resolve via this package's copy).
+
 ## 14.0.1 - 2026-08-18
 
 ### 🐞 Bug Fixes

@@ -23,9 +23,6 @@ importers:
       '@babel/preset-react':
         specifier: ^7.28.5
         version: 7.29.7(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1)
-      '@babel/preset-typescript':
-        specifier: ^7.28.5
-        version: 7.29.7(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1)
       '@types/lodash':
         specifier: 4.x
         version: 4.17.25
@@ -80,9 +77,6 @@ importers:
       sass-loader:
         specifier: ~17.0.0
         version: 17.0.0(sass-embedded@1.100.0)(sass@1.100.0)(webpack@5.109.2)
-      sass-material-colors:
-        specifier: ~0.0.5
-        version: 0.0.5
       style-loader:
         specifier: ~4.0.0
         version: 4.0.0(webpack@5.109.2)
@@ -669,12 +663,6 @@ packages:
 
   '@babel/preset-react@7.29.7':
     resolution: {integrity: sha512-C+PV1TFUPTmBQGoPBL8j2QmLpZ117YTCwxIZeJOM96GbYMFSc7/pOXU5lVykwnZxyTqQxRsvoRk6f2FktZgGHA==}
-    engines: {node: '>=6.9.0'}
-    peerDependencies:
-      '@babel/core': ^7.0.0-0
-
-  '@babel/preset-typescript@7.29.7':
-    resolution: {integrity: sha512-/Foi8vKY2EVbed/1eZx0gJEEwHAIxogrySI7rULcRIvhZzbvoE/b5qG5Ghc0WKAFKOHA9SD1x7RsFlOYdutIiQ==}
     engines: {node: '>=6.9.0'}
     peerDependencies:
       '@babel/core': ^7.0.0-0
@@ -1801,6 +1789,7 @@ packages:
   eslint@9.39.5:
     resolution: {integrity: sha512-DgZS62aPLXKlnxILS/AYCoRvHaZeXceIzlXPkkGGzJWSow1aEk0lbTlxUSlyjC8jcaKxAdOnTDz+o1JFSBsyjw==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+    deprecated: This version is no longer supported. Please see https://eslint.org/version-support for other options.
     hasBin: true
     peerDependencies:
       jiti: '*'
@@ -2980,9 +2969,6 @@ packages:
         optional: true
       webpack:
         optional: true
-
-  sass-material-colors@0.0.5:
-    resolution: {integrity: sha512-WqBonSUkR5U9xs9adPVIymIdcT2Ku7PN0Q57yFfcLHj/E63wDqZ/Y5i/m9RmkRyr/jmR85g6ZIS053fyAR8G2A==}
 
   sass@1.100.0:
     resolution: {integrity: sha512-B5j0rYMlinhhOo9tjQebMVVn0TfyXAF+wB3b2ggZUuJ/is/Y+7+JGjirAMxHZ9Z3hIP98NPfamlAkBHa1lAaXQ==}
@@ -4209,17 +4195,6 @@ snapshots:
       '@babel/plugin-transform-react-jsx': 7.29.7(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1)
       '@babel/plugin-transform-react-jsx-development': 7.29.7(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1)
       '@babel/plugin-transform-react-pure-annotations': 7.29.7(@babel/core@7.29.7(supports-color@8.1.1))
-    transitivePeerDependencies:
-      - supports-color
-
-  '@babel/preset-typescript@7.29.7(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1)':
-    dependencies:
-      '@babel/core': 7.29.7(supports-color@8.1.1)
-      '@babel/helper-plugin-utils': 7.29.7
-      '@babel/helper-validator-option': 7.29.7
-      '@babel/plugin-syntax-jsx': 7.29.7(@babel/core@7.29.7(supports-color@8.1.1))
-      '@babel/plugin-transform-modules-commonjs': 7.29.7(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1)
-      '@babel/plugin-transform-typescript': 7.29.7(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -6755,8 +6730,6 @@ snapshots:
       sass: 1.100.0
       sass-embedded: 1.100.0
       webpack: 5.109.2(clean-css@5.3.3)(html-minifier-terser@6.1.0)(postcss@8.5.26)(webpack-cli@7.2.2)
-
-  sass-material-colors@0.0.5: {}
 
   sass@1.100.0:
     dependencies:

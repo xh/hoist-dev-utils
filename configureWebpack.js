@@ -22,6 +22,10 @@ const _ = require('lodash'),
     devUtilsPkg = require('./package'),
     basePath = fs.realpathSync(process.cwd());
 
+// Minimum hoist-react major version supported by this release - review on each new major, and
+// keep in sync with CHANGELOG and hoist-react's docs/version-compatibility.md.
+const MIN_HOIST_REACT_VERSION = 87;
+
 // These are not deps of hoist-dev-utils but of the consuming app, so resolve them from the
 // app's own directory (basePath) - required under isolated/symlinked node_modules layouts
 // (e.g. pnpm), where this package cannot resolve undeclared siblings. Might still be undefined -
@@ -159,6 +163,18 @@ async function configureWebpack(env) {
         terserOptions = env.terserOptions || {},
         sourceMaps = env.sourceMaps === undefined ? true : env.sourceMaps,
         buildDate = new Date();
+
+    // Fail fast on an unsupported hoist-react pairing with the actual remedy, rather than
+    // letting version drift surface as cryptic downstream build errors. Skipped when
+    // hoist-react is not resolvable or is a local inline checkout.
+    const hoistReactMajor = parseInt(hoistReactPkg.version);
+    if (!inlineHoist && hoistReactMajor < MIN_HOIST_REACT_VERSION) {
+        throw (
+            `hoist-dev-utils v${devUtilsPkg.version} requires hoist-react >= ` +
+            `${MIN_HOIST_REACT_VERSION} - found v${hoistReactPkg.version}. Upgrade @xh/hoist, ` +
+            `or remain on an earlier dev-utils release.`
+        );
+    }
 
     process.env.BABEL_ENV = prodBuild ? 'production' : 'development';
     process.env.NODE_ENV = prodBuild ? 'production' : 'development';
@@ -310,6 +326,22 @@ async function configureWebpack(env) {
     // Setup resolver alias to synthetic import path used by XH.changelogService.
     resolveAliases['@xh/app-changelog.json'] = clDestPath;
 
+    // TS-only support: fail fast with a clear error if the app (or any custom package it asks us
+    // to transpile) still contains .jsx source. Without this check, .jsx files surface as cryptic
+    // module-resolution or parse errors.
+    const jsxFiles = [srcPath, ...babelIncludePaths]
+        .filter(root => fs.existsSync(root))
+        .flatMap(root =>
+            findJsxFiles(root).map(f => path.join(path.basename(root), path.relative(root, f)))
+        );
+    if (jsxFiles.length) {
+        throw (
+            `Found .jsx file(s) - not supported by hoist-dev-utils v15+, which builds TypeScript ` +
+            `apps only, with JSX carried by .tsx files. Rename to .tsx to proceed:\n` +
+            jsxFiles.map(f => `  > ${f}`).join('\n')
+        );
+    }
+
     // Resolve app entry points - one for each file within src/apps/ - to create bundles below.
     const appDirPath = path.resolve(srcPath, 'apps'),
         clientApps = fs
@@ -326,8 +358,9 @@ async function configureWebpack(env) {
     // Build Webpack entry config, with keys for each JS app to be bundled.
     const appEntryPoints = {};
     clientApps.forEach(clientApp => {
-        // Ensure core-js and regenerator-runtime both imported for every app bundle - they are
-        // specified as dependencies by Hoist and imported once in its polyfills.js file.
+        // Prepend hoist-react's polyfills.js (a single core-js import) to every app bundle.
+        // With `useBuiltIns: 'entry'` in the preset-env config below, Babel rewrites that
+        // import into the specific polyfills needed for the configured target browsers.
         appEntryPoints[clientApp.name] = [
             path.resolve(hoistPath, 'static/polyfills.js'),
             clientApp.path
@@ -379,10 +412,10 @@ async function configureWebpack(env) {
 
         resolve: {
             alias: resolveAliases,
-            // Add JSX to support imports from .jsx source w/o needing to add the extension.
-            // Include "*" to continue supporting other imports that *do* specify an extension
-            // within the import statement (i.e. `import './foo.png'`). Yes, it's confusing.
-            extensions: ['*', '.js', '.ts', '.jsx', '.tsx', '.json']
+            // Extensions tried, in order, for imports that do not specify one. Imports that
+            // *do* include an extension (e.g. `import './foo.png'`) always resolve as written.
+            // Note no `.jsx` - apps must be TS, with JSX carried solely by `.tsx` files.
+            extensions: ['.js', '.ts', '.tsx', '.json']
         },
 
         // Fallback resolution for any loaders referenced by bare name (e.g. via app-supplied
@@ -436,7 +469,10 @@ async function configureWebpack(env) {
                         // Transpile via Babel, with presets/plugins to support Hoist's use of modern / staged JS features.
                         //------------------------
                         {
-                            test: /\.(jsx?)$|\.(tsx?)$/,
+                            // Note `.js` is retained - hoist-react's `static/polyfills.js` entry and
+                            // any stray plain-JS must still transpile - but `.jsx` is not: apps must
+                            // be TS, with JSX carried by `.tsx`.
+                            test: /\.(js|ts|tsx)$/,
                             use: {
                                 // Loaders, presets and plugins below are deps of this package and
                                 // resolved from here via require.resolve() - apps do not get them
@@ -444,30 +480,32 @@ async function configureWebpack(env) {
                                 loader: require.resolve('babel-loader'),
                                 options: {
                                     presets: [
-                                        require.resolve('@babel/preset-typescript'),
                                         require.resolve('@babel/preset-react'),
                                         [
                                             require.resolve('@babel/preset-env'),
                                             {
                                                 targets: targetBrowsers.join(', '),
 
-                                                // Specify use of corejs and allow it to polyfill proposals (e.g. object rest spread).
-                                                corejs: {version: 3, proposals: true},
+                                                // Polyfill via core-js v3.
+                                                corejs: {version: 3},
 
-                                                // Note that we force import of core-js and regen-runtime in the `entry` config produced by this file.
-                                                // This should be replaced by a set of polyfills based on our target browsers as per this setting.
+                                                // Rewrite the core-js import in hoist-react's polyfills.js
+                                                // (prepended to every app entry above) into the polyfills
+                                                // needed for the configured target browsers.
                                                 useBuiltIns: 'entry',
 
-                                                // Recently (Mar 2020) added optimization to preset-env to further minimize transpilation to ES5 where
-                                                // not required. See https://babeljs.io/docs/en/babel-preset-env#bugfixes.
+                                                // Where a target browser has a buggy implementation of a
+                                                // modern feature (vs. lacking it entirely), transpile just
+                                                // the broken syntax to the closest working modern syntax,
+                                                // rather than down-leveling the whole feature group.
+                                                // Opt-in for Babel 7; default in Babel 8.
                                                 bugfixes: true,
 
-                                                // Ensure expected transform plugins are enabled for latest features.
-                                                // (Note these plugins are all generally bundled with preset-env.)
+                                                // Interop transforms required while legacy decorators are
+                                                // in use - Babel must compile the class elements it
+                                                // decorates. Remove when Hoist moves off legacy decorators.
                                                 include: [
                                                     'transform-class-properties',
-                                                    'transform-nullish-coalescing-operator',
-                                                    'transform-optional-chaining',
                                                     'transform-private-methods',
                                                     'transform-private-property-in-object'
                                                 ],
@@ -477,55 +515,35 @@ async function configureWebpack(env) {
                                             }
                                         ]
                                     ],
-                                    plugins: [
-                                        // Support Typescript via Babel. `isTSX` option allows use of JSX inline with
-                                        // .js files for older JS apps. Typescript apps must use the .tsx extension for
-                                        // any files containing JSX syntax.
-                                        [
-                                            require.resolve('@babel/plugin-transform-typescript'),
-                                            {allowDeclareFields: true, isTSX: true}
-                                        ],
-
-                                        // Support our current decorator syntax, for MobX and Hoist decorators.
-                                        // See notes @ https://babeljs.io/docs/en/babel-plugin-proposal-decorators#legacy
-                                        // and https://mobx.js.org/enabling-decorators.html#babel-7
-                                        [
-                                            require.resolve('@babel/plugin-proposal-decorators'),
-                                            {version: 'legacy'}
-                                        ],
-
-                                        // Avoid importing every FA icon ever made.
-                                        // See https://github.com/FortAwesome/react-fontawesome/issues/70
-                                        [
-                                            require.resolve('babel-plugin-transform-imports'),
-                                            {
-                                                '@fortawesome/pro-light-svg-icons': {
-                                                    transform:
-                                                        '@fortawesome/pro-light-svg-icons/${member}',
-                                                    skipDefaultConversion: true
-                                                },
-                                                '@fortawesome/pro-regular-svg-icons': {
-                                                    transform:
-                                                        '@fortawesome/pro-regular-svg-icons/${member}',
-                                                    skipDefaultConversion: true
-                                                },
-                                                '@fortawesome/pro-solid-svg-icons': {
-                                                    transform:
-                                                        '@fortawesome/pro-solid-svg-icons/${member}',
-                                                    skipDefaultConversion: true
-                                                },
-                                                '@fortawesome/pro-thin-svg-icons': {
-                                                    transform:
-                                                        '@fortawesome/pro-thin-svg-icons/${member}',
-                                                    skipDefaultConversion: true
-                                                },
-                                                '@fortawesome/free-brands-svg-icons': {
-                                                    transform:
-                                                        '@fortawesome/free-brands-svg-icons/${member}',
-                                                    skipDefaultConversion: true
-                                                }
-                                            }
-                                        ]
+                                    // Plugins are configured per-extension via `overrides` below so
+                                    // that JSX parsing is enabled only for `.tsx` files - `.ts`/`.js`
+                                    // parse without it, keeping e.g. angle-bracket type assertions
+                                    // (`<string>val`) valid in plain `.ts`. Within each branch the
+                                    // TypeScript strip must run first: the legacy decorators plugin
+                                    // cannot handle TS constructs (e.g. `declare` class fields) that
+                                    // would otherwise reach it unstripped. Revisit when Hoist moves
+                                    // off legacy decorators.
+                                    overrides: [
+                                        {
+                                            test: /\.tsx$/,
+                                            plugins: [
+                                                [
+                                                    require.resolve('@babel/plugin-transform-typescript'),
+                                                    {allowDeclareFields: true, isTSX: true}
+                                                ],
+                                                ...sharedBabelPlugins
+                                            ]
+                                        },
+                                        {
+                                            exclude: /\.tsx$/,
+                                            plugins: [
+                                                [
+                                                    require.resolve('@babel/plugin-transform-typescript'),
+                                                    {allowDeclareFields: true}
+                                                ],
+                                                ...sharedBabelPlugins
+                                            ]
+                                        }
                                     ],
                                     // Cache for dev builds, don't bother compressing.
                                     cacheDirectory: !prodBuild,
@@ -619,12 +637,14 @@ async function configureWebpack(env) {
                         },
 
                         //------------------------
-                        // Fall-through entry to emit all other assets (e.g. SVGs, fonts) as hashed
-                        // files. Uses Webpack 5 asset modules (replaces the deprecated file-loader).
-                        // (Exclude config here is from CRA source config - commented there, but didn't understand).
+                        // Fall-through entry to emit everything not claimed by a rule above
+                        // (e.g. SVGs, fonts) as hashed asset files. Excludes script-type files -
+                        // anything falling through the babel rule (e.g. node_modules JS outside
+                        // its include paths) must get webpack's native JS handling rather than
+                        // become an asset URL - plus JSON (parsed natively by webpack) and HTML.
                         //------------------------
                         {
-                            exclude: [/\.jsx?$/, /\.html$/, /\.json$/],
+                            exclude: [/\.[cm]?[jt]sx?$/, /\.html$/, /\.json$/],
                             type: 'asset/resource',
                             generator: {filename: 'static/media/[name].[hash:8][ext]'}
                         }
@@ -826,6 +846,42 @@ async function configureWebpack(env) {
 //------------------------
 // Implementation
 //------------------------
+// Babel plugins shared by both per-extension branches of the loader's `overrides` config.
+const sharedBabelPlugins = [
+    // Support our current decorator syntax, for MobX and Hoist decorators.
+    // See notes @ https://babeljs.io/docs/en/babel-plugin-proposal-decorators#legacy
+    // and https://mobx.js.org/enabling-decorators.html#babel-7
+    [require.resolve('@babel/plugin-proposal-decorators'), {version: 'legacy'}],
+
+    // Avoid importing every FA icon ever made.
+    // See https://github.com/FortAwesome/react-fontawesome/issues/70
+    [
+        require.resolve('babel-plugin-transform-imports'),
+        {
+            '@fortawesome/pro-light-svg-icons': {
+                transform: '@fortawesome/pro-light-svg-icons/${member}',
+                skipDefaultConversion: true
+            },
+            '@fortawesome/pro-regular-svg-icons': {
+                transform: '@fortawesome/pro-regular-svg-icons/${member}',
+                skipDefaultConversion: true
+            },
+            '@fortawesome/pro-solid-svg-icons': {
+                transform: '@fortawesome/pro-solid-svg-icons/${member}',
+                skipDefaultConversion: true
+            },
+            '@fortawesome/pro-thin-svg-icons': {
+                transform: '@fortawesome/pro-thin-svg-icons/${member}',
+                skipDefaultConversion: true
+            },
+            '@fortawesome/free-brands-svg-icons': {
+                transform: '@fortawesome/free-brands-svg-icons/${member}',
+                skipDefaultConversion: true
+            }
+        }
+    ]
+];
+
 class HoistManifestPlugin {
     constructor(clientAppName, content = {}) {
         this.clientAppName = clientAppName;
@@ -982,12 +1038,6 @@ const extraPluginsProd = terserOptions => {
                 // necessary w/mangling off, but leaving here as docs are a bit vague, and in case
                 // we re-enable. We want to maintain function/class names for error messages.
                 keep_fnames: true,
-
-                compress: {
-                    comparisons: false,
-                    // See https://fontawesome.com/how-to-use/with-the-api/other/tree-shaking
-                    collapse_vars: false
-                },
                 ...terserOptions
             }
         })
@@ -1019,6 +1069,17 @@ function getFileDependenciesByEntrypoint(compilation, clientAppName) {
         });
 
     return ret;
+}
+
+// Recursively find .jsx files under a directory, skipping symlinks (which can cycle, or lead
+// into package-manager stores) and nested node_modules (not the scanned package's own source).
+function findJsxFiles(dir) {
+    return fs.readdirSync(dir, {withFileTypes: true}).flatMap(e => {
+        if (e.isSymbolicLink() || e.name === 'node_modules') return [];
+        const p = path.join(dir, e.name);
+        if (e.isDirectory()) return findJsxFiles(p);
+        return e.isFile() && e.name.endsWith('.jsx') ? [p] : [];
+    });
 }
 
 // Resolve any symlinks to a real path, falling back to the given path if it does not (yet)
