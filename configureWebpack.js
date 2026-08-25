@@ -1016,13 +1016,10 @@ const extraPluginsProd = terserOptions => {
         // Minify and tree-shake via Terser - https://github.com/terser/terser#readme
         new TerserPlugin({
             terserOptions: {
-                // Mangling disabled due to intermittent / difficult to debug issues with it
-                // breaking code, especially when run on already-packaged libraries. Disabling does
-                // increase bundle size, although not by much on a relative basis.
-                mangle: false,
-                // As per docs "prevent discarding or mangling of function names" - most likely not
-                // necessary w/mangling off, but leaving here as docs are a bit vague, and in case
-                // we re-enable. We want to maintain function/class names for error messages.
+                // Mangling (on by default) renames local identifiers for meaningfully smaller
+                // bundles. Function and class names are kept - relied upon for error messages,
+                // logging, and debugging of deployed builds.
+                keep_classnames: true,
                 keep_fnames: true,
                 ...terserOptions
             }

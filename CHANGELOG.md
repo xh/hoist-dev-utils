@@ -16,6 +16,10 @@ to exist carries forward. **Use with `hoist-react >= 87`.**
 
 ### ⚙️ Technical
 
+* Re-enabled Terser name-mangling in production builds, disabled for years over since-resolved
+  issues with older library packaging. Bundles shrink substantially. Function and class names
+  are preserved (`keep_classnames` / `keep_fnames`) for readable stack traces, error messages,
+  and logging in deployed apps.
 * Dropped forced Babel transpilation of nullish-coalescing (`??`) and optional-chaining (`?.`)
   operators - 2020-era guards, native in all target browsers for years. Bundles shrink slightly.
 * Dropped Terser `compress: {comparisons: false, collapse_vars: false}` overrides - workarounds
