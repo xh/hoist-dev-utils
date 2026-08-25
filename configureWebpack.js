@@ -451,9 +451,9 @@ async function configureWebpack(env) {
                         // Transpile via Babel, with presets/plugins to support Hoist's use of modern / staged JS features.
                         //------------------------
                         {
-                            // Note `.js` is retained (without JSX parsing) - hoist-react's
-                            // `static/polyfills.js` entry and any stray plain-JS must still
-                            // transpile - but `.jsx` is not: apps must be TS, JSX via `.tsx`.
+                            // Note `.js` is retained - hoist-react's `static/polyfills.js` entry and
+                            // any stray plain-JS must still transpile - but `.jsx` is not: apps must
+                            // be TS, with JSX carried by `.tsx`.
                             test: /\.(js|ts|tsx)$/,
                             use: {
                                 // Loaders, presets and plugins below are deps of this package and
@@ -471,24 +471,21 @@ async function configureWebpack(env) {
                                                 // Polyfill via core-js v3.
                                                 corejs: {version: 3},
 
-                                                // Rewrite the core-js import in hoist-react's
-                                                // polyfills.js (prepended to every app entry
-                                                // above) into the polyfills needed for the
-                                                // configured target browsers.
+                                                // Rewrite the core-js import in hoist-react's polyfills.js
+                                                // (prepended to every app entry above) into the polyfills
+                                                // needed for the configured target browsers.
                                                 useBuiltIns: 'entry',
 
-                                                // Where a target browser has a buggy
-                                                // implementation of a modern feature (vs. lacking
-                                                // it entirely), transpile just the broken syntax
-                                                // to the closest working modern syntax, rather
-                                                // than down-leveling the whole feature group.
+                                                // Where a target browser has a buggy implementation of a
+                                                // modern feature (vs. lacking it entirely), transpile just
+                                                // the broken syntax to the closest working modern syntax,
+                                                // rather than down-leveling the whole feature group.
                                                 // Opt-in for Babel 7; default in Babel 8.
                                                 bugfixes: true,
 
-                                                // Interop transforms required while legacy
-                                                // decorators are in use - Babel must compile the
-                                                // class elements it decorates. Remove when Hoist
-                                                // moves off `version: 'legacy'` decorators.
+                                                // Interop transforms required while legacy decorators are
+                                                // in use - Babel must compile the class elements it
+                                                // decorates. Remove when Hoist moves off legacy decorators.
                                                 include: [
                                                     'transform-class-properties',
                                                     'transform-private-methods',
@@ -501,12 +498,11 @@ async function configureWebpack(env) {
                                         ]
                                     ],
                                     plugins: [
-                                        // Strip TypeScript syntax. Must run as the *first root
-                                        // plugin* - not via @babel/preset-typescript - because
-                                        // root plugins run before presets, and the legacy
-                                        // decorators plugin below cannot handle TS constructs
-                                        // (e.g. `declare` class fields) that would otherwise
-                                        // reach it unstripped. Revisit when Hoist moves off
+                                        // Strip TypeScript syntax. Must run as the *first root plugin* -
+                                        // not via @babel/preset-typescript - because root plugins run
+                                        // before presets, and the legacy decorators plugin below cannot
+                                        // handle TS constructs (e.g. `declare` class fields) that would
+                                        // otherwise reach it unstripped. Revisit when Hoist moves off
                                         // legacy decorators.
                                         [
                                             require.resolve('@babel/plugin-transform-typescript'),
