@@ -468,12 +468,8 @@ async function configureWebpack(env) {
                                             {
                                                 targets: targetBrowsers.join(', '),
 
-                                                // Polyfill via core-js v3. (The `proposals` flag
-                                                // only affects `useBuiltIns: 'usage'` - with
-                                                // 'entry' below, what gets pulled in is governed
-                                                // by which core-js entry point polyfills.js
-                                                // imports.)
-                                                corejs: {version: 3, proposals: true},
+                                                // Polyfill via core-js v3.
+                                                corejs: {version: 3},
 
                                                 // Rewrite the core-js import in hoist-react's
                                                 // polyfills.js (prepended to every app entry
