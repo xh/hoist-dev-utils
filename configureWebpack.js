@@ -26,6 +26,10 @@ const _ = require('lodash'),
 // app's own directory (basePath) - required under isolated/symlinked node_modules layouts
 // (e.g. pnpm), where this package cannot resolve undeclared siblings. Might still be undefined -
 // e.g. when running this script locally to debug via `pnpm link` / `yarn link`.
+// Minimum hoist-react major version supported by this release - review on each new major, and
+// keep in sync with CHANGELOG and hoist-react's docs/version-compatibility.md.
+const minHoistReactVersion = 87;
+
 let hoistReactPkg, reactPkg;
 try {
     hoistReactPkg = require(require.resolve('@xh/hoist/package.json', {paths: [basePath]}));
@@ -160,14 +164,15 @@ async function configureWebpack(env) {
         sourceMaps = env.sourceMaps === undefined ? true : env.sourceMaps,
         buildDate = new Date();
 
-    // This release pairs with hoist-react >= 87 (see CHANGELOG) - fail fast with the actual
-    // remedy rather than letting version drift surface as cryptic downstream build errors.
-    // Skipped when hoist-react is not resolvable or is a local inline checkout.
+    // Fail fast on an unsupported hoist-react pairing with the actual remedy, rather than
+    // letting version drift surface as cryptic downstream build errors. Skipped when
+    // hoist-react is not resolvable or is a local inline checkout.
     const hoistReactMajor = parseInt(hoistReactPkg.version);
-    if (!inlineHoist && hoistReactMajor < 87) {
+    if (!inlineHoist && hoistReactMajor < minHoistReactVersion) {
         throw (
-            `hoist-dev-utils v${devUtilsPkg.version} requires hoist-react >= 87 - found ` +
-            `v${hoistReactPkg.version}. Upgrade @xh/hoist, or remain on dev-utils v14.`
+            `hoist-dev-utils v${devUtilsPkg.version} requires hoist-react >= ` +
+            `${minHoistReactVersion} - found v${hoistReactPkg.version}. Upgrade @xh/hoist, ` +
+            `or remain on an earlier dev-utils release.`
         );
     }
 
