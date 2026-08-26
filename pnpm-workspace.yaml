@@ -1,0 +1,9 @@
+# pnpm settings (pnpm 11+ reads these from this file, not from a `pnpm` field in package.json).
+# This is a single-package repo - the file exists for settings only, not to define a workspace.
+
+# Dependency build scripts do not run unless reviewed here; unreviewed scripts are a hard error
+# in CI. @parcel/watcher (via sass's watch-mode support, which this library never uses) has a
+# native postinstall build - decline it rather than approve it, as prebuilt binaries ship as
+# optional platform deps and nothing here needs the from-source fallback.
+allowBuilds:
+    '@parcel/watcher': false

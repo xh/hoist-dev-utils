@@ -1,5 +1,5 @@
-/.yarn
 /.github
 /static
-yarn.lock
+pnpm-lock.yaml
 *.md
+/.claude/settings.local.json

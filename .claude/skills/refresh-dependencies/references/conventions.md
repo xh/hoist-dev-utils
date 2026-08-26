@@ -48,7 +48,7 @@ Heading is exactly:
 
 List **only direct dependencies whose `package.json` semver spec changed in a way that crosses a
 MAJOR or MINOR boundary** — because the CHANGELOG documents what this release newly allows/requires
-for apps, not what a `yarn upgrade` happens to resolve. A `^`/`X.x` dep drifting to a new minor
+for apps, not what a lockfile refresh (`pnpm update`) happens to resolve. A `^`/`X.x` dep drifting to a new minor
 *within an unchanged spec* is **not** listed; a deliberate spec edit (tilde minor bump, caret/`.x`
 floor raise, major) **is**. Skip patch-floor edits. Render each spec to `major.minor` (strip the
 range operator and the patch; `~5.106.2 → 5.106`, `^7.28.5 → 7.28`, `4.x → 4.x`). Alphabetize.

@@ -30,35 +30,64 @@ Key behaviors:
 
 **`static/`** contains assets bundled with the package:
 - `index.html` — Template for HtmlWebpackPlugin used by all Hoist apps
-- `requiredBlueprintIcons.js` — Minimal BlueprintJS icon shim to reduce bundle size
+
+BlueprintJS icon stubs (which strip the ~700-icon set down to the icons Hoist actually uses) are
+generated at build time by `generateBlueprintIconStubs()` in `configureWebpack.js` and swapped in
+via `NormalModuleReplacementPlugin` - apps opt out with `env.loadAllBlueprintJsIcons`.
 
 ## Development
 
 There is no build step — the package ships `configureWebpack.js` and `static/**/*` directly.
 There are no tests in this repo.
 
-**Package manager: yarn (classic, v1.x).** `yarn.lock` is the source of truth — do not invoke
-`npm install` or create a `package-lock.json`. If you need to inspect transitive-dep deprecation
-warnings (which yarn 1.x suppresses), use `yarn why <pkg>` or `npm ls <pkg>` in read-only fashion
-without reinstalling.
+**Package manager: pnpm.** `pnpm-lock.yaml` is the source of truth — do not invoke `npm install`
+or `yarn install`, and do not create a `package-lock.json` or `yarn.lock`. The required pnpm
+version is pinned via the `packageManager` field in `package.json`; if pnpm is not on the PATH,
+run it through corepack (`corepack pnpm <cmd>`). Use `pnpm why <pkg>` to inspect the dependency
+tree in read-only fashion without reinstalling.
 
 ### Commands
 
 ```bash
-yarn install          # Install dependencies
-yarn prettier --check .   # Check formatting
-yarn prettier --write .   # Fix formatting
+pnpm install          # Install dependencies
+pnpm prettier --check .   # Check formatting
+pnpm prettier --write .   # Fix formatting
+pnpm outdated             # List deps with newer versions than the lockfile / specs allow
+pnpm audit                # Check for known vulnerabilities
 ```
 
 ### Local development workflow
 
-Clone alongside a consuming app (e.g. Toolbox), then use `yarn link` to symlink this package
+Clone alongside a consuming app (e.g. Toolbox), then use your package manager's link command
+(`pnpm link` / `yarn link`, matching the app's own package manager) to symlink this package
 into the app's `node_modules`. Changes take effect immediately.
 
 ### Versioning
 
 - `develop` branch for feature work, `master` for releases
 - Version in `package.json` follows `MAJOR.MINOR.PATCH-SNAPSHOT` between releases
+- `MIN_HOIST_REACT_VERSION` in `configureWebpack.js` enforces the minimum supported hoist-react
+  major with a fail-fast build error. Review on each new major and bump whenever a release
+  raises the floor, keeping it in sync with the CHANGELOG's "Requires hoist-react" entry and
+  the version-compatibility doc below.
+
+### Version compatibility doc (maintained in hoist-react)
+
+The canonical hoist-react / hoist-dev-utils compatibility reference lives in the **hoist-react**
+repo at `docs/version-compatibility.md` (section "hoist-react ↔ hoist-dev-utils", with a reverse
+lookup table per dev-utils major). It is surfaced to developers and AI agents via hoist-react's
+docs MCP server and the Toolbox docs viewer.
+
+Whenever work here changes a compatibility fact, update that doc in a paired hoist-react PR:
+
+- a new minimum or recommended `hoist-react` version (check `💥 Breaking Changes` for
+  "Requires hoist-react >= X" entries)
+- a new Node floor (`engines.node` in `package.json`)
+- any new pairing constraint apps must know when upgrading (e.g. React/`@types/react` major,
+  package-manager support)
+
+A new dev-utils major should always add a row to the reverse lookup table there, even if
+requirements are unchanged.
 
 ### Changelog
 

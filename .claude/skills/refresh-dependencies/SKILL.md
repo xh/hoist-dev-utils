@@ -2,9 +2,9 @@
 name: refresh-dependencies
 description: >-
   Refresh the npm dependencies of @xh/hoist-dev-utils — bumping package.json semver specs,
-  revving yarn.lock, and documenting the changes in CHANGELOG.md following project convention.
+  revving pnpm-lock.yaml, and documenting the changes in CHANGELOG.md following project convention.
   Use this whenever the user wants to update, refresh, upgrade, or bump dependencies / libraries
-  in this repo, run `yarn upgrade`, pull in newer minor/major versions, or prepare a batch of
+  in this repo, run `pnpm update`, pull in newer minor/major versions, or prepare a batch of
   dependency updates ahead of a release — even if they don't name this skill explicitly. This is
   a recurring maintenance task; reach for the skill rather than improvising the steps.
 ---
@@ -32,17 +32,17 @@ new release of this package actually changes for a consuming app.
 That means there are two mechanically-similar operations that are documented **completely
 differently**:
 
-1. **Lockfile-only refresh** (`yarn upgrade`): pulls the newest versions allowed *within the
+1. **Lockfile-only refresh** (`pnpm update`): pulls the newest versions allowed *within the
    existing specs*. For `~X.Y.Z` specs that's patch bumps; for `^` and `X.x` specs it can also pull
-   new minors. This touches **only `yarn.lock`**. It is **NOT changelogged** — even when a `^`/`X.x`
+   new minors. This touches **only `pnpm-lock.yaml`**. It is **NOT changelogged** — even when a `^`/`X.x`
    dep crosses a minor — because we didn't change what the package allows. An app running its own
-   `yarn upgrade` would get the same thing; our release isn't what delivers it.
+   `pnpm update` would get the same thing; our release isn't what delivers it.
 
 2. **Spec change** (edit `package.json`): raise a tilde minor (`~5.4.0 → ~5.5.0`), raise a caret/`.x`
    floor (`^7.28.5 → ^7.29.7`, `4.17 → 4.x`), or take a major (`~6.0.1 → ~7.0.0`). This changes what
    the release allows or requires, so it **IS changelogged** under `### 📚 Libraries`.
 
-A full refresh usually does both: `yarn upgrade` to sweep in-range updates into the lock, *and*
+A full refresh usually does both: `pnpm update` to sweep in-range updates into the lock, *and*
 selected spec edits to reach across minor/major boundaries. **Only the spec edits hit the
 CHANGELOG**, and only when they cross a minor or major (patch-floor edits don't count).
 
@@ -56,46 +56,46 @@ Work from the repo root: `/Users/amcclain/dev/hoist-dev-utils`. Track these as t
 ### 1. Pre-flight
 
 - Confirm a clean working tree (`git status`) and that you're on `develop` (`git branch --show-current`).
-  If `package.json`, `yarn.lock`, or `CHANGELOG.md` already has uncommitted changes, stop and ask —
+  If `package.json`, `pnpm-lock.yaml`, or `CHANGELOG.md` already has uncommitted changes, stop and ask —
   don't fold unrelated changes into a dep refresh. (Untracked files *outside* those three — e.g. a
   not-yet-committed copy of this skill under `.claude/skills/` — are fine to ignore.) The clean
   state of those three files matters because the changelog differ uses the committed `package.json`
   (`HEAD`) as its before-baseline.
-- This repo uses **yarn classic (1.x)**. Never run `npm install` or create a `package-lock.json`.
-  `yarn.lock` is the source of truth.
+- This repo uses **pnpm** (version pinned via the `packageManager` field in `package.json`).
+  Never run `npm install` or `yarn install`, or create a `package-lock.json` or `yarn.lock`.
+  `pnpm-lock.yaml` is the source of truth. If pnpm is not on the PATH, run it through corepack
+  (`corepack pnpm <cmd>`).
 
 ### 2. See what's available
 
 ```bash
-yarn outdated 2>&1 | grep -v -iE "DeprecationWarning|trace-deprecation"
+pnpm outdated              # everything with a newer release (Current vs Latest)
+pnpm outdated --compatible # only updates already allowed by the current specs
 ```
 
-(The `grep` filters a noisy `url.parse` `DeprecationWarning` yarn 1.x emits under newer Node — it's
-harmless, just clutter.) This lists each dep's `Current` (installed), `Wanted` (max within current
-spec), and `Latest`
-(absolute newest). Use it to plan:
-- **Wanted > Current** → an in-range update `yarn upgrade` will pick up. Not changelogged.
-- **Latest > Wanted** → a newer minor/major sits outside the current spec; reaching it requires a
-  spec edit in `package.json` — and that part *is* changelogged.
+Use the two views to plan:
+- Listed under `--compatible` → an in-range update `pnpm update` will pick up. Not changelogged.
+- Listed only in the full view → a newer minor/major sits outside the current spec; reaching it
+  requires a spec edit in `package.json` — and that part *is* changelogged.
 
 ### 3. Apply in-range updates
 
 ```bash
-yarn upgrade
+pnpm update
 ```
 
-Revs `yarn.lock` to `Wanted` for everything. No `package.json` change, and — per the principle
-above — **nothing here goes in the CHANGELOG**.
+Revs `pnpm-lock.yaml` to the newest version each existing spec allows. No `package.json` change,
+and — per the principle above — **nothing here goes in the CHANGELOG**.
 
 ### 4. Edit specs to reach newer minors/majors
 
 Decide which out-of-range updates to take, then edit `package.json` specs **preserving the spec
-style of each entry** (see conventions below). After editing, run `yarn install` to rev the lock.
+style of each entry** (see conventions below). After editing, run `pnpm install` to rev the lock.
 
 - **Minor bumps**: apply freely. For a `~` dep, raise the minor and reset patch to 0
   (`~5.4.0 → ~5.5.0`). For a `^`/`X.x` dep, raising the floor to require a newer minor is a
   deliberate choice — do it when you want apps to get at least that version; otherwise the minor
-  already flows through `yarn upgrade` without a spec change (and stays out of the CHANGELOG).
+  already flows through `pnpm update` without a spec change (and stays out of the CHANGELOG).
 - **Major bumps**: do **not** apply blind — but do **not** silently defer them either. For each
   available major, research it, then **put the decision to the user explicitly** (an
   `AskUserQuestion` with a clear take-it / hold recommendation) and wait for their answer. Deciding
@@ -121,28 +121,32 @@ style of each entry** (see conventions below). After editing, run `yarn install`
   that floor is *also* a `💥 Breaking Changes` item is a judgment call — if every app on this
   dev-utils release is already expected to be at/above the floor (the repos track `lts/*`), it's just
   documentation, not a break. Confirm with the user rather than assuming.
+- **Compatibility doc**: a changed Node floor or hoist-react minimum must also be reflected in the
+  hoist-react repo's `docs/version-compatibility.md` ("hoist-react ↔ hoist-dev-utils" section) -
+  see the "Version compatibility doc" section of this repo's CLAUDE.md. Flag it to the user as a
+  paired hoist-react change; don't leave the table stale.
 
 After spec edits:
 
 ```bash
-yarn install
+pnpm install
 ```
 
 ### 5. Verify the install is healthy
 
 - The install must complete with no resolution errors or peer-dependency failures that weren't
   there before.
-- `git diff yarn.lock` should look like version bumps, not duplicate-package explosions. A full
-  refresh produces large line churn (the `yarn upgrade` sweep rewrites many version strings) — that
-  alone is normal. A useful sanity check is the count of top-level lockfile entries before vs after
-  (`grep -cE '^[^ #].*:$' yarn.lock` vs the same on `git show HEAD:yarn.lock`); it should hold roughly
-  steady, not balloon.
+- `git diff pnpm-lock.yaml` should look like version bumps, not duplicate-package explosions. A full
+  refresh produces large line churn (the `pnpm update` sweep rewrites many version strings) — that
+  alone is normal. A useful sanity check is the count of locked packages before vs after
+  (`grep -c 'resolution:' pnpm-lock.yaml` vs the same on `git show HEAD:pnpm-lock.yaml`); it
+  should hold roughly steady, not balloon.
 - To confirm a specific dep resolved as expected, read its installed manifest directly —
   `node -p "require('./node_modules/<pkg>/package.json').version"` works for most, but packages that
   restrict `exports` (e.g. `sass-embedded`) will throw `ERR_PACKAGE_PATH_NOT_EXPORTED`. Read the file
   directly instead (`grep -m1 '"version"' node_modules/<pkg>/package.json`), which always works.
 - There is **no build or test suite** in this repo. For higher confidence on a risky bump
-  (especially a major), `yarn link` this package into a consuming app like Toolbox and run that
+  (especially a major), `pnpm link` this package into a consuming app like Toolbox and run that
   app's build — but this is optional and usually reserved for majors.
 
 ### 6. Compute the CHANGELOG diff
@@ -162,7 +166,7 @@ It prints three groups:
 - **Spec edits below minor granularity** — e.g. a patch-floor bump; informational, **not** changelogged.
 
 If this prints "no spec changes", then the refresh was lockfile-only and there is **nothing to add
-to the CHANGELOG** — skip to step 8 and propose a `` Run `yarn upgrade` `` commit.
+to the CHANGELOG** — skip to step 8 and propose a `` Run `pnpm update` `` commit.
 
 ### 7. Update CHANGELOG.md
 
@@ -185,11 +189,11 @@ See `references/conventions.md` for the exact CHANGELOG formats and worked examp
 ### 8. Format and present
 
 ```bash
-yarn prettier --check .
+pnpm prettier --check .
 ```
 
-Fix anything it flags with `yarn prettier --write .`. Then show the user:
-- The `package.json` diff and a summary of the `yarn.lock` churn.
+Fix anything it flags with `pnpm prettier --write .`. Then show the user:
+- The `package.json` diff and a summary of the `pnpm-lock.yaml` churn.
 - The new CHANGELOG section (or a note that the refresh was lockfile-only).
 - Any majors deferred or applied, with their breaking-change implications.
 - A **proposed commit message** following the conventions below.
@@ -200,7 +204,7 @@ Then stop. Let the user review and commit.
 
 When editing `package.json`, match the existing style of each dependency — don't homogenize them.
 
-| Style | Example | Used for | `yarn upgrade` pulls (NOT changelogged) |
+| Style | Example | Used for | `pnpm update` pulls (NOT changelogged) |
 |-------|---------|----------|------------------------------------------|
 | `~X.Y.Z` (tilde) | `webpack: ~5.106.2` | most build deps / webpack plugins | patches only |
 | `^X.Y.Z` (caret) | `@babel/core: ^7.28.5`, `@xh/eslint-config: ^7.0` | Babel packages, eslint-config | minors + patches |
@@ -208,7 +212,7 @@ When editing `package.json`, match the existing style of each dependency — don
 
 Implications for what reaches the CHANGELOG:
 - A `~` dep needs a **spec edit** to take a new minor — and that edit is changelogged.
-- A `^`/`X.x` dep takes new minors silently via `yarn upgrade`; that's **not** changelogged. Only a
+- A `^`/`X.x` dep takes new minors silently via `pnpm update`; that's **not** changelogged. Only a
   deliberate **floor raise** (`^7.28.5 → ^7.29.7`) or **major widen** (`4.x → 5.x`) is a spec change
   worth documenting.
 - To take a **major** on any style, raise the major in the spec and review breaking changes first.
@@ -216,9 +220,9 @@ Implications for what reaches the CHANGELOG:
 ## Commit message conventions
 
 Past commits, smallest to largest scope:
-- `` Run `yarn upgrade` `` — lockfile-only, no spec changes, no CHANGELOG change.
+- `` Run `pnpm update` `` — lockfile-only, no spec changes, no CHANGELOG change.
 - `Minor dependency update` / `Minor dependency updates` — minor spec bumps, with a short body
-  listing them and a `` - Run `yarn upgrade` `` line when applicable.
+  listing them and a `` - Run `pnpm update` `` line when applicable.
 - `Update dependencies to latest minor/major versions` — larger batch; body groups `Minor:` and
   `Major:` deps and notes any Node-floor changes.
 

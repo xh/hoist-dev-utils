@@ -1,6 +1,6 @@
 {
     "name": "@xh/hoist-dev-utils",
-    "version": "14.0.0-SNAPSHOT",
+    "version": "15.0.0-SNAPSHOT",
     "description": "Utilities for configuring builds of Hoist-React client applications.",
     "repository": {
         "type": "git",
@@ -15,17 +15,17 @@
         "static/**/*"
     ],
     "engines": {
-        "node": ">=22.11.0"
+        "node": ">=22.15.0"
     },
     "dependencies": {
         "@babel/core": "^7.28.5",
         "@babel/plugin-proposal-decorators": "^7.28.0",
+        "@babel/plugin-transform-typescript": "^7.28.5",
         "@babel/preset-env": "^7.28.5",
         "@babel/preset-react": "^7.28.5",
-        "@babel/preset-typescript": "^7.28.5",
         "@types/lodash": "4.x",
-        "@types/react": "18.x",
-        "@types/react-dom": "18.x",
+        "@types/react": "19.x",
+        "@types/react-dom": "19.x",
         "@xh/eslint-config": "^7.0",
         "autoprefixer": "~10.5.0",
         "babel-loader": "~10.1.1",
@@ -41,17 +41,17 @@
         "postcss-loader": "~8.2.0",
         "sass-embedded": "~1.100.0",
         "sass-loader": "~17.0.0",
-        "sass-material-colors": "~0.0.5",
         "style-loader": "~4.0.0",
         "terser-webpack-plugin": "~5.6.0",
         "type-fest": "5.x",
-        "webpack": "~5.107.2",
+        "webpack": "~5.109.2",
         "webpack-bundle-analyzer": "~5.3.0",
-        "webpack-cli": "~7.0.0",
-        "webpack-dev-server": "~5.2.0",
+        "webpack-cli": "~7.2.2",
+        "webpack-dev-server": "~6.0.0",
         "webpackbar": "~7.0.0"
     },
     "devDependencies": {
         "prettier": "3.x"
-    }
+    },
+    "packageManager": "pnpm@11.21.0+sha512.521705bce689924eac72f5a3587122f362689ef6571e55ba80076fd637c11132ecffada26fad4ea79c485bfddbfd3d5a2a5b05805a77e893de71ec8a6cca3bb1"
 }

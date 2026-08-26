@@ -1,16 +1,109 @@
 # Changelog
 
-## v14.0.0-SNAPSHOT - unreleased
+## 15.0.0-SNAPSHOT
+
+Cleanup release per [#72](https://github.com/xh/hoist-dev-utils/issues/72) - sheds obsolete build
+config accumulated over years of webpack evolution, so that only config with a re-verified reason
+to exist carries forward. **Use with `hoist-react >= 87`.**
 
 ### 💥 Breaking Changes
 
-* Requires `hoist-react >= 87.0`.
+* **Requires hoist-react >= 87** - now enforced with a fail-fast error at build/startup.
+* **TS-only app support**: `.jsx` files are no longer resolved or transpiled - apps on this
+  release must be TypeScript, with JSX carried solely by `.tsx` files. Apps with remaining
+  `.jsx` files must rename them to `.tsx` before upgrading - the build fails fast with an
+  error listing any found under `/src` or in `babelIncludePaths` packages.
 * Flipped `@babel/plugin-proposal-decorators` from `{version: 'legacy'}` to `{version: '2023-05'}`
-  to align with hoist-react v87's migration to TC39 Stage 3 modern decorators. Consuming apps must
+  to align with hoist-react's migration to TC39 Stage 3 modern decorators. Consuming apps must
   upgrade `@xh/hoist` and `@xh/hoist-dev-utils` together — mixing a legacy-decorator app with this
   build of dev-utils will silently break all `@observable` and `@bindable` fields. See the
-  hoist-react v87 upgrade notes for the codemod required in app code.
+  hoist-react upgrade notes for the codemod required in app code.
 
+### ⚙️ Technical
+
+* Dropped forced Babel transpilation of nullish-coalescing (`??`) and optional-chaining (`?.`)
+  operators - 2020-era guards, native in all target browsers for years. Bundles shrink slightly.
+* Dropped Terser `compress: {comparisons: false, collapse_vars: false}` overrides - workarounds
+  for 2018-era bugs in tools long since gone. Terser compression defaults now apply.
+* Collapsed the duplicated TypeScript transform config: `@babel/preset-typescript` removed; the
+  explicit `@babel/plugin-transform-typescript` now runs per-extension, so JSX parses only in
+  `.tsx` files and angle-bracket type assertions remain valid in plain `.ts`. It stays ahead of
+  the decorators plugin, which cannot handle unstripped TS.
+* Rewrote the catch-all asset rule's exclude list - now covers all script-type extensions and
+  documents why each exclusion exists.
+
+### 📚 Libraries
+
+* @babel/preset-typescript `removed`
+* sass-material-colors `removed` - consumed only by hoist-react's `vars.scss`, and hoist-react
+  \>= 87 declares its own copy. Any app importing it directly in its own SCSS must declare it in
+  its own `package.json` (previously it could resolve via this package's copy).
+
+## 14.0.1 - 2026-08-18
+
+### 🐞 Bug Fixes
+
+* Restored the Blueprint icon bundle-size optimization, silently broken since Blueprint 5 changed
+  its icon packaging - the full `@blueprintjs/icons` set (~0.5MB gzipped) was landing in the
+  initial bundle of every app. Build-time-generated stubs now limit that to the icons Hoist's
+  Blueprint components actually use, and an unexpected icon import fails the build rather than
+  rendering blank. Opt out with the existing `loadAllBlueprintJsIcons` flag.
+
+## 14.0.0 - 2026-08-08
+
+This release adds support for [pnpm](https://pnpm.io) as the package manager for Hoist apps.
+Apps that wish to adopt pnpm must take this release - v13 and earlier rely on `node_modules`
+layout assumptions that do not hold under pnpm. Apps remaining on yarn classic or npm can also
+take v14 freely: it is fully compatible with those package managers, and the resolution changes
+below are no-ops on their flat layouts.
+
+**Use with `hoist-react >= 87`** (the React 19 baseline). Apps on earlier hoist-react / React 18
+should remain on dev-utils v13.
+
+### 💥 Breaking Changes
+
+* **Apps adopting pnpm must declare every package they import directly** - including
+  `@types/lodash` (required by hoist-react's raw TypeScript source, previously hoisted from this
+  package) and any loaders referenced by bare name in `extraModuleRules`. Under flat layouts,
+  apps could import undeclared packages that hoist-react happened to carry (`@fortawesome/*`,
+  `classnames`, `filesize`, etc.); under pnpm these surface as webpack `Can't resolve` errors or
+  missing-type errors from `tsc`. Declare each in the app's own `package.json`, with a spec
+  matching hoist-react's to avoid duplicate copies. Apps remaining on yarn classic or npm are
+  unaffected.
+* webpack-dev-server updated to v6, raising the minimum Node version from 22.11 to 22.15 (repos
+  tracking `lts/*` are already well past this). App run scripts and the built-in config are
+  unaffected, but apps passing custom `devServerOptions` should review the
+  [v6 migration guide](https://github.com/webpack/webpack-dev-server/blob/main/migration-v6.md)
+  for removed options.
+* `@types/react` and `@types/react-dom` updated to 19.x, matching hoist-react v87's React 19
+  baseline (see version note above).
+
+### ⚙️ Technical
+
+* `configureWebpack()` no longer assumes a flat, physically-hoisted `node_modules` layout, making
+  the generated build config compatible with isolation-based package managers such as pnpm. Yarn
+  classic and npm continue to work unchanged. Built-in loaders, Babel presets, and plugins are now
+  resolved via `require.resolve()` from this package's own dependencies, and Babel
+  `include`/`exclude` paths (including `@xh/hoist`, in both packaged and `inlineHoist` modes) are
+  symlink-resolved to match the real module paths Webpack produces.
+* This repo itself is now managed with pnpm: `pnpm-lock.yaml` replaces `yarn.lock`, with the pnpm
+  version pinned via the `packageManager` field. No impact on consuming apps.
+
+### 🐞 Bug Fixes
+
+* `inlineHoist` mode now aliases `react-dom` (alongside the existing `react` alias) to the app's
+  own copy. React 19 throws at runtime if the two packages' versions differ at all, so patch-level
+  drift between the app and hoist-react checkouts would previously break inline development.
+
+### 📚 Libraries
+
+* @babel/plugin-transform-typescript `added @ 7.28` (now `require.resolve()`d directly - was a
+  transitive dep of @babel/preset-typescript)
+* @types/react `18.x → 19.x`
+* @types/react-dom `18.x → 19.x`
+* webpack `5.107 → 5.109`
+* webpack-cli `7.0 → 7.2`
+* webpack-dev-server `5.2 → 6.0`
 
 ## 13.0.1 - 2026-06-10
 
@@ -37,6 +130,9 @@
 * Declared a minimum Node version of `>=22.11.0` via the `engines` field in `package.json`. This
   reflects the floor now required by build dependencies (notably `sass-loader` 17) and matches the
   `lts/*` Node policy already used across Hoist repos.
+* If your app uses `flex: 1 1 0` or `flex-basis: 0` you should visually verify that the flex layouts
+  continue to work as expected and add an explicit unit if they do not
+  (e.g. `flex: 1 1 0%` or `flex-basis: 0%`).
 
 ### 🎁 New Features
 
