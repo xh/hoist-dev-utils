@@ -506,6 +506,9 @@ async function configureWebpack(env) {
                                                 // decorates. Remove when Hoist moves off legacy decorators.
                                                 include: [
                                                     'transform-class-properties',
+                                                    // Required by the 2023-05 decorator transform,
+                                                    // which desugars decorators into static blocks.
+                                                    'transform-class-static-block',
                                                     'transform-private-methods',
                                                     'transform-private-property-in-object'
                                                 ],
