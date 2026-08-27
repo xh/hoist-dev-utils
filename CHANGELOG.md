@@ -13,6 +13,10 @@ exist carries forward. **Use with `hoist-react >= 87.1`.**
   must be TypeScript, with JSX carried solely by `.tsx` files. Apps with remaining `.jsx` files must
   rename them to `.tsx` before upgrading - the build fails fast with an error listing any found
   under `/src` or in `babelIncludePaths` packages.
+* **ESLint v10** via `@xh/eslint-config` v8. Apps inherit ESLint v10 through this package - their
+  existing v9-era flat `eslint.config.js` continues to work unchanged, but v10's `recommended`
+  config enables three new rules (`no-useless-assignment`, `no-unassigned-vars`,
+  `preserve-caught-error`), so expect a small number of new lint findings in app code.
 
 ### ⚙️ Technical
 
@@ -38,6 +42,8 @@ exist carries forward. **Use with `hoist-react >= 87.1`.**
 ### 📚 Libraries
 
 * @babel/preset-typescript `removed`
+* @xh/eslint-config `7.0 → 8.0` - ESLint v9 → v10, drops the unused `@babel/*` and
+  `eslint-plugin-react` lint deps.
 * sass-material-colors `removed` - consumed only by hoist-react's `vars.scss`, and hoist-react \>=
   87 declares its own copy. Any app importing it directly in its own SCSS must declare it in its own
   `package.json` (previously it could resolve via this package's copy).

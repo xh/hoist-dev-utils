@@ -7,3 +7,9 @@
 # optional platform deps and nothing here needs the from-source fallback.
 allowBuilds:
     '@parcel/watcher': false
+
+# The default 24h maturity gate on new releases guards against a compromised upstream publish.
+# Our own @xh packages are published by us and often consumed here the same day, so exempt the
+# whole scope rather than pinning an exact version on every release.
+minimumReleaseAgeExclude:
+    - '@xh/*'
