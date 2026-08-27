@@ -16,31 +16,26 @@ to exist carries forward. **Use with `hoist-react >= 87.1`.**
 
 ### ⚙️ Technical
 
-* Re-enabled package-declaration-based tree-shaking (`optimization.sideEffects: 'flag'`),
-  disabled for years over imports dropped seemingly at random - root-caused to hoist-react's own
-  incomplete `sideEffects` declaration, corrected in v87/v87.1 (the source of the version floor above).
-  Modules reachable only through unused barrel re-exports now drop out of bundles entirely.
-* Re-enabled Terser name-mangling in production builds, disabled for years over since-resolved
-  issues with older library packaging. Bundles shrink substantially. Function and class names
-  are preserved (`keep_classnames` / `keep_fnames`) for readable stack traces, error messages,
-  and logging in deployed apps.
-* Dropped forced Babel transpilation of nullish-coalescing (`??`) and optional-chaining (`?.`)
-  operators - 2020-era guards, native in all target browsers for years. Bundles shrink slightly.
+* Re-enabled package-declaration-based tree-shaking (`optimization.sideEffects: 'flag'`) -
+  historical breakage traced to hoist-react's own `sideEffects` declaration, corrected in
+  v87/v87.1. Modules reachable only through unused barrel re-exports now drop from bundles.
+* Re-enabled Terser name-mangling in production builds - bundles shrink substantially. Function
+  and class names are preserved (`keep_classnames` / `keep_fnames`) for readable stack traces
+  and logging.
+* Dropped forced Babel transpilation of `??` and `?.` - native in all target browsers for
+  years.
 * Dropped Terser `compress: {comparisons: false, collapse_vars: false}` overrides - workarounds
-  for 2018-era bugs in tools long since gone. Terser compression defaults now apply.
-* Collapsed the duplicated TypeScript transform config: `@babel/preset-typescript` removed; the
-  explicit `@babel/plugin-transform-typescript` now runs per-extension, so JSX parses only in
-  `.tsx` files and angle-bracket type assertions remain valid in plain `.ts`. It stays ahead of
-  the legacy decorators plugin, which cannot handle unstripped TS.
-* Rewrote the catch-all asset rule's exclude list - now covers all script-type extensions and
-  documents why each exclusion exists.
-* Removed the 2020-era rule mapping `.mjs` files to webpack's `javascript/auto` module type - a
-  workaround for a stylis packaging bug (via react-select > emotion) fixed upstream years ago.
-  `.mjs` files now get standard ESM handling.
-* Removed autoprefixer's `flexbox: 'no-2009'` option - a guard against emitting 2009-spec flexbox
-  syntax for ancient mobile WebKit, a no-op for current targets. The autoprefixer stage itself
-  was re-verified and stays: Safari still requires `-webkit-` prefixes for several properties in
-  use, and the stage also strips stale hand-written prefixes.
+  for long-gone 2018-era tool bugs.
+* Collapsed the duplicated TypeScript transform config onto a single per-extension
+  `@babel/plugin-transform-typescript` - JSX parses only in `.tsx`, and angle-bracket type
+  assertions remain valid in plain `.ts`.
+* Rewrote the catch-all asset rule's exclude list to cover all script-type extensions, with
+  each exclusion documented.
+* Removed the 2020-era `.mjs` → `javascript/auto` rule - a stylis packaging workaround fixed
+  upstream years ago.
+* Removed autoprefixer's `flexbox: 'no-2009'` option, a no-op for current targets. The stage
+  itself was re-verified and stays - Safari still requires `-webkit-` prefixes for several
+  properties in use.
 
 ### 📚 Libraries
 
