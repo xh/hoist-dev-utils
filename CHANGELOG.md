@@ -3,83 +3,80 @@
 ## 15.0.0-SNAPSHOT
 
 Cleanup release per [#72](https://github.com/xh/hoist-dev-utils/issues/72) - sheds obsolete build
-config accumulated over years of webpack evolution, so that only config with a re-verified reason
-to exist carries forward. **Use with `hoist-react >= 87.1`.**
+config accumulated over years of webpack evolution, so that only config with a re-verified reason to
+exist carries forward. **Use with `hoist-react >= 87.1`.**
 
 ### 💥 Breaking Changes
 
 * **Requires hoist-react >= 87.1** - now enforced with a fail-fast error at build/startup.
-* **TS-only app support**: `.jsx` files are no longer resolved or transpiled - apps on this
-  release must be TypeScript, with JSX carried solely by `.tsx` files. Apps with remaining
-  `.jsx` files must rename them to `.tsx` before upgrading - the build fails fast with an
-  error listing any found under `/src` or in `babelIncludePaths` packages.
+* **TS-only app support**: `.jsx` files are no longer resolved or transpiled - apps on this release
+  must be TypeScript, with JSX carried solely by `.tsx` files. Apps with remaining `.jsx` files must
+  rename them to `.tsx` before upgrading - the build fails fast with an error listing any found
+  under `/src` or in `babelIncludePaths` packages.
 
 ### ⚙️ Technical
 
 * Re-enabled package-declaration-based tree-shaking (`optimization.sideEffects: 'flag'`) -
-  historical breakage traced to hoist-react's own `sideEffects` declaration, corrected in
-  v87/v87.1. Modules reachable only through unused barrel re-exports now drop from bundles.
-* Re-enabled Terser name-mangling in production builds - bundles shrink substantially. Function
-  and class names are preserved (`keep_classnames` / `keep_fnames`) for readable stack traces
-  and logging.
-* Dropped forced Babel transpilation of `??` and `?.` - native in all target browsers for
-  years.
-* Dropped Terser `compress: {comparisons: false, collapse_vars: false}` overrides - workarounds
-  for long-gone 2018-era tool bugs.
+  historical breakage traced to hoist-react's own `sideEffects` declaration, corrected in v87.1.
+  Modules reachable only through unused barrel re-exports now drop from bundles.
+* Re-enabled Terser name-mangling in production builds to reduce bundle size. Function and class
+  names are preserved (`keep_classnames` / `keep_fnames`) for readable stack traces and logging.
+* Dropped forced Babel transpilation of `??` and `?.` - native in all target browsers for years.
+* Dropped Terser `compress: {comparisons: false, collapse_vars: false}` overrides - workarounds for
+  long-gone 2018-era tool bugs.
 * Collapsed the duplicated TypeScript transform config onto a single per-extension
   `@babel/plugin-transform-typescript` - JSX parses only in `.tsx`, and angle-bracket type
   assertions remain valid in plain `.ts`.
-* Rewrote the catch-all asset rule's exclude list to cover all script-type extensions, with
-  each exclusion documented.
+* Rewrote the catch-all asset rule's exclude list to cover all script-type extensions, with each
+  exclusion documented.
 * Removed the 2020-era `.mjs` → `javascript/auto` rule - a stylis packaging workaround fixed
   upstream years ago.
-* Removed autoprefixer's `flexbox: 'no-2009'` option, a no-op for current targets. The stage
-  itself was re-verified and stays - Safari still requires `-webkit-` prefixes for several
-  properties in use.
+* Removed autoprefixer's `flexbox: 'no-2009'` option, a no-op for current targets. The stage itself
+  was re-verified and stays - Safari still requires `-webkit-` prefixes for several properties in
+  use.
 
 ### 📚 Libraries
 
 * @babel/preset-typescript `removed`
-* sass-material-colors `removed` - consumed only by hoist-react's `vars.scss`, and hoist-react
-  \>= 87 declares its own copy. Any app importing it directly in its own SCSS must declare it in
-  its own `package.json` (previously it could resolve via this package's copy).
+* sass-material-colors `removed` - consumed only by hoist-react's `vars.scss`, and hoist-react \>=
+  87 declares its own copy. Any app importing it directly in its own SCSS must declare it in its own
+  `package.json` (previously it could resolve via this package's copy).
 
 ## 14.0.1 - 2026-08-18
 
 ### 🐞 Bug Fixes
 
 * Restored the Blueprint icon bundle-size optimization, silently broken since Blueprint 5 changed
-  its icon packaging - the full `@blueprintjs/icons` set (~0.5MB gzipped) was landing in the
-  initial bundle of every app. Build-time-generated stubs now limit that to the icons Hoist's
-  Blueprint components actually use, and an unexpected icon import fails the build rather than
-  rendering blank. Opt out with the existing `loadAllBlueprintJsIcons` flag.
+  its icon packaging - the full `@blueprintjs/icons` set (~0.5MB gzipped) was landing in the initial
+  bundle of every app. Build-time-generated stubs now limit that to the icons Hoist's Blueprint
+  components actually use, and an unexpected icon import fails the build rather than rendering
+  blank. Opt out with the existing `loadAllBlueprintJsIcons` flag.
 
 ## 14.0.0 - 2026-08-08
 
-This release adds support for [pnpm](https://pnpm.io) as the package manager for Hoist apps.
-Apps that wish to adopt pnpm must take this release - v13 and earlier rely on `node_modules`
-layout assumptions that do not hold under pnpm. Apps remaining on yarn classic or npm can also
-take v14 freely: it is fully compatible with those package managers, and the resolution changes
-below are no-ops on their flat layouts.
+This release adds support for [pnpm](https://pnpm.io) as the package manager for Hoist apps. Apps
+that wish to adopt pnpm must take this release - v13 and earlier rely on `node_modules` layout
+assumptions that do not hold under pnpm. Apps remaining on yarn classic or npm can also take v14
+freely: it is fully compatible with those package managers, and the resolution changes below are
+no-ops on their flat layouts.
 
 **Use with `hoist-react >= 87`** (the React 19 baseline). Apps on earlier hoist-react / React 18
 should remain on dev-utils v13.
 
 ### 💥 Breaking Changes
 
-* **Apps adopting pnpm must declare every package they import directly** - including
-  `@types/lodash` (required by hoist-react's raw TypeScript source, previously hoisted from this
-  package) and any loaders referenced by bare name in `extraModuleRules`. Under flat layouts,
-  apps could import undeclared packages that hoist-react happened to carry (`@fortawesome/*`,
-  `classnames`, `filesize`, etc.); under pnpm these surface as webpack `Can't resolve` errors or
-  missing-type errors from `tsc`. Declare each in the app's own `package.json`, with a spec
-  matching hoist-react's to avoid duplicate copies. Apps remaining on yarn classic or npm are
-  unaffected.
+* **Apps adopting pnpm must declare every package they import directly** - including `@types/lodash`
+  (required by hoist-react's raw TypeScript source, previously hoisted from this package) and any
+  loaders referenced by bare name in `extraModuleRules`. Under flat layouts, apps could import
+  undeclared packages that hoist-react happened to carry (`@fortawesome/*`, `classnames`,
+  `filesize`, etc.); under pnpm these surface as webpack `Can't resolve` errors or missing-type
+  errors from `tsc`. Declare each in the app's own `package.json`, with a spec matching
+  hoist-react's to avoid duplicate copies. Apps remaining on yarn classic or npm are unaffected.
 * webpack-dev-server updated to v6, raising the minimum Node version from 22.11 to 22.15 (repos
   tracking `lts/*` are already well past this). App run scripts and the built-in config are
   unaffected, but apps passing custom `devServerOptions` should review the
-  [v6 migration guide](https://github.com/webpack/webpack-dev-server/blob/main/migration-v6.md)
-  for removed options.
+  [v6 migration guide](https://github.com/webpack/webpack-dev-server/blob/main/migration-v6.md) for
+  removed options.
 * `@types/react` and `@types/react-dom` updated to 19.x, matching hoist-react v87's React 19
   baseline (see version note above).
 
@@ -96,9 +93,9 @@ should remain on dev-utils v13.
 
 ### 🐞 Bug Fixes
 
-* `inlineHoist` mode now aliases `react-dom` (alongside the existing `react` alias) to the app's
-  own copy. React 19 throws at runtime if the two packages' versions differ at all, so patch-level
-  drift between the app and hoist-react checkouts would previously break inline development.
+* `inlineHoist` mode now aliases `react-dom` (alongside the existing `react` alias) to the app's own
+  copy. React 19 throws at runtime if the two packages' versions differ at all, so patch-level drift
+  between the app and hoist-react checkouts would previously break inline development.
 
 ### 📚 Libraries
 
@@ -123,21 +120,21 @@ should remain on dev-utils v13.
 
 ### 💥 Breaking Changes
 
-* `.md` imports now resolve to the file's raw **text content** (Webpack `asset/source`) rather than a
-  URL to an emitted file. Apps that previously fetched the imported value to read it
+* `.md` imports now resolve to the file's raw **text content** (Webpack `asset/source`) rather than
+  a URL to an emitted file. Apps that previously fetched the imported value to read it
   (`fetch(imported).then(r => r.text())`) should drop the fetch and use the import directly as the
-  markdown string (e.g. pass it straight to Hoist's `markdown` component). This aligns the build with
-  the `*.md` module declaration (`const content: string`) hoist-react already ships; hoist-react
-  itself requires no change, so taking v13 is a strong recommendation for consistency rather than a
-  hard requirement.
+  markdown string (e.g. pass it straight to Hoist's `markdown` component). This aligns the build
+  with the `*.md` module declaration (`const content: string`) hoist-react already ships;
+  hoist-react itself requires no change, so taking v13 is a strong recommendation for consistency
+  rather than a hard requirement.
     * To opt a specific import back into the old URL behavior — for instance a large document loaded
       lazily — append `?url` to the request: `import url from './big.md?url'`.
 * Declared a minimum Node version of `>=22.11.0` via the `engines` field in `package.json`. This
   reflects the floor now required by build dependencies (notably `sass-loader` 17) and matches the
   `lts/*` Node policy already used across Hoist repos.
 * If your app uses `flex: 1 1 0` or `flex-basis: 0` you should visually verify that the flex layouts
-  continue to work as expected and add an explicit unit if they do not
-  (e.g. `flex: 1 1 0%` or `flex-basis: 0%`).
+  continue to work as expected and add an explicit unit if they do not (e.g. `flex: 1 1 0%` or
+  `flex-basis: 0%`).
 
 ### 🎁 New Features
 
@@ -170,19 +167,19 @@ should remain on dev-utils v13.
 
 ### 🎁 New Features
 
-* Enabled webpack Hot Module Replacement for CSS/SCSS in development. Style edits now apply in
-  place without a full page reload, preserving scroll position and in-app state. JS/TS edits
-  continue to trigger a full reload.
+* Enabled webpack Hot Module Replacement for CSS/SCSS in development. Style edits now apply in place
+  without a full page reload, preserving scroll position and in-app state. JS/TS edits continue to
+  trigger a full reload.
 
 ## v12.1.1 - 2026-05-19
 
 ### ⚙️ Technical
 
 * Removed `html-webpack-tags-plugin` dependency. It was used in a single spot to inject the
-  `preflight.js` script tag and has been unmaintained since 2021, pulling in deprecated
-  transitive deps (`glob@7`, `inflight`) that surfaced as warnings on install. The preflight
-  tag is now emitted directly from the `static/index.html` template, with a `preflightHash`
-  template parameter (sourced from the webpack compilation hash) preserving cache-busting.
+  `preflight.js` script tag and has been unmaintained since 2021, pulling in deprecated transitive
+  deps (`glob@7`, `inflight`) that surfaced as warnings on install. The preflight tag is now emitted
+  directly from the `static/index.html` template, with a `preflightHash` template parameter (sourced
+  from the webpack compilation hash) preserving cache-busting.
 
 ### 📚 Libraries
 
@@ -193,15 +190,15 @@ should remain on dev-utils v13.
 
 ### 🎁 New Features
 
-* Replaced the animated PNG on the static loader page with an inline SVG that visually matches
-  Hoist React's in-app `Spinner` component (FA `spinner-third` with a CSS rotation). Eliminates a
-  style discontinuity at the JS-bundle handoff.
+* Replaced the animated PNG on the static loader page with an inline SVG that visually matches Hoist
+  React's in-app `Spinner` component (FA `spinner-third` with a CSS rotation). Eliminates a style
+  discontinuity at the JS-bundle handoff.
 * New `preloadSpinnerColor` config controls the stroke color of the loader spinner. Defaults to
   `#888`. Pairs with the existing `preloadBackgroundColor`.
 
 ### 📚 Libraries
 
-* terser-webpack-plugin `5.4 → 5.5`we u
+* terser-webpack-plugin `5.4 → 5.5`
 
 ## v12.0.1 - 2026-04-18
 
@@ -226,7 +223,8 @@ should remain on dev-utils v13.
 
 ### 🐞 Bug Fixes
 
-* Fixed bug in release-related GitHub actions that prevented them from working when used in other repos.
+* Fixed bug in release-related GitHub actions that prevented them from working when used in other
+  repos.
 
 ## v11.2.0 - 2026-03-27
 
@@ -264,16 +262,17 @@ should remain on dev-utils v13.
 
 ### ⚙️ Technical
 
-* Updated resolution rule needed when developing Hoist inline to ensure AG Grid hooks only resolve to a single instance.
+* Updated resolution rule needed when developing Hoist inline to ensure AG Grid hooks only resolve
+  to a single instance.
 
 ## v11.0.0 - 2025-05-15
 
 ### 💥 Breaking Changes
 
 * Requires `hoist-react >= 73.0`.
-* Upgrade from `@xh/eslint-config` v6.0 to v7.0 requires changes to Hoist Applications' `eslint` configurations:
-  Rename the `.eslintrc` file to `eslint.config.js` and use the configuration found in Toolbox's `eslint.config.js` as
-  a new baseline example.
+* Upgrade from `@xh/eslint-config` v6.0 to v7.0 requires changes to Hoist Applications' `eslint`
+  configurations: Rename the `.eslintrc` file to `eslint.config.js` and use the configuration found
+  in Toolbox's `eslint.config.js` as a new baseline example.
 
 ### 📚 Libraries
 
@@ -298,8 +297,9 @@ should remain on dev-utils v13.
 
 ### 💥 Breaking Changes
 
-* Requires `hoist-react >= 71.0` with workaround for SASS/CSS processing issue caused by bad syntax in the `react-dates`
-  library, which started throwing an error after the updates to sass in this dev-utils release.
+* Requires `hoist-react >= 71.0` with workaround for SASS/CSS processing issue caused by bad syntax
+  in the `react-dates` library, which started throwing an error after the updates to sass in this
+  dev-utils release.
 
 ### 📚 Libraries
 
@@ -316,16 +316,18 @@ should remain on dev-utils v13.
 
 ### 📚 Libraries
 
-* type-fest `added @ 4.x` - ensures that apps have a recent version of this library installed as a dev dependency.
-  (It's required to compile hoist-react typescript as part of the current combined Hoist + app build.)
+* type-fest `added @ 4.x` - ensures that apps have a recent version of this library installed as a
+  dev dependency. (It's required to compile hoist-react typescript as part of the current combined
+  Hoist + app build.)
 * webpack `5.92 → 5.93`
 
 ## v9.0.0 - 2024-06-25
 
 ### 💥 Breaking Changes
 
-* Requires `hoist-react >= 64.1` with updated static assets within a new `/public` directory. These are now copied at
-  build time to the `/public/` output directory, alongside (and deferring to) any app-provided assets.
+* Requires `hoist-react >= 64.1` with updated static assets within a new `/public` directory. These
+  are now copied at build time to the `/public/` output directory, alongside (and deferring to) any
+  app-provided assets.
 
 ### 📚 Libraries
 
@@ -335,10 +337,11 @@ should remain on dev-utils v13.
 
 ### ⚙️ Technical
 
-* Updated the viewport `meta` tag within the static `index.html` template to remove constraints on user scaling.
-  (See https://github.com/xh/hoist-react/issues/3651.)
-* Default `baseUrl` in development now has an adaptive protocol (http/https) based on browser location.  
-  This makes it simpler for developers to configure their local development environment to use https.
+* Updated the viewport `meta` tag within the static `index.html` template to remove constraints on
+  user scaling. (See https://github.com/xh/hoist-react/issues/3651.)
+* Default `baseUrl` in development now has an adaptive protocol (http/https) based on browser
+  location. This makes it simpler for developers to configure their local development environment to
+  use https.
 
 ### 📚 Libraries
 
@@ -353,36 +356,39 @@ should remain on dev-utils v13.
 
 ### ⚙️ Technical
 
-* Added another `resolveAliases` entry to ensure that the same instance of `@ag-grid-community` is used when
-  developing inline. This ensures there is only one version of ag-grid's hook contexts.
+* Added another `resolveAliases` entry to ensure that the same instance of `@ag-grid-community` is
+  used when developing inline. This ensures there is only one version of ag-grid's hook contexts.
 
 ## v8.1.0 - 2024-03-27
 
 ### 🎁 New Features
 
-* Individual manifest.json files are now generated for each clientApp, with their starting URL set to the base URL
-  for that app. Intended specifically for mobile apps added to device home screens, so they can load their intended
-  client app directly without the need for additional redirects.
-* A new `preloadBackgroundColor` config will be applied to the preloader spinner, allowing apps to set a background
-  color that matches their app's theme. This can help minimize a flash of white when the app first loads.
+* Individual manifest.json files are now generated for each clientApp, with their starting URL set
+  to the base URL for that app. Intended specifically for mobile apps added to device home screens,
+  so they can load their intended client app directly without the need for additional redirects.
+* A new `preloadBackgroundColor` config will be applied to the preloader spinner, allowing apps to
+  set a background color that matches their app's theme. This can help minimize a flash of white
+  when the app first loads.
 
 ### ⚙️ Technical
 
-* The static `index.html` file used as an entry point template has been moved out of hoist-react and into this project,
-  to aid in future dev-utils releases where changes to this file are required.
+* The static `index.html` file used as an entry point template has been moved out of hoist-react and
+  into this project, to aid in future dev-utils releases where changes to this file are required.
 
 ## v8.0.0 - 2024-03-18
 
 ### 💥 Breaking Changes
 
-* Requires Hoist React v62+ with updated (and now only) `/static/index.html` HTML entrypoint template.
+* Requires Hoist React v62+ with updated (and now only) `/static/index.html` HTML entrypoint
+  template.
 
 ### ⚙️ Technical
 
-* Chunking of bundled JS and CSS outputs updated to use webpack's default naming and splitting strategy, avoiding issues
-  where builds with many client apps could generate bundle names that exceeded filename length limits.
-* Builds can now generate more but smaller chunks, allowing browsers to better parallelize the initial download of an
-  app's codebase.
+* Chunking of bundled JS and CSS outputs updated to use webpack's default naming and splitting
+  strategy, avoiding issues where builds with many client apps could generate bundle names that
+  exceeded filename length limits.
+* Builds can now generate more but smaller chunks, allowing browsers to better parallelize the
+  initial download of an app's codebase.
 
 ### 📚 Libraries
 
@@ -398,17 +404,19 @@ should remain on dev-utils v13.
 
 ### 📚 Libraries
 
-* Removed `clean-webpack-plugin` - it is no longer maintained and was causing runtime issues in development.
-  Its functionality is replaced by the `clean` option in the `output` section of the webpack config.
+* Removed `clean-webpack-plugin` - it is no longer maintained and was causing runtime issues in
+  development. Its functionality is replaced by the `clean` option in the `output` section of the
+  webpack config.
 
 ## v7.1.0 - 2024-02-05
 
-* Updated to new webpack API for enabling HTTPS on local dev server. Note that the handling of the (rarely used)
-  `devHttps` parameter has changed.
+* Updated to new webpack API for enabling HTTPS on local dev server. Note that the handling of the
+  (rarely used) `devHttps` parameter has changed.
 
 ### 🐞 Bug Fixes
 
-* Fixed chunk collection so that similarly named apps within a project do not load each other's app chunk.
+* Fixed chunk collection so that similarly named apps within a project do not load each other's app
+  chunk.
 
 ### 📚 Libraries
 
@@ -436,26 +444,28 @@ should remain on dev-utils v13.
 
 ## v6.3.0 - 2023-06-15
 
-* Added new `devServerOverlay` config to control full-screen error overlay added by webpack-dev-server. Default to show
-  compilation errors only, allowing devs to opt-in to compilation warnings and/or runtime errors.
+* Added new `devServerOverlay` config to control full-screen error overlay added by
+  webpack-dev-server. Default to show compilation errors only, allowing devs to opt-in to
+  compilation warnings and/or runtime errors.
 
 ### 📚 Libraries
 
 * sass `1.62 → 1.63`
 * webpack `5.84 → 5.87`
-* webpack-bundle-analyzer `4.8 0 → 4.9`
+* webpack-bundle-analyzer `4.8 → 4.9`
 
 ## v6.2.0 - 2023-05-31
 
-* Updated Babel configuration to enable key transforms via preset-env `includes` directive. Resolves issue with outdated
-  plugin names in the prior config causing errors like "cannot find package @babel/plugin-proposal-class-properties"
-  for apps that updated to Babel 7.22 (several key transforms were released under new names with the 7.22 release -
-  see https://github.com/babel/babel/pull/15614).
-* Updated special transformations for the FontAwesome icon dependencies to include their "thin" package, which was added
-  to hoist-react last year and was not being properly tree-shaken.
-* Updated minimal shim for required-only BlueprintJS icons to restore another bundle size reduction that had been lost
-  with the update to Blueprint 4.x back in Hoist React v50. Update required a new path for import transformations and
-  moved the shim file from hoist-react to this project.
+* Updated Babel configuration to enable key transforms via preset-env `includes` directive. Resolves
+  issue with outdated plugin names in the prior config causing errors like "cannot find package
+  @babel/plugin-proposal-class-properties" for apps that updated to Babel 7.22 (several key
+  transforms were released under new names with the 7.22 release - see
+  https://github.com/babel/babel/pull/15614).
+* Updated special transformations for the FontAwesome icon dependencies to include their "thin"
+  package, which was added to hoist-react last year and was not being properly tree-shaken.
+* Updated minimal shim for required-only BlueprintJS icons to restore another bundle size reduction
+  that had been lost with the update to Blueprint 4.x back in Hoist React v50. Update required a new
+  path for import transformations and moved the shim file from hoist-react to this project.
 
 ### 📚 Libraries
 
@@ -482,8 +492,8 @@ should remain on dev-utils v13.
 
 ## v6.1.1 - 2022-12-07
 
-* Flipped options for Babel plugins related to decorator and class field proposals, reverting to `loose:false` (the
-  default) as per latest MobX docs.
+* Flipped options for Babel plugins related to decorator and class field proposals, reverting to
+  `loose:false` (the default) as per latest MobX docs.
     * ⚠️Required for updated implementation of the `@bindable` decorator in Hoist React v54.
 
 ## v6.1.0 - 2022-11-21
@@ -491,7 +501,8 @@ should remain on dev-utils v13.
 ### 🎁 New Features
 
 * Typescript support for Hoist React v54+ via `@babel/plugin-transform-typescript`.
-* Remains compatible for use with JS-only application projects and prior JS-only versions of Hoist React.
+* Remains compatible for use with JS-only application projects and prior JS-only versions of Hoist
+  React.
 
 ### 📚 Libraries
 
@@ -509,19 +520,22 @@ should remain on dev-utils v13.
 
 ## v6.0.0 - 2022-07-19
 
-* This release features a major update to Webpack v5, along with updates to all supporting libraries.
+* This release features a major update to Webpack v5, along with updates to all supporting
+  libraries.
 
 ### 💥 Breaking Changes
 
 * Requires Hoist React v48+.
-* Imports from `package.json` no longer support default export - you must import the entire package JSON as an object.
-  This is most likely to be relevant in `Bootstrap.js` where apps read the Ag-Grid version from its package. See this
-  file within the XH Toolbox app for the updated syntax.
-* The syntax form passing variables to `yarn` scripts in your package.json has changed - note the removal of the dot:
+* Imports from `package.json` no longer support default export - you must import the entire package
+  JSON as an object. This is most likely to be relevant in `Bootstrap.js` where apps read the
+  Ag-Grid version from its package. See this file within the XH Toolbox app for the updated syntax.
+* The syntax form passing variables to `yarn` scripts in your package.json has changed - note the
+  removal of the dot:
     * e.g. `webpack --env.prodBuild` > `webpack --env prodBuild`
-    * This will likely require updates to automated builds which pass in version / build tags via env args.
-* If you have a mobile app, you must provide a wider range of favicons for display on devices.
-  See https://github.com/xh/hoist-dev-utils/#favicons for more details.
+    * This will likely require updates to automated builds which pass in version / build tags via
+      env args.
+* If you have a mobile app, you must provide a wider range of favicons for display on devices. See
+  https://github.com/xh/hoist-dev-utils/#favicons for more details.
 
 ### 📚 Libraries
 
@@ -550,8 +564,8 @@ should remain on dev-utils v13.
 
 ## v5.14.0 - 2022-06-09
 
-* Supports new `reactProdMode` flag passed to `configureWebpack()`. Use to force React into production mode during local
-  development. (Production builds always use prod mode, as before.)
+* Supports new `reactProdMode` flag passed to `configureWebpack()`. Use to force React into
+  production mode during local development. (Production builds always use prod mode, as before.)
 
 [Commit Log](https://github.com/xh/hoist-dev-utils/compare/v5.13.0...v5.14.0)
 
@@ -776,11 +790,12 @@ see any indication that they would be incompatible.
 * App builds now load only a handful of `@blueprintjs` icons that are actually used by components.
   This change significantly reduces build size as BP ships a large set of generic SVG icons and
   bundles them all by default, but Hoist already includes FontAwesome as our standard icon library.
-    * If the full set of Blueprint icons are required for a special app use-case, `configureWebpack()`
-      now supports a new `loadAllBlueprintJsIcons` argument to revert to the previous behavior.
-    * Requires Hoist React v35.2+ to supply the more minimal set of icon SVGs. Older
-      versions of HR are compatible with this version of dev-utils, but the icons optimization will
-      not be activated.
+    * If the full set of Blueprint icons are required for a special app use-case,
+      `configureWebpack()` now supports a new `loadAllBlueprintJsIcons` argument to revert to the
+      previous behavior.
+    * Requires Hoist React v35.2+ to supply the more minimal set of icon SVGs. Older versions of HR
+      are compatible with this version of dev-utils, but the icons optimization will not be
+      activated.
 
 ### 📚 Libraries
 
