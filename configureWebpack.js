@@ -22,9 +22,9 @@ const _ = require('lodash'),
     devUtilsPkg = require('./package'),
     basePath = fs.realpathSync(process.cwd());
 
-// Minimum hoist-react major version supported by this release - review on each new major, and
-// keep in sync with CHANGELOG and hoist-react's docs/version-compatibility.md.
-const MIN_HOIST_REACT_VERSION = 87;
+// Minimum hoist-react version supported by this release, as 'major[.minor]' - review on each
+// new major, and keep in sync with CHANGELOG and hoist-react's docs/version-compatibility.md.
+const MIN_HOIST_REACT_VERSION = '87.1';
 
 // These are not deps of hoist-dev-utils but of the consuming app, so resolve them from the
 // app's own directory (basePath) - required under isolated/symlinked node_modules layouts
@@ -167,8 +167,13 @@ async function configureWebpack(env) {
     // Fail fast on an unsupported hoist-react pairing with the actual remedy, rather than
     // letting version drift surface as cryptic downstream build errors. Skipped when
     // hoist-react is not resolvable or is a local inline checkout.
-    const hoistReactMajor = parseInt(hoistReactPkg.version);
-    if (!inlineHoist && hoistReactMajor < MIN_HOIST_REACT_VERSION) {
+    const [minMajor, minMinor = 0] = MIN_HOIST_REACT_VERSION.split('.').map(Number),
+        [hrMajor, hrMinor = 0] = hoistReactPkg.version.split('.').map(Number);
+    if (
+        !inlineHoist &&
+        !isNaN(hrMajor) &&
+        (hrMajor < minMajor || (hrMajor === minMajor && hrMinor < minMinor))
+    ) {
         throw (
             `hoist-dev-utils v${devUtilsPkg.version} requires hoist-react >= ` +
             `${MIN_HOIST_REACT_VERSION} - found v${hoistReactPkg.version}. Upgrade @xh/hoist, ` +
@@ -396,9 +401,12 @@ async function configureWebpack(env) {
             // https://webpack.js.org/configuration/optimization/#optimizationremoveavailablemodules)
             removeAvailableModules: false,
 
-            // Disable package.json `sideEffects` based tree-shaking - was getting inconsistent
-            // results, with imports being dropped seemingly at random.
-            sideEffects: false,
+            // Prune modules whose package `sideEffects` declarations mark them pure when nothing
+            // imports their exports. 'flag' trusts declarations only, without webpack's deeper
+            // own-code analysis. Requires hoist-react >= 87 for its corrected declaration - the
+            // faulty prior one (styles + platform registration marked pure) was the root cause of
+            // the historical breakage that kept this disabled.
+            sideEffects: 'flag',
 
             // Produce chunks for any shared imports across JS apps.
             splitChunks: {
@@ -440,18 +448,6 @@ async function configureWebpack(env) {
             rules: [
                 {
                     oneOf: [
-                        //------------------------
-                        // Type mapping for .mjs files, used by the stylis library distribution.
-                        // We have a transitive dep on stylis via: react-select > emotion > stylis
-                        // Without this rule in place, builds fail with errors throw from emotion
-                        // re. exports not found in stylis. Another user reported the same issue
-                        // and provided this pointer @  https://github.com/thysultan/stylis.js/issues/254
-                        //------------------------
-                        {
-                            test: /\.mjs$/,
-                            type: 'javascript/auto'
-                        },
-
                         //------------------------
                         // Image processing
                         // Inline as a data URI when small enough, otherwise emit a hashed file.
@@ -588,8 +584,11 @@ async function configureWebpack(env) {
                                     }
                                 },
 
-                                // 1) Pre-process CSS to install vendor-specific prefixes for the configured browsers.
-                                //    Note that the "post" in the loader name refers to http://postcss.org/ - NOT the processing order within Webpack.
+                                // 1) Install vendor prefixes still required by the configured target
+                                //    browsers (e.g. Safari's -webkit-user-select), and strip stale
+                                //    hand-written prefixes from source styles. ("post" in the loader
+                                //    name refers to http://postcss.org/ - NOT the processing order
+                                //    within Webpack.)
                                 {
                                     loader: require.resolve('postcss-loader'),
                                     options: {
@@ -597,12 +596,7 @@ async function configureWebpack(env) {
                                             plugins: [
                                                 [
                                                     require.resolve('autoprefixer'),
-                                                    {
-                                                        // We still want to provide an array of target browsers
-                                                        // that can be passed to / managed centrally by this script.
-                                                        overrideBrowserslist: targetBrowsers,
-                                                        flexbox: 'no-2009'
-                                                    }
+                                                    {overrideBrowserslist: targetBrowsers}
                                                 ]
                                             ]
                                         }
@@ -1030,13 +1024,10 @@ const extraPluginsProd = terserOptions => {
         // Minify and tree-shake via Terser - https://github.com/terser/terser#readme
         new TerserPlugin({
             terserOptions: {
-                // Mangling disabled due to intermittent / difficult to debug issues with it
-                // breaking code, especially when run on already-packaged libraries. Disabling does
-                // increase bundle size, although not by much on a relative basis.
-                mangle: false,
-                // As per docs "prevent discarding or mangling of function names" - most likely not
-                // necessary w/mangling off, but leaving here as docs are a bit vague, and in case
-                // we re-enable. We want to maintain function/class names for error messages.
+                // Mangling (on by default) renames local identifiers for meaningfully smaller
+                // bundles. Function and class names are kept - relied upon for error messages,
+                // logging, and debugging of deployed builds.
+                keep_classnames: true,
                 keep_fnames: true,
                 ...terserOptions
             }
