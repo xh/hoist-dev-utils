@@ -24,7 +24,6 @@ exist carries forward. **Use with `hoist-react >= 87.1`.**
   assets alongside the originals, for direct serving by nginx via `brotli_static` / `gzip_static`.
   * Unlocks Brotli quality 11 - far too slow to run per-request, and a solid step down in transfer
     size from on-the-fly gzip.
-  * Source maps are excluded - large, and fetched only with devtools open.
   * Recommended nginx Dockerfile is `FROM xhio/xh-nginx:latest-brotli` - the latest stable,
     brotli-enabled image, for optimal compression. Images without brotli use the `.gz` copies.
   * Enabled by default - disable or tune via the new `precompressAssets` option.
@@ -36,6 +35,14 @@ exist carries forward. **Use with `hoist-react >= 87.1`.**
   Modules reachable only through unused barrel re-exports now drop from bundles.
 * Re-enabled Terser name-mangling in production builds to reduce bundle size. Function and class
   names are preserved (`keep_classnames` / `keep_fnames`) for readable stack traces and logging.
+* Replaced the loose `x`-range dependency specs with concrete caret ranges, and documented a
+  caret vs. tilde rubric in `pnpm-workspace.yaml` (`savePrefix` set to `~` to match). Tilde stays
+  the default for build tooling, where a minor can change build output and a dev-utils release is
+  the delivery vehicle. Caret is reserved for packages that must co-resolve with the app's own
+  copies - `lodash`, `postcss`, `type-fest` and the `@types/*` set - where a tight pin risks a
+  duplicate copy, and two `@types/react` break type-checking outright. Ceilings are unchanged
+  except `postcss`, which widens from `< 8.6` to `< 9`. The declared floors now state the
+  versions actually tested.
 * Dropped forced Babel transpilation of `??` and `?.` - native in all target browsers for years.
 * Dropped Terser `compress: {comparisons: false, collapse_vars: false}` overrides - workarounds for
   long-gone 2018-era tool bugs.
@@ -58,12 +65,22 @@ exist carries forward. **Use with `hoist-react >= 87.1`.**
 ### 📚 Libraries
 
 * @babel/preset-typescript `removed`
+* changelog-parser `3.0 → 4.1` - now ESM-only. Consumed internally by this package only, so apps
+  take no action.
 * compression-webpack-plugin `added @ 12.0`
 * @xh/eslint-config `7.0 → 8.0` - ESLint v9 → v10, drops the unused `@babel/*` and
   `eslint-plugin-react` lint deps.
+* lodash `4.x → 4.18`
+* postcss `8.5 → 8.5` - spec widened from `~` to `^`, so apps may now resolve 8.6+.
+* sass-embedded `1.100 → 1.103`
 * sass-material-colors `removed` - consumed only by hoist-react's `vars.scss`, and hoist-react \>=
   87 declares its own copy. Any app importing it directly in its own SCSS must declare it in its own
   `package.json` (previously it could resolve via this package's copy).
+* type-fest `5.x → 5.8`
+* @types/lodash `4.x → 4.17`
+* @types/react `19.x → 19.2`
+* @types/react-dom `19.x → 19.2`
+* webpack `5.109 → 5.110`
 
 ## 14.0.1 - 2026-08-18
 
