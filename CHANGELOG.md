@@ -25,8 +25,8 @@ exist carries forward. **Use with `hoist-react >= 87.1`.**
   * Unlocks Brotli quality 11 - far too slow to run per-request, and a solid step down in transfer
     size from on-the-fly gzip.
   * Source maps are excluded - large, and fetched only with devtools open.
-  * Serving `.br` requires the `-brotli` variant of `xh-nginx`; the standard image uses the `.gz`
-    copies. Pair with `xh-nginx >= 3.3.0` for its `Vary: Accept-Encoding` fix.
+  * Recommended nginx Dockerfile is `FROM xhio/xh-nginx:latest-brotli` - the latest stable,
+    brotli-enabled image, for optimal compression. Images without brotli use the `.gz` copies.
   * Enabled by default - disable or tune via the new `precompressAssets` option.
 
 ### ⚙️ Technical
