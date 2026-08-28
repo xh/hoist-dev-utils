@@ -153,8 +153,8 @@ async function configureWebpack(env) {
         babelExcludePaths = (env.babelExcludePaths || []).map(safeRealpath),
         extraModuleRules = env.extraModuleRules || [],
         contextRoot = env.contextRoot || '/',
-        copyPublicAssets = env.copyPublicAssets !== false,
-        parseChangelog = env.parseChangelog !== false,
+        copyPublicAssets = parseFlag(env.copyPublicAssets, true),
+        parseChangelog = parseFlag(env.parseChangelog, true),
         favicon = env.favicon || null,
         manifestConfig = env.manifestConfig || {},
         preloadBackgroundColor = env.preloadBackgroundColor || 'white',
@@ -170,7 +170,7 @@ async function configureWebpack(env) {
         babelPresetEnvOptions = env.babelPresetEnvOptions || {},
         terserOptions = env.terserOptions || {},
         precompressAssets = parseFlag(env.precompressAssets, true),
-        sourceMaps = env.sourceMaps === undefined ? true : env.sourceMaps,
+        sourceMaps = parseFlag(env.sourceMaps, true),
         buildDate = new Date();
 
     // Fail fast on an unsupported hoist-react pairing with the actual remedy, rather than
@@ -1061,10 +1061,10 @@ const compressionPlugins = precompressAssets => {
         threshold: 1024,
         minRatio: 0.8,
         ...(_.isPlainObject(precompressAssets) ? precompressAssets : {}),
-        // Never delete the originals. nginx `try_files` tests for the *uncompressed* file, so
-        // dropping it would route every asset request to the app's index.html instead, and clients
-        // that send no `Accept-Encoding` have nothing to fall back on. Applied last, deliberately
-        // after any app-level overrides.
+        // Never delete the originals. If only the `.br` and `.gz` remain, nginx still serves
+        // them to any client that advertises the matching encoding - but a client that
+        // advertises neither (a plain curl, a health check, an old proxy) has no file left to
+        // read and gets a 404. Applied last, deliberately after any app-level overrides.
         deleteOriginalAssets: false
     };
 

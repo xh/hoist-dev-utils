@@ -20,17 +20,14 @@ exist carries forward. **Use with `hoist-react >= 87.1`.**
 
 ### 🎁 New Features
 
-* Production builds now emit pre-compressed `.br` (Brotli) and `.gz` copies of bundled JS, CSS, HTML
-  and SVG assets, alongside the originals. nginx serves these directly via `brotli_static` /
-  `gzip_static`, which avoids re-compressing the same immutable bundles on every request and unlocks
-  Brotli quality 11 - far too slow to run per-request, and a solid step down in transfer size from
-  on-the-fly gzip. Source maps are excluded, being large and requested only with devtools open.
-
-  Serving `.br` requires the `-brotli` variant of `xh-nginx`; apps on the standard image still get
-  the `.gz` copies. Pair with `xh-nginx` >= 3.3.0, which adds the `Vary: Accept-Encoding` header that
-  content-negotiated responses need when a shared cache sits in front of nginx.
-
-  Enabled by default - disable or tune via the new `precompressAssets` option.
+* Production builds now emit pre-compressed `.br` and `.gz` copies of bundled JS, CSS, HTML and SVG
+  assets alongside the originals, for direct serving by nginx via `brotli_static` / `gzip_static`.
+  * Unlocks Brotli quality 11 - far too slow to run per-request, and a solid step down in transfer
+    size from on-the-fly gzip.
+  * Source maps are excluded - large, and fetched only with devtools open.
+  * Serving `.br` requires the `-brotli` variant of `xh-nginx`; the standard image uses the `.gz`
+    copies. Pair with `xh-nginx >= 3.3.0` for its `Vary: Accept-Encoding` fix.
+  * Enabled by default - disable or tune via the new `precompressAssets` option.
 
 ### ⚙️ Technical
 
@@ -52,6 +49,11 @@ exist carries forward. **Use with `hoist-react >= 87.1`.**
 * Removed autoprefixer's `flexbox: 'no-2009'` option, a no-op for current targets. The stage itself
   was re-verified and stays - Safari still requires `-webkit-` prefixes for several properties in
   use.
+
+### 🐞 Bug Fixes
+
+* `--env someFlag=false` on the webpack CLI now correctly disables `sourceMaps`, `copyPublicAssets`
+  and `parseChangelog` - such values arrive as the string `'false'`, which read as enabled.
 
 ### 📚 Libraries
 
