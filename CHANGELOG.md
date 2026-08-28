@@ -18,6 +18,20 @@ exist carries forward. **Use with `hoist-react >= 87.1`.**
   config enables three new rules (`no-useless-assignment`, `no-unassigned-vars`,
   `preserve-caught-error`), so expect a small number of new lint findings in app code.
 
+### 🎁 New Features
+
+* Production builds now emit pre-compressed `.br` (Brotli) and `.gz` copies of bundled JS, CSS, HTML
+  and SVG assets, alongside the originals. nginx serves these directly via `brotli_static` /
+  `gzip_static`, which avoids re-compressing the same immutable bundles on every request and unlocks
+  Brotli quality 11 - far too slow to run per-request, and a solid step down in transfer size from
+  on-the-fly gzip. Source maps are excluded, being large and requested only with devtools open.
+
+  Serving `.br` requires the `-brotli` variant of `xh-nginx`; apps on the standard image still get
+  the `.gz` copies. Pair with `xh-nginx` >= 3.3.0, which adds the `Vary: Accept-Encoding` header that
+  content-negotiated responses need when a shared cache sits in front of nginx.
+
+  Enabled by default - disable or tune via the new `precompressAssets` option.
+
 ### ⚙️ Technical
 
 * Re-enabled package-declaration-based tree-shaking (`optimization.sideEffects: 'flag'`) -
@@ -42,6 +56,7 @@ exist carries forward. **Use with `hoist-react >= 87.1`.**
 ### 📚 Libraries
 
 * @babel/preset-typescript `removed`
+* compression-webpack-plugin `added @ 12.0`
 * @xh/eslint-config `7.0 → 8.0` - ESLint v9 → v10, drops the unused `@babel/*` and
   `eslint-plugin-react` lint deps.
 * sass-material-colors `removed` - consumed only by hoist-react's `vars.scss`, and hoist-react \>=

@@ -9,9 +9,11 @@
 const _ = require('lodash'),
     path = require('path'),
     fs = require('fs'),
+    zlib = require('zlib'),
     webpack = require('webpack'),
     BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin,
     CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin'),
+    CompressionPlugin = require('compression-webpack-plugin'),
     CopyWebpackPlugin = require('copy-webpack-plugin'),
     MiniCssExtractPlugin = require('mini-css-extract-plugin'),
     HtmlWebpackPlugin = require('html-webpack-plugin'),
@@ -96,6 +98,12 @@ try {
  *      loader preset-env preset config.
  * @param {Object} [env.terserOptions] - options to spread onto / override defaults passed here to the Terser
  *      minification plugin for production builds.
+ * @param {(boolean|Object)} [env.precompressAssets=true] - control build-time generation of pre-compressed `.br`
+ *      and `.gz` copies of bundled assets, for direct serving by nginx via `brotli_static` / `gzip_static`. Set
+ *      to `false` to disable, or provide an object to spread onto / override the defaults passed to the
+ *      compression plugin (e.g. `test`, `threshold`, `minRatio`). Note that `filename`, `algorithm`,
+ *      `compressionOptions` and `deleteOriginalAssets` are managed here and cannot be overridden - the original
+ *      uncompressed assets are always retained. Production builds only.
  * @param {(boolean|string)} [env.sourceMaps=true] - control sourceMap generation. Set to `true` to enable defaults
  *      specific to dev vs. prod builds, `false` to disable source maps entirely, special string `'devOnly'` to enable
  *      default for dev and disable in prod, or any other valid Webpack `devtool` string to specify a mode directly.
@@ -161,6 +169,7 @@ async function configureWebpack(env) {
         ],
         babelPresetEnvOptions = env.babelPresetEnvOptions || {},
         terserOptions = env.terserOptions || {},
+        precompressAssets = parseFlag(env.precompressAssets, true),
         sourceMaps = env.sourceMaps === undefined ? true : env.sourceMaps,
         buildDate = new Date();
 
@@ -195,6 +204,7 @@ async function configureWebpack(env) {
     if (inlineHoist) logMsg('🏗️   Inline Hoist enabled');
     if (reactProdMode) logMsg('⚛️   React Production mode enabled');
     if (analyzeBundles) logMsg('🎁  Bundle analysis enabled');
+    if (prodBuild && precompressAssets) logMsg('🗜️   Asset pre-compression enabled');
     logSep();
     logMsg('📚  Key libraries:');
     logMsg(`  > @xh/hoist ${inlineHoist ? 'INLINE' : 'v' + hoistReactPkg.version}`);
@@ -785,7 +795,7 @@ async function configureWebpack(env) {
             }),
 
             // Environment-specific plugins.
-            ...(prodBuild ? extraPluginsProd(terserOptions) : extraPluginsDev())
+            ...(prodBuild ? extraPluginsProd(terserOptions, precompressAssets) : extraPluginsDev())
         ].filter(Boolean),
 
         devtool: devtool,
@@ -1014,7 +1024,7 @@ const generateBlueprintIconStubs = () => {
     };
 };
 
-const extraPluginsProd = terserOptions => {
+const extraPluginsProd = (terserOptions, precompressAssets) => {
     return [
         // Extract built CSS files into subdirectories by chunk / entry point name.
         new MiniCssExtractPlugin({
@@ -1031,6 +1041,45 @@ const extraPluginsProd = terserOptions => {
                 keep_fnames: true,
                 ...terserOptions
             }
+        }),
+
+        ...compressionPlugins(precompressAssets)
+    ];
+};
+
+// Emit pre-compressed `.br` and `.gz` copies of bundled assets alongside the originals, for direct
+// serving by nginx via `brotli_static` / `gzip_static`. Doing this at build time is what makes
+// brotli quality 11 usable at all - it is far too slow to run per-request - and it drops the cost of
+// re-compressing the same immutable bundles on every request.
+const compressionPlugins = precompressAssets => {
+    if (!precompressAssets) return [];
+
+    const shared = {
+        // Source maps are deliberately excluded - they are large, fetched only with devtools open,
+        // and already compressed on the fly by xh-nginx (which serves them as `application/json`).
+        test: /\.(js|css|html|svg)$/,
+        threshold: 1024,
+        minRatio: 0.8,
+        ...(_.isPlainObject(precompressAssets) ? precompressAssets : {}),
+        // Never delete the originals. nginx `try_files` tests for the *uncompressed* file, so
+        // dropping it would route every asset request to the app's index.html instead, and clients
+        // that send no `Accept-Encoding` have nothing to fall back on. Applied last, deliberately
+        // after any app-level overrides.
+        deleteOriginalAssets: false
+    };
+
+    return [
+        new CompressionPlugin({
+            ...shared,
+            filename: '[path][base].br',
+            algorithm: 'brotliCompress',
+            compressionOptions: {params: {[zlib.constants.BROTLI_PARAM_QUALITY]: 11}}
+        }),
+        new CompressionPlugin({
+            ...shared,
+            filename: '[path][base].gz',
+            algorithm: 'gzip',
+            compressionOptions: {level: 9}
         })
     ];
 };
@@ -1083,6 +1132,17 @@ function safeRealpath(p) {
     } catch (e) {
         return p;
     }
+}
+
+// Normalize a boolean-ish env param. Params supplied via the webpack CLI as `--env foo=false`
+// arrive as the *string* 'false', which a bare truthiness check would read as enabled. (A bare
+// `--env foo` does arrive as a real boolean, which is why simple `=== true` checks work elsewhere.)
+// Any other value - notably a config object - is passed through untouched.
+function parseFlag(val, dflt) {
+    if (val === undefined) return dflt;
+    if (val === 'true') return true;
+    if (val === 'false') return false;
+    return val;
 }
 
 function logSep() {
