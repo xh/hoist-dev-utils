@@ -26,7 +26,7 @@ const _ = require('lodash'),
 
 // Minimum hoist-react version supported by this release, as 'major[.minor]' - review on each
 // new major, and keep in sync with CHANGELOG and hoist-react's docs/version-compatibility.md.
-const MIN_HOIST_REACT_VERSION = '87.1';
+const MIN_HOIST_REACT_VERSION = '88';
 
 // These are not deps of hoist-dev-utils but of the consuming app, so resolve them from the
 // app's own directory (basePath) - required under isolated/symlinked node_modules layouts
