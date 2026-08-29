@@ -5,6 +5,10 @@
 *.iml
 .history
 
+# Planning / scratch
+.tmp
+docs/superpowers
+
 # Build / Libs
 node_modules/
 

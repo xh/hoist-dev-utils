@@ -9,22 +9,24 @@
 const _ = require('lodash'),
     path = require('path'),
     fs = require('fs'),
+    zlib = require('zlib'),
     webpack = require('webpack'),
     BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin,
     CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin'),
+    CompressionPlugin = require('compression-webpack-plugin'),
     CopyWebpackPlugin = require('copy-webpack-plugin'),
     MiniCssExtractPlugin = require('mini-css-extract-plugin'),
     HtmlWebpackPlugin = require('html-webpack-plugin'),
     TerserPlugin = require('terser-webpack-plugin'),
     WebpackBar = require('webpackbar'),
-    parseChangelogMarkdown = require('changelog-parser'),
+    parseChangelogMarkdown = require('changelog-parser').parseChangelog,
     babelCorePkg = require('@babel/core/package'),
     devUtilsPkg = require('./package'),
     basePath = fs.realpathSync(process.cwd());
 
-// Minimum hoist-react major version supported by this release - review on each new major, and
-// keep in sync with CHANGELOG and hoist-react's docs/version-compatibility.md.
-const MIN_HOIST_REACT_VERSION = 87;
+// Minimum hoist-react version supported by this release, as 'major[.minor]' - review on each
+// new major, and keep in sync with CHANGELOG and hoist-react's docs/version-compatibility.md.
+const MIN_HOIST_REACT_VERSION = '87.1';
 
 // These are not deps of hoist-dev-utils but of the consuming app, so resolve them from the
 // app's own directory (basePath) - required under isolated/symlinked node_modules layouts
@@ -96,6 +98,12 @@ try {
  *      loader preset-env preset config.
  * @param {Object} [env.terserOptions] - options to spread onto / override defaults passed here to the Terser
  *      minification plugin for production builds.
+ * @param {(boolean|Object)} [env.precompressAssets=true] - control build-time generation of pre-compressed `.br`
+ *      and `.gz` copies of bundled assets, for direct serving by nginx via `brotli_static` / `gzip_static`. Set
+ *      to `false` to disable, or provide an object to spread onto / override the defaults passed to the
+ *      compression plugin (e.g. `test`, `threshold`, `minRatio`). Note that `filename`, `algorithm`,
+ *      `compressionOptions` and `deleteOriginalAssets` are managed here and cannot be overridden - the original
+ *      uncompressed assets are always retained. Production builds only.
  * @param {(boolean|string)} [env.sourceMaps=true] - control sourceMap generation. Set to `true` to enable defaults
  *      specific to dev vs. prod builds, `false` to disable source maps entirely, special string `'devOnly'` to enable
  *      default for dev and disable in prod, or any other valid Webpack `devtool` string to specify a mode directly.
@@ -145,8 +153,8 @@ async function configureWebpack(env) {
         babelExcludePaths = (env.babelExcludePaths || []).map(safeRealpath),
         extraModuleRules = env.extraModuleRules || [],
         contextRoot = env.contextRoot || '/',
-        copyPublicAssets = env.copyPublicAssets !== false,
-        parseChangelog = env.parseChangelog !== false,
+        copyPublicAssets = parseFlag(env.copyPublicAssets, true),
+        parseChangelog = parseFlag(env.parseChangelog, true),
         favicon = env.favicon || null,
         manifestConfig = env.manifestConfig || {},
         preloadBackgroundColor = env.preloadBackgroundColor || 'white',
@@ -161,14 +169,20 @@ async function configureWebpack(env) {
         ],
         babelPresetEnvOptions = env.babelPresetEnvOptions || {},
         terserOptions = env.terserOptions || {},
-        sourceMaps = env.sourceMaps === undefined ? true : env.sourceMaps,
+        precompressAssets = parseFlag(env.precompressAssets, true),
+        sourceMaps = parseFlag(env.sourceMaps, true),
         buildDate = new Date();
 
     // Fail fast on an unsupported hoist-react pairing with the actual remedy, rather than
     // letting version drift surface as cryptic downstream build errors. Skipped when
     // hoist-react is not resolvable or is a local inline checkout.
-    const hoistReactMajor = parseInt(hoistReactPkg.version);
-    if (!inlineHoist && hoistReactMajor < MIN_HOIST_REACT_VERSION) {
+    const [minMajor, minMinor = 0] = MIN_HOIST_REACT_VERSION.split('.').map(Number),
+        [hrMajor, hrMinor = 0] = hoistReactPkg.version.split('.').map(Number);
+    if (
+        !inlineHoist &&
+        !isNaN(hrMajor) &&
+        (hrMajor < minMajor || (hrMajor === minMajor && hrMinor < minMinor))
+    ) {
         throw (
             `hoist-dev-utils v${devUtilsPkg.version} requires hoist-react >= ` +
             `${MIN_HOIST_REACT_VERSION} - found v${hoistReactPkg.version}. Upgrade @xh/hoist, ` +
@@ -190,6 +204,7 @@ async function configureWebpack(env) {
     if (inlineHoist) logMsg('🏗️   Inline Hoist enabled');
     if (reactProdMode) logMsg('⚛️   React Production mode enabled');
     if (analyzeBundles) logMsg('🎁  Bundle analysis enabled');
+    if (prodBuild && precompressAssets) logMsg('🗜️   Asset pre-compression enabled');
     logSep();
     logMsg('📚  Key libraries:');
     logMsg(`  > @xh/hoist ${inlineHoist ? 'INLINE' : 'v' + hoistReactPkg.version}`);
@@ -396,9 +411,12 @@ async function configureWebpack(env) {
             // https://webpack.js.org/configuration/optimization/#optimizationremoveavailablemodules)
             removeAvailableModules: false,
 
-            // Disable package.json `sideEffects` based tree-shaking - was getting inconsistent
-            // results, with imports being dropped seemingly at random.
-            sideEffects: false,
+            // Prune modules whose package `sideEffects` declarations mark them pure when nothing
+            // imports their exports. 'flag' trusts declarations only, without webpack's deeper
+            // own-code analysis. Requires hoist-react >= 87 for its corrected declaration - the
+            // faulty prior one (styles + platform registration marked pure) was the root cause of
+            // the historical breakage that kept this disabled.
+            sideEffects: 'flag',
 
             // Produce chunks for any shared imports across JS apps.
             splitChunks: {
@@ -440,18 +458,6 @@ async function configureWebpack(env) {
             rules: [
                 {
                     oneOf: [
-                        //------------------------
-                        // Type mapping for .mjs files, used by the stylis library distribution.
-                        // We have a transitive dep on stylis via: react-select > emotion > stylis
-                        // Without this rule in place, builds fail with errors throw from emotion
-                        // re. exports not found in stylis. Another user reported the same issue
-                        // and provided this pointer @  https://github.com/thysultan/stylis.js/issues/254
-                        //------------------------
-                        {
-                            test: /\.mjs$/,
-                            type: 'javascript/auto'
-                        },
-
                         //------------------------
                         // Image processing
                         // Inline as a data URI when small enough, otherwise emit a hashed file.
@@ -501,13 +507,15 @@ async function configureWebpack(env) {
                                                 // Opt-in for Babel 7; default in Babel 8.
                                                 bugfixes: true,
 
-                                                // Interop transforms required while legacy decorators are
-                                                // in use - Babel must compile the class elements it
-                                                // decorates. Remove when Hoist moves off legacy decorators.
+                                                // Class-element transforms the decorators plugin
+                                                // requires - it desugars decorated classes into
+                                                // static blocks and private elements, and Babel must
+                                                // be able to compile those. Without the static-block
+                                                // entry the build fails outright on any decorated
+                                                // class. Drop only if targets ever cover all four
+                                                // natively AND the plugin no longer needs them.
                                                 include: [
                                                     'transform-class-properties',
-                                                    // Required by the 2023-05 decorator transform,
-                                                    // which desugars decorators into static blocks.
                                                     'transform-class-static-block',
                                                     'transform-private-methods',
                                                     'transform-private-property-in-object'
@@ -590,8 +598,11 @@ async function configureWebpack(env) {
                                     }
                                 },
 
-                                // 1) Pre-process CSS to install vendor-specific prefixes for the configured browsers.
-                                //    Note that the "post" in the loader name refers to http://postcss.org/ - NOT the processing order within Webpack.
+                                // 1) Install vendor prefixes still required by the configured target
+                                //    browsers (e.g. Safari's -webkit-user-select), and strip stale
+                                //    hand-written prefixes from source styles. ("post" in the loader
+                                //    name refers to http://postcss.org/ - NOT the processing order
+                                //    within Webpack.)
                                 {
                                     loader: require.resolve('postcss-loader'),
                                     options: {
@@ -599,12 +610,7 @@ async function configureWebpack(env) {
                                             plugins: [
                                                 [
                                                     require.resolve('autoprefixer'),
-                                                    {
-                                                        // We still want to provide an array of target browsers
-                                                        // that can be passed to / managed centrally by this script.
-                                                        overrideBrowserslist: targetBrowsers,
-                                                        flexbox: 'no-2009'
-                                                    }
+                                                    {overrideBrowserslist: targetBrowsers}
                                                 ]
                                             ]
                                         }
@@ -793,7 +799,7 @@ async function configureWebpack(env) {
             }),
 
             // Environment-specific plugins.
-            ...(prodBuild ? extraPluginsProd(terserOptions) : extraPluginsDev())
+            ...(prodBuild ? extraPluginsProd(terserOptions, precompressAssets) : extraPluginsDev())
         ].filter(Boolean),
 
         devtool: devtool,
@@ -1025,7 +1031,7 @@ const generateBlueprintIconStubs = () => {
     };
 };
 
-const extraPluginsProd = terserOptions => {
+const extraPluginsProd = (terserOptions, precompressAssets) => {
     return [
         // Extract built CSS files into subdirectories by chunk / entry point name.
         new MiniCssExtractPlugin({
@@ -1035,16 +1041,52 @@ const extraPluginsProd = terserOptions => {
         // Minify and tree-shake via Terser - https://github.com/terser/terser#readme
         new TerserPlugin({
             terserOptions: {
-                // Mangling disabled due to intermittent / difficult to debug issues with it
-                // breaking code, especially when run on already-packaged libraries. Disabling does
-                // increase bundle size, although not by much on a relative basis.
-                mangle: false,
-                // As per docs "prevent discarding or mangling of function names" - most likely not
-                // necessary w/mangling off, but leaving here as docs are a bit vague, and in case
-                // we re-enable. We want to maintain function/class names for error messages.
+                // Mangling (on by default) renames local identifiers for meaningfully smaller
+                // bundles. Function and class names are kept - relied upon for error messages,
+                // logging, and debugging of deployed builds.
+                keep_classnames: true,
                 keep_fnames: true,
                 ...terserOptions
             }
+        }),
+
+        ...compressionPlugins(precompressAssets)
+    ];
+};
+
+// Emit pre-compressed `.br` and `.gz` copies of bundled assets alongside the originals, for direct
+// serving by nginx via `brotli_static` / `gzip_static`. Doing this at build time is what makes
+// brotli quality 11 usable at all - it is far too slow to run per-request - and it drops the cost of
+// re-compressing the same immutable bundles on every request.
+const compressionPlugins = precompressAssets => {
+    if (!precompressAssets) return [];
+
+    const shared = {
+        // Source maps are deliberately excluded - they are large, fetched only with devtools open,
+        // and already compressed on the fly by xh-nginx (which serves them as `application/json`).
+        test: /\.(js|css|html|svg)$/,
+        threshold: 1024,
+        minRatio: 0.8,
+        ...(_.isPlainObject(precompressAssets) ? precompressAssets : {}),
+        // Never delete the originals. If only the `.br` and `.gz` remain, nginx still serves
+        // them to any client that advertises the matching encoding - but a client that
+        // advertises neither (a plain curl, a health check, an old proxy) has no file left to
+        // read and gets a 404. Applied last, deliberately after any app-level overrides.
+        deleteOriginalAssets: false
+    };
+
+    return [
+        new CompressionPlugin({
+            ...shared,
+            filename: '[path][base].br',
+            algorithm: 'brotliCompress',
+            compressionOptions: {params: {[zlib.constants.BROTLI_PARAM_QUALITY]: 11}}
+        }),
+        new CompressionPlugin({
+            ...shared,
+            filename: '[path][base].gz',
+            algorithm: 'gzip',
+            compressionOptions: {level: 9}
         })
     ];
 };
@@ -1097,6 +1139,17 @@ function safeRealpath(p) {
     } catch (e) {
         return p;
     }
+}
+
+// Normalize a boolean-ish env param. Params supplied via the webpack CLI as `--env foo=false`
+// arrive as the *string* 'false', which a bare truthiness check would read as enabled. (A bare
+// `--env foo` does arrive as a real boolean, which is why simple `=== true` checks work elsewhere.)
+// Any other value - notably a config object - is passed through untouched.
+function parseFlag(val, dflt) {
+    if (val === undefined) return dflt;
+    if (val === 'true') return true;
+    if (val === 'false') return false;
+    return val;
 }
 
 function logSep() {

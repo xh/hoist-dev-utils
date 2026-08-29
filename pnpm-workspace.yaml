@@ -7,3 +7,21 @@
 # optional platform deps and nothing here needs the from-source fallback.
 allowBuilds:
     '@parcel/watcher': false
+
+# Caret vs. tilde policy for `dependencies`. These ranges are the contract consuming apps resolve
+# against - this repo's lockfile is never published.
+#
+# Tilde by default: this is a toolchain aggregator, so apps take a dev-utils release rather than a
+# webpack release, and a caret would let minors change build output with no release behind them.
+# Caret only where a dep must co-resolve with a copy the app or hoist-react also pulls in - tildes
+# at different minors stop overlapping, and a duplicate copy is worse than an untested minor.
+#
+# `pnpm update` raises declared floors but preserves each operator, so tildes take patches and
+# carets take minors. Moving a tilde dep's minor is deliberate, and earns a CHANGELOG entry.
+savePrefix: '~'
+
+# The default 24h maturity gate on new releases guards against a compromised upstream publish.
+# Our own @xh packages are published by us and often consumed here the same day, so exempt the
+# whole scope rather than pinning an exact version on every release.
+minimumReleaseAgeExclude:
+    - '@xh/*'
