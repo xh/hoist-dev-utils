@@ -411,12 +411,16 @@ async function configureWebpack(env) {
             // https://webpack.js.org/configuration/optimization/#optimizationremoveavailablemodules)
             removeAvailableModules: false,
 
-            // Prune modules whose package `sideEffects` declarations mark them pure when nothing
-            // imports their exports. 'flag' trusts declarations only, without webpack's deeper
-            // own-code analysis. Requires hoist-react >= 87 for its corrected declaration - the
-            // faulty prior one (styles + platform registration marked pure) was the root cause of
-            // the historical breakage that kept this disabled.
-            sideEffects: 'flag',
+            // Disable package.json `sideEffects` based module pruning. When enabled ('flag' in
+            // v15.0.0), webpack elides hoist-react's barrel index modules and rewrites consumer
+            // imports to the underlying deep modules. Hoist-react's module graph is heavily
+            // circular and relies on those barrels evaluating in source order to initialize
+            // safely - without them, evaluation order follows the app's own import graph, and
+            // some orderings hit a class decorator or `extends` before its binding initializes,
+            // throwing `Cannot access '...' before initialization` (naming a hoist-react export)
+            // at startup. Must remain disabled until hoist-react's internal cycles are
+            // restructured to be ordering-independent - see hoist-react #4640.
+            sideEffects: false,
 
             // Produce chunks for any shared imports across JS apps.
             splitChunks: {

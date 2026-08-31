@@ -1,5 +1,16 @@
 # Changelog
 
+## 15.0.1 - 2026-08-31
+
+### 🐞 Bug Fixes
+
+* Reverted `optimization.sideEffects` to `false` (was enabled as `'flag'` in v15.0.0). Eliding
+  hoist-react's barrel modules removes the source-order evaluation guarantee its internally
+  circular imports rely on - depending on the app's own import graph, apps could fail hard at
+  startup with a `ReferenceError: Cannot access '...' before initialization` naming a hoist-react
+  export. To be revisited once hoist-react's internal module graph is made evaluation-order
+  independent - tracked by [hoist-react #4640](https://github.com/xh/hoist-react/issues/4640).
+
 ## 15.0.0 - 2026-08-28
 
 Cleanup release - sheds obsolete build config accumulated over years of webpack evolution, so that
