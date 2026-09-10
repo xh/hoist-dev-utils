@@ -532,11 +532,14 @@ async function configureRsbuild(env) {
                       },
                       // Proxy API requests to the Grails backend, mirroring the production nginx setup.
                       // Only needed when baseUrl is a relative path (default '/api/') - if baseUrl is
-                      // an absolute URL, the app will call the remote server directly.
+                      // an absolute URL, the app will call the remote server directly. Note the
+                      // http-proxy-middleware v3 option name `pathFilter` - webpack-dev-server's
+                      // `context` is silently ignored here, and a filterless entry proxies *every*
+                      // request, the app's own pages included.
                       proxy: baseUrl.startsWith('/')
                           ? [
                                 {
-                                    context: baseUrl.slice(0, -1),
+                                    pathFilter: baseUrl.slice(0, -1),
                                     target: `http://${devHost}:${devGrailsPort}`,
                                     pathRewrite: {[`^${baseUrl.slice(0, -1)}`]: ''},
                                     changeOrigin: true,
