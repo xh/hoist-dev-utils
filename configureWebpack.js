@@ -26,7 +26,7 @@ const _ = require('lodash'),
 
 // Minimum hoist-react version supported by this release, as 'major[.minor]' - review on each
 // new major, and keep in sync with CHANGELOG and hoist-react's docs/version-compatibility.md.
-const MIN_HOIST_REACT_VERSION = '87.1';
+const MIN_HOIST_REACT_VERSION = '88';
 
 // These are not deps of hoist-dev-utils but of the consuming app, so resolve them from the
 // app's own directory (basePath) - required under isolated/symlinked node_modules layouts
@@ -511,11 +511,16 @@ async function configureWebpack(env) {
                                                 // Opt-in for Babel 7; default in Babel 8.
                                                 bugfixes: true,
 
-                                                // Interop transforms required while legacy decorators are
-                                                // in use - Babel must compile the class elements it
-                                                // decorates. Remove when Hoist moves off legacy decorators.
+                                                // Class-element transforms the decorators plugin
+                                                // requires - it desugars decorated classes into
+                                                // static blocks and private elements, and Babel must
+                                                // be able to compile those. Without the static-block
+                                                // entry the build fails outright on any decorated
+                                                // class. Drop only if targets ever cover all four
+                                                // natively AND the plugin no longer needs them.
                                                 include: [
                                                     'transform-class-properties',
+                                                    'transform-class-static-block',
                                                     'transform-private-methods',
                                                     'transform-private-property-in-object'
                                                 ],
@@ -529,10 +534,9 @@ async function configureWebpack(env) {
                                     // that JSX parsing is enabled only for `.tsx` files - `.ts`/`.js`
                                     // parse without it, keeping e.g. angle-bracket type assertions
                                     // (`<string>val`) valid in plain `.ts`. Within each branch the
-                                    // TypeScript strip must run first: the legacy decorators plugin
-                                    // cannot handle TS constructs (e.g. `declare` class fields) that
-                                    // would otherwise reach it unstripped. Revisit when Hoist moves
-                                    // off legacy decorators.
+                                    // TypeScript strip must run first: the decorators plugin cannot
+                                    // handle TS constructs (e.g. `declare` class fields) that would
+                                    // otherwise reach it unstripped.
                                     overrides: [
                                         {
                                             test: /\.tsx$/,
@@ -856,10 +860,16 @@ async function configureWebpack(env) {
 //------------------------
 // Babel plugins shared by both per-extension branches of the loader's `overrides` config.
 const sharedBabelPlugins = [
-    // Support our current decorator syntax, for MobX and Hoist decorators.
-    // See notes @ https://babeljs.io/docs/en/babel-plugin-proposal-decorators#legacy
-    // and https://mobx.js.org/enabling-decorators.html#babel-7
-    [require.resolve('@babel/plugin-proposal-decorators'), {version: 'legacy'}],
+    // Support TC39 Stage 3 decorators, used by hoist-react and compatible apps. `2023-11` is the
+    // current spec revision and the newest Babel supports - field/accessor `addInitializer`
+    // callbacks run right after the element initializes, and output is slightly smaller than
+    // `2023-05`.
+    // See notes @ https://babeljs.io/docs/babel-plugin-proposal-decorators
+    // and https://mobx.js.org/enabling-decorators.html
+    // Apps upgrading from legacy decorators must also add the `accessor` keyword to
+    // `@observable` / `@bindable` fields and remove `makeObservable(this)` calls - see the
+    // hoist-react upgrade notes.
+    [require.resolve('@babel/plugin-proposal-decorators'), {version: '2023-11'}],
 
     // Avoid importing every FA icon ever made.
     // See https://github.com/FortAwesome/react-fontawesome/issues/70
