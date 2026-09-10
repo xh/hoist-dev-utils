@@ -1,5 +1,50 @@
 # Changelog
 
+## 16.0.0-SNAPSHOT
+
+### 🎁 New Features
+
+* Added `configureRsbuild()` (`@xh/hoist-dev-utils/configureRsbuild`) - an [Rsbuild](https://rsbuild.rs)
+  (Rspack + SWC) build configuration for Hoist apps, alongside the existing webpack
+  `configureWebpack()`. It accepts the same `env` options (app metadata, `inlineHoist`,
+  `babelIncludePaths`, `resolveAliases`, `extraModuleRules`, favicon/manifest, dev-server proxy and
+  HTTPS options, `precompressAssets`, `sourceMaps`, ...) and reproduces the same build features:
+  per-app entry discovery, raw hoist-react TS transpilation, legacy decorators with `[[Define]]`
+  class-field semantics, `xh*` globals, `@xh/app-changelog.json`, Blueprint icon stubs, FontAwesome
+  deep-import rewriting, SCSS, markdown-as-text (+ `?url`), per-app `index.html` and
+  `manifest.json`, moment locale stripping, and pre-compressed assets. New options: `swcOptions`
+  (replaces `babelPresetEnvOptions`), `minifyOptions` (replaces `terserOptions`), `logLevel`,
+  `minify`, `buildCache`. Build-time overrides arrive as `XH_*` environment variables via the
+  exported `readCliEnv()` helper, as the Rsbuild CLI has no `--env key=value` flag. Requires
+  hoist-react >= 88.0 (enforced), whose `@persist` decorator no longer depends on Babel-specific
+  emit. See `docs/rsbuild-spike.md` for measurements against Toolbox and the remaining risk ledger
+  (hoist-dev-utils #73).
+* Production builds via `configureRsbuild()` measured on Toolbox (10 entry points) at roughly a
+  quarter of the webpack wall-clock time and a third of the peak memory, with dev-server React Fast
+  Refresh replacing full-page live reloads for component edits. Output layout and runtime behavior
+  verified equivalent - see the spike doc.
+
+### ⚙️ Technical
+
+* Extracted the bundler-agnostic parts of `configureWebpack.js` (hoist-react version check,
+  entry discovery, CHANGELOG parsing, Blueprint icon stubs, manifest content, logging) into
+  `lib/common.js`, and the per-app `manifest.json` plugin into `lib/HoistManifestPlugin.js`, both
+  shared with `configureRsbuild()`. Webpack build output verified identical before and after.
+* Blueprint icon stubs now locate `@blueprintjs/icons` by walking the real dependency chain
+  (hoist-react -> `@blueprintjs/core` -> `@blueprintjs/icons`) when it is not resolvable from the
+  app root. Previously the lookup silently succeeded only because pnpm's bin shims export a
+  `NODE_PATH` pointing at its hidden hoist directory - invoking a bundler CLI any other way disabled
+  the stubs without warning.
+* `static/index.html` template parameters flattened to bundler-neutral names (`publicPath`,
+  `title`, `includeAppleIcon`) - rendered output unchanged.
+
+### 📚 Libraries
+
+* @rsbuild/core `added @ 2.2`
+* @rsbuild/plugin-react `added @ 2.1`
+* @rsbuild/plugin-sass `added @ 2.0`
+* @rsbuild/plugin-basic-ssl `added @ 1.2`
+
 ## 15.0.1 - 2026-08-31
 
 ### 🐞 Bug Fixes

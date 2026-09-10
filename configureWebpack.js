@@ -19,30 +19,32 @@ const _ = require('lodash'),
     HtmlWebpackPlugin = require('html-webpack-plugin'),
     TerserPlugin = require('terser-webpack-plugin'),
     WebpackBar = require('webpackbar'),
-    parseChangelogMarkdown = require('changelog-parser').parseChangelog,
+    HoistManifestPlugin = require('./lib/HoistManifestPlugin'),
     babelCorePkg = require('@babel/core/package'),
-    devUtilsPkg = require('./package'),
     basePath = fs.realpathSync(process.cwd());
 
-// Minimum hoist-react version supported by this release, as 'major[.minor]' - review on each
-// new major, and keep in sync with CHANGELOG and hoist-react's docs/version-compatibility.md.
-const MIN_HOIST_REACT_VERSION = '87.1';
+const {
+    DEFAULT_TARGET_BROWSERS,
+    devUtilsPkg,
+    resolveAppPackage,
+    checkHoistReactVersion,
+    resolveIcons,
+    writeChangelogJson,
+    checkNoJsxFiles,
+    discoverClientApps,
+    manifestContent,
+    blueprintIconModulePatterns,
+    generateBlueprintIconStubs,
+    safeRealpath,
+    parseFlag,
+    logSep,
+    logMsg
+} = require('./lib/common');
 
 // These are not deps of hoist-dev-utils but of the consuming app, so resolve them from the
-// app's own directory (basePath) - required under isolated/symlinked node_modules layouts
-// (e.g. pnpm), where this package cannot resolve undeclared siblings. Might still be undefined -
-// e.g. when running this script locally to debug via `pnpm link` / `yarn link`.
-let hoistReactPkg, reactPkg;
-try {
-    hoistReactPkg = require(require.resolve('@xh/hoist/package.json', {paths: [basePath]}));
-} catch (e) {
-    hoistReactPkg = {version: 'NOT_FOUND'};
-}
-try {
-    reactPkg = require(require.resolve('react/package.json', {paths: [basePath]}));
-} catch (e) {
-    reactPkg = {version: 'NOT_FOUND'};
-}
+// app's own directory (basePath).
+const hoistReactPkg = resolveAppPackage('@xh/hoist', basePath),
+    reactPkg = resolveAppPackage('react', basePath);
 
 /**
  * Consolidated Webpack configuration for both dev-time and production builds of Hoist React web
@@ -161,34 +163,14 @@ async function configureWebpack(env) {
         preloadSpinnerColor = env.preloadSpinnerColor || '#888',
         stats = env.stats || 'errors-only',
         infrastructureLoggingLevel = env.infrastructureLoggingLevel || 'error',
-        targetBrowsers = env.targetBrowsers || [
-            'last 2 Chrome versions',
-            'last 2 Safari versions',
-            'last 2 iOS versions',
-            'last 2 Edge versions'
-        ],
+        targetBrowsers = env.targetBrowsers || DEFAULT_TARGET_BROWSERS,
         babelPresetEnvOptions = env.babelPresetEnvOptions || {},
         terserOptions = env.terserOptions || {},
         precompressAssets = parseFlag(env.precompressAssets, true),
         sourceMaps = parseFlag(env.sourceMaps, true),
         buildDate = new Date();
 
-    // Fail fast on an unsupported hoist-react pairing with the actual remedy, rather than
-    // letting version drift surface as cryptic downstream build errors. Skipped when
-    // hoist-react is not resolvable or is a local inline checkout.
-    const [minMajor, minMinor = 0] = MIN_HOIST_REACT_VERSION.split('.').map(Number),
-        [hrMajor, hrMinor = 0] = hoistReactPkg.version.split('.').map(Number);
-    if (
-        !inlineHoist &&
-        !isNaN(hrMajor) &&
-        (hrMajor < minMajor || (hrMajor === minMajor && hrMinor < minMinor))
-    ) {
-        throw (
-            `hoist-dev-utils v${devUtilsPkg.version} requires hoist-react >= ` +
-            `${MIN_HOIST_REACT_VERSION} - found v${hoistReactPkg.version}. Upgrade @xh/hoist, ` +
-            `or remain on an earlier dev-utils release.`
-        );
-    }
+    checkHoistReactVersion(hoistReactPkg, inlineHoist);
 
     process.env.BABEL_ENV = prodBuild ? 'production' : 'development';
     process.env.NODE_ENV = prodBuild ? 'production' : 'development';
@@ -235,37 +217,17 @@ async function configureWebpack(env) {
     );
 
     // Check for and resolve standard/expected favicons.
-    const manifestIcons = [];
-    if (copyPublicAssets) {
-        logSep();
-        logMsg('🎨  Icons:');
-        if (fs.existsSync(favicon)) {
-            logMsg(`  > ${path.basename(favicon)}`);
-        }
-        if (fs.existsSync(path.resolve(publicAssetsPath, 'favicon-192.png'))) {
-            manifestIcons.push({
-                src: '/public/favicon-192.png',
-                sizes: '192x192',
-                type: 'image/png'
-            });
-            logMsg(`  > favicon-192.png`);
-        }
-        if (fs.existsSync(path.resolve(publicAssetsPath, 'favicon-512.png'))) {
-            manifestIcons.push({
-                src: '/public/favicon-512.png',
-                sizes: '512x512',
-                type: 'image/png'
-            });
-            logMsg(`  > favicon-512.png`);
-        }
-    }
-    const appleTouchIconExists =
-        copyPublicAssets && fs.existsSync(path.resolve(publicAssetsPath, 'apple-touch-icon.png'));
-    if (appleTouchIconExists) logMsg(`  > apple-touch-icon.png`);
+    const {manifestIcons, appleTouchIconExists} = resolveIcons(
+        publicAssetsPath,
+        favicon,
+        copyPublicAssets
+    );
 
     // Generate lightweight stub modules for Blueprint icons, unless app opts into the full set.
     const loadAllBlueprintJsIcons = env.loadAllBlueprintJsIcons === true,
-        bpIconStubs = loadAllBlueprintJsIcons ? null : generateBlueprintIconStubs();
+        bpIconStubs = loadAllBlueprintJsIcons
+            ? null
+            : generateBlueprintIconStubs(basePath, hoistPath);
 
     // Tell webpack where to look for modules when resolving imports - this is the key to getting
     // inlineHoist mode to look in within the checked-out hoist-react project at hoistPath.
@@ -309,65 +271,15 @@ async function configureWebpack(env) {
             ? [{message: /Conflicting values for 'process.env.NODE_ENV'/}]
             : [];
 
-    // Parse CHANGELOG.md and write to tmp .json file, if requested. Write fallback file if disabled
-    // or parsing fails, then install a resolver alias to support import from XH.changelogService.
-    const tmpPath = path.resolve(basePath, 'node_modules', '.xhtmp'),
-        clDestPath = path.resolve(tmpPath, 'changelog.json');
-    if (!fs.existsSync(tmpPath)) fs.mkdirSync(tmpPath);
-    let clDestUpdated = false;
-    if (parseChangelog) {
-        logSep();
-        logMsg('📜  Changelog:');
-        const clSrcPath = path.resolve(basePath, '..', 'CHANGELOG.md');
-        if (!fs.existsSync(clSrcPath)) {
-            logMsg('  > CHANGELOG.md not found');
-        } else {
-            try {
-                const clJson = await parseChangelogMarkdown(clSrcPath),
-                    versions = clJson.versions,
-                    latestVer = versions.length > 0 ? versions[0].version : null;
-                fs.writeFileSync(clDestPath, JSON.stringify(clJson));
-                clDestUpdated = true;
-                logMsg(`  > Parsed: ${versions.length} versions`);
-                logMsg(`  > Latest: ${latestVer || '???'}`);
-            } catch (e) {
-                logMsg(`  > ERROR - exception parsing CHANGELOG.md: ${e}`);
-            }
-        }
-    }
-    // Write dummy file if CL disabled or has failed to parse/write changelog.json.
-    // Ensures we always have a file with either updated or appropriately empty JSON to alias.
-    if (!clDestUpdated) fs.writeFileSync(clDestPath, '{}');
-    // Setup resolver alias to synthetic import path used by XH.changelogService.
-    resolveAliases['@xh/app-changelog.json'] = clDestPath;
+    // Parse CHANGELOG.md to JSON (or write an empty fallback), then install a resolver alias to
+    // the synthetic import path used by XH.changelogService.
+    resolveAliases['@xh/app-changelog.json'] = await writeChangelogJson(basePath, parseChangelog);
 
-    // TS-only support: fail fast with a clear error if the app (or any custom package it asks us
-    // to transpile) still contains .jsx source. Without this check, .jsx files surface as cryptic
-    // module-resolution or parse errors.
-    const jsxFiles = [srcPath, ...babelIncludePaths]
-        .filter(root => fs.existsSync(root))
-        .flatMap(root =>
-            findJsxFiles(root).map(f => path.join(path.basename(root), path.relative(root, f)))
-        );
-    if (jsxFiles.length) {
-        throw (
-            `Found .jsx file(s) - not supported by hoist-dev-utils v15+, which builds TypeScript ` +
-            `apps only, with JSX carried by .tsx files. Rename to .tsx to proceed:\n` +
-            jsxFiles.map(f => `  > ${f}`).join('\n')
-        );
-    }
+    // TS-only support - fail fast on any .jsx source.
+    checkNoJsxFiles([srcPath, ...babelIncludePaths]);
 
     // Resolve app entry points - one for each file within src/apps/ - to create bundles below.
-    const appDirPath = path.resolve(srcPath, 'apps'),
-        clientApps = fs
-            .readdirSync(appDirPath)
-            .filter(f => f.endsWith('.js') || f.endsWith('.ts'))
-            .map(f => {
-                return {
-                    name: f.replace('.js', '').replace('.ts', ''),
-                    path: path.resolve(appDirPath, f)
-                };
-            }),
+    const clientApps = discoverClientApps(srcPath),
         clientAppNames = clientApps.map(it => it.name);
 
     // Build Webpack entry config, with keys for each JS app to be bundled.
@@ -667,15 +579,15 @@ async function configureWebpack(env) {
             ...(bpIconStubs
                 ? [
                       new webpack.NormalModuleReplacementPlugin(
-                          /@blueprintjs[\\/]icons[\\/]lib[\\/]esm[\\/]generated[\\/]index\.js$/,
+                          blueprintIconModulePatterns.entry,
                           bpIconStubs.entry
                       ),
                       new webpack.NormalModuleReplacementPlugin(
-                          /@blueprintjs[\\/]icons[\\/]lib[\\/]esm[\\/]generated[\\/]16px[\\/]paths[\\/]index\.js$/,
+                          blueprintIconModulePatterns.paths16,
                           bpIconStubs.paths16
                       ),
                       new webpack.NormalModuleReplacementPlugin(
-                          /@blueprintjs[\\/]icons[\\/]lib[\\/]esm[\\/]generated[\\/]20px[\\/]paths[\\/]index\.js$/,
+                          blueprintIconModulePatterns.paths20,
                           bpIconStubs.paths20
                       )
                   ]
@@ -750,7 +662,11 @@ async function configureWebpack(env) {
                                 files: assets,
                                 options
                             },
-                            // XH additions
+                            // XH additions - flat names shared with configureRsbuild's template
+                            // parameters, so the one static/index.html serves both bundlers.
+                            title: appName,
+                            publicPath: contextRoot,
+                            includeAppleIcon: appleTouchIconExists,
                             styleTags,
                             scriptTags,
                             clientAppName,
@@ -768,21 +684,16 @@ async function configureWebpack(env) {
                 });
             }),
 
-            // Create a manifest.json for each app. The icon choices here work with the favicon provided
-            // to HtmlWebpackPlugin above to match the spec here:
-            // https://evilmartians.com/chronicles/how-to-favicon-in-2021-six-files-that-fit-most-needs
+            // Create a manifest.json for each app - see manifestContent() for the icon scheme.
             ...clientAppNames.map(clientAppName => {
-                return new HoistManifestPlugin(clientAppName, {
-                    name: appName,
-                    short_name: appName,
-                    description: `${appName} - ${appVersion}`,
-                    display: 'standalone',
-                    orientation: 'any',
-                    background_color: preloadBackgroundColor, // ignored by Safari, but also used within index.html
-                    theme_color: '#212121', // off-black from default `--xh-black` CSS var
-                    icons: manifestIcons,
-                    ...manifestConfig
-                });
+                return new HoistManifestPlugin(
+                    clientAppName,
+                    manifestContent(
+                        clientAppName,
+                        {appName, appVersion, preloadBackgroundColor, icons: manifestIcons},
+                        manifestConfig
+                    )
+                );
             }),
 
             // Support an optional post-build/run interactive treemap of output bundles and their sizes / contents.
@@ -890,144 +801,6 @@ const sharedBabelPlugins = [
     ]
 ];
 
-class HoistManifestPlugin {
-    constructor(clientAppName, content = {}) {
-        this.clientAppName = clientAppName;
-
-        // We create one of these per clientApp. Default start_url to the clientApp's root, to bring user back to the
-        // clientApp from which they added the bookmark without any need for redirects, respecting possible override.
-        if (!content.start_url) {
-            content = {...content, start_url: `/${clientAppName}/`};
-        }
-
-        this.content = content;
-    }
-
-    apply(compiler) {
-        const pluginName = HoistManifestPlugin.name,
-            {Compilation} = compiler.webpack,
-            {RawSource} = compiler.webpack.sources;
-
-        // Tap into compilation hook which gives compilation as argument to the callback function
-        compiler.hooks.compilation.tap(pluginName, compilation => {
-            compilation.hooks.processAssets.tap(
-                {
-                    name: pluginName,
-                    stage: Compilation.PROCESS_ASSETS_STAGE_SUMMARIZE
-                },
-                () => {
-                    // Emit client-app specific manifest.json within /public, to avoid issues with deeper routes
-                    // and relative paths. This is picked up by this project's /static/index.html template.
-                    compilation.emitAsset(
-                        `/public/${this.clientAppName}/manifest.json`,
-                        new RawSource(JSON.stringify(this.content, null, 2))
-                    );
-                }
-            );
-        });
-    }
-}
-
-//------------------------------------------------------------------------------------
-// Blueprint icons
-//------------------------------------------------------------------------------------
-// Icons required by the Blueprint components used within Hoist React - the per-icon React
-// components imported internally by @blueprintjs/core, @blueprintjs/datetime, and
-// @blueprintjs/select (a transitive dep of datetime), plus the string-name icons those packages
-// render via `<Icon icon="..."/>`. PascalCase, per the @blueprintjs/icons naming convention.
-const requiredBlueprintIcons = [
-    'ArrowDown',
-    'ArrowLeft',
-    'ArrowRight',
-    'ArrowUp',
-    'CaretDown',
-    'CaretRight',
-    'ChevronDown',
-    'ChevronLeft',
-    'ChevronRight',
-    'ChevronUp',
-    'Cross',
-    'DoubleCaretVertical',
-    'Error',
-    'InfoSign',
-    'KeyCommand',
-    'KeyControl',
-    'KeyDelete',
-    'KeyEnter',
-    'KeyOption',
-    'KeyShift',
-    'Search',
-    'SmallCross',
-    'SmallTick',
-    'Square',
-    'Tick',
-    'WarningSign'
-];
-
-/**
- * Generate stub modules that re-export only the Blueprint icons required by Hoist React
- * components. Swapped in via NormalModuleReplacementPlugin for:
- *
- *   1) The @blueprintjs/icons package entry point (`lib/esm/generated/index.js`), which
- *      statically re-exports all ~700 per-icon React components.
- *   2) The 16px and 20px icon path barrels (`lib/esm/generated/{16px,20px}/paths/index.js`),
- *      statically imported by the entry point via its `allPaths` re-export and dynamically
- *      imported by the package's lazy path loaders.
- *
- * Without these stubs, the entire icon set (~2.4MB pre-minification) lands in the initial
- * bundle of every app. Blueprint marks its JS side-effect-free, but this config disables
- * webpack's `sideEffects`-based module pruning (see `optimization` above), so the unused
- * re-exports ride the static import graph into the bundle.
- *
- * Stubs are generated at build time with absolute-path imports resolved against the app's own
- * copy of @blueprintjs/icons, so they remain correct across package managers (including pnpm's
- * isolated layout, where this package cannot resolve undeclared siblings) and across icon
- * package versions. Any Blueprint component importing an icon outside the whitelist will fail
- * the build loudly (`strictExportPresence`) - extend the list above, or have the app opt out
- * via `env.loadAllBlueprintJsIcons`.
- */
-const generateBlueprintIconStubs = () => {
-    let iconsPath;
-    try {
-        iconsPath = path.dirname(
-            require.resolve('@blueprintjs/icons/package.json', {paths: [basePath]})
-        );
-    } catch (e) {
-        logMsg('⚠️  Could not resolve @blueprintjs/icons - Blueprint icon stubs disabled.');
-        return null;
-    }
-
-    // Forward slashes in import specifiers, valid on all platforms.
-    const esmPath = p => path.join(iconsPath, 'lib/esm', p).split(path.sep).join('/'),
-        outDir = path.join(basePath, 'node_modules', '.cache', 'hoist-dev-utils'),
-        writeStub = (filename, lines) => {
-            const ret = path.join(outDir, filename);
-            fs.writeFileSync(ret, lines.join('\n') + '\n');
-            return ret;
-        };
-
-    fs.mkdirSync(outDir, {recursive: true});
-
-    const componentExports = requiredBlueprintIcons.map(it => {
-            const mod = esmPath(`generated/components/${_.kebabCase(it)}.js`);
-            return `export {${it}Icon, ${it}} from '${mod}';`;
-        }),
-        pathExports = size =>
-            requiredBlueprintIcons.map(it => {
-                const mod = esmPath(`generated/${size}/paths/${_.kebabCase(it)}.js`);
-                return `export {default as ${it}} from '${mod}';`;
-            });
-
-    return {
-        entry: writeStub('bpIconsEntryStub.mjs', [
-            `export * from '${esmPath('index.js')}';`,
-            ...componentExports
-        ]),
-        paths16: writeStub('bpIconsPaths16Stub.mjs', pathExports('16px')),
-        paths20: writeStub('bpIconsPaths20Stub.mjs', pathExports('20px'))
-    };
-};
-
 const extraPluginsProd = (terserOptions, precompressAssets) => {
     return [
         // Extract built CSS files into subdirectories by chunk / entry point name.
@@ -1113,48 +886,6 @@ function getFileDependenciesByEntrypoint(compilation, clientAppName) {
         });
 
     return ret;
-}
-
-// Recursively find .jsx files under a directory, skipping symlinks (which can cycle, or lead
-// into package-manager stores) and nested node_modules (not the scanned package's own source).
-function findJsxFiles(dir) {
-    return fs.readdirSync(dir, {withFileTypes: true}).flatMap(e => {
-        if (e.isSymbolicLink() || e.name === 'node_modules') return [];
-        const p = path.join(dir, e.name);
-        if (e.isDirectory()) return findJsxFiles(p);
-        return e.isFile() && e.name.endsWith('.jsx') ? [p] : [];
-    });
-}
-
-// Resolve any symlinks to a real path, falling back to the given path if it does not (yet)
-// exist. No-op for flat/hoisted node_modules layouts. Required so that paths used within
-// loader include/exclude rules match the real module paths produced by Webpack's default
-// resolve.symlinks behavior under symlinking package managers (e.g. pnpm).
-function safeRealpath(p) {
-    try {
-        return fs.realpathSync(p);
-    } catch (e) {
-        return p;
-    }
-}
-
-// Normalize a boolean-ish env param. Params supplied via the webpack CLI as `--env foo=false`
-// arrive as the *string* 'false', which a bare truthiness check would read as enabled. (A bare
-// `--env foo` does arrive as a real boolean, which is why simple `=== true` checks work elsewhere.)
-// Any other value - notably a config object - is passed through untouched.
-function parseFlag(val, dflt) {
-    if (val === undefined) return dflt;
-    if (val === 'true') return true;
-    if (val === 'false') return false;
-    return val;
-}
-
-function logSep() {
-    console.log(':------------------------------------');
-}
-
-function logMsg(msg) {
-    console.log(`: ${msg}`);
 }
 
 module.exports = configureWebpack;

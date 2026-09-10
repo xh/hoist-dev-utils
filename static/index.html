@@ -3,11 +3,11 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link rel="manifest" href="<%= webpackConfig.output.publicPath %>public/<%= clientAppName %>/manifest.json" crossorigin="use-credentials">
-    <% if (htmlWebpackPlugin.options.includeAppleIcon) { %>
-    <link rel="apple-touch-icon" href="<%= webpackConfig.output.publicPath %>public/apple-touch-icon.png">
+    <link rel="manifest" href="<%= publicPath %>public/<%= clientAppName %>/manifest.json" crossorigin="use-credentials">
+    <% if (includeAppleIcon) { %>
+    <link rel="apple-touch-icon" href="<%= publicPath %>public/apple-touch-icon.png">
     <% } %>
-    <title><%= htmlWebpackPlugin.options.title %></title>
+    <title><%= title %></title>
     <%= styleTags %>
     <style>
         @keyframes xh-preload-spin { to { transform: rotate(360deg); } }
@@ -21,7 +21,7 @@
 </head>
 <body class="xh-app" style="margin: 0">
 
-<script src="<%= webpackConfig.output.publicPath %>public/preflight.js?<%= preflightHash %>"></script>
+<script src="<%= publicPath %>public/preflight.js?<%= preflightHash %>"></script>
 
 <noscript>
     This application requires that JavaScript be enabled for this site in your browser.
