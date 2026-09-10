@@ -8,14 +8,15 @@ Decorator release - moves the build from legacy decorators to the TC39 Stage 3 s
 
 * **Requires hoist-react >= 88.**
 * **TC39 decorators.** `@babel/plugin-proposal-decorators` flips from `{version: 'legacy'}` to
-  `{version: '2023-05'}`, matching hoist-react v88's move to TC39 Stage 3 decorators. The two
+  `{version: '2023-11'}` (the current spec revision), matching hoist-react v88's move to TC39
+  Stage 3 decorators. The two
   releases must be taken together - the transform is a build-wide setting, so it applies to
   hoist-react source and app source alike, and neither version pairs with the other's decorator
   syntax. App code requires corresponding changes: see the hoist-react v88 release notes.
 
 ### ⚙️ Technical
 
-* Added `transform-class-static-block` to the `@babel/preset-env` `include` list. The 2023-05
+* Added `transform-class-static-block` to the `@babel/preset-env` `include` list. The 2023-11
   decorator transform desugars decorated classes into static blocks, and the build fails without
   it.
 
@@ -33,7 +34,7 @@ Decorator release - moves the build from legacy decorators to the TC39 Stage 3 s
 ## 15.0.0 - 2026-08-28
 
 Cleanup release - sheds obsolete build config accumulated over years of webpack evolution, so that
-only config with a re-verified reason to exist carries forward.
+only config with a re-verified reason to exist carries forward. **Use with `hoist-react >= 87.1`.**
 
 ### 💥 Breaking Changes
 

@@ -860,13 +860,16 @@ async function configureWebpack(env) {
 //------------------------
 // Babel plugins shared by both per-extension branches of the loader's `overrides` config.
 const sharedBabelPlugins = [
-    // Support TC39 Stage 3 (2023-05 / 2022.3) decorators, used by hoist-react and compatible apps.
+    // Support TC39 Stage 3 decorators, used by hoist-react and compatible apps. `2023-11` is the
+    // current spec revision and the newest Babel supports - field/accessor `addInitializer`
+    // callbacks run right after the element initializes, and output is slightly smaller than
+    // `2023-05`.
     // See notes @ https://babeljs.io/docs/babel-plugin-proposal-decorators
     // and https://mobx.js.org/enabling-decorators.html
     // Apps upgrading from legacy decorators must also add the `accessor` keyword to
     // `@observable` / `@bindable` fields and remove `makeObservable(this)` calls - see the
     // hoist-react upgrade notes.
-    [require.resolve('@babel/plugin-proposal-decorators'), {version: '2023-05'}],
+    [require.resolve('@babel/plugin-proposal-decorators'), {version: '2023-11'}],
 
     // Avoid importing every FA icon ever made.
     // See https://github.com/FortAwesome/react-fontawesome/issues/70
