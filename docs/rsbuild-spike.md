@@ -20,8 +20,8 @@ parity gates pass, and the payoff is large:
 | Production build, wall clock | 114-138 s across four runs | 29-37 s across three runs | **~4x faster** |
 | Production build, peak RSS (process tree) | 4.6-5.7 GB | 1.4-1.6 GB | **~3.5x less** |
 | Dev server cold start to first served bundle (inline hoist) | 32.5 s (42.7 s on a second run) | 5.0 s | **~6-8x faster** |
-| Dev incremental rebuild, app model edit | 2.8 s rebuild, 4.2 s edit-to-reloaded | 0.3 s rebuild, 0.4 s edit-to-reloaded | **~10x faster** | |
-| Dev incremental rebuild, component edit | 1.7 s rebuild, 2.6 s edit-to-reloaded | 0.3 s rebuild, 0.4 s edit-to-reloaded | **~7x faster** | |
+| Dev incremental rebuild, app model edit | 2.8 s rebuild, 4.2 s edit-to-reloaded | 0.3 s rebuild, 0.4 s edit-to-reloaded | **~10x faster** |
+| Dev incremental rebuild, component edit | 1.7 s rebuild, 2.6 s edit-to-reloaded | 0.3 s rebuild, 0.4 s edit-to-reloaded | **~7x faster** |
 | Dev server peak RSS | 2.1 GB (needs `--max_old_space_size=3072`) | 1.3 GB (default heap) | -40% |
 | Total emitted JS (10 apps, minified) | 22.0 MB / 3.88 MB brotli | 18.3 MB / 3.67 MB brotli | -17% / -5% |
 | Total emitted CSS | 2.08 MB | 1.66 MB | -20% |
@@ -74,7 +74,7 @@ uses. Rspack-first spends no app-source change budget; the later TC39 flip is a 
 | Markdown as text + `?url` | ✅ | Explicit `.md` rule (`asset/source`, `resourceQuery: /url/` → `asset/resource`). Gate checks both. |
 | moment `IgnorePlugin` | ✅ | `rspack.IgnorePlugin`; gate: `moment.locales().length === 1`. |
 | Public-dir copy (hoist + app, app wins) | ✅ | `output.copy` (CopyRspackPlugin); Rsbuild's own `server.publicDir` disabled. `preflight.js` cache-busted by a content hash rather than the compilation hash. |
-| Dev server: Grails proxy, per-app `historyApiFallback`, HTTPS, overlay | ✅ (HTTPS untested) | Same http-proxy-middleware option shape; rewrites per app; `devHttps: true` uses `@rsbuild/plugin-basic-ssl` for a self-signed cert, object form passes through to `server.https`. Overlay maps `{errors, runtimeErrors}` → `{errors, runtime}`; there is no `warnings` equivalent. |
+| Dev server: Grails proxy, per-app `historyApiFallback`, HTTPS, overlay | ✅ (HTTPS untested) | http-proxy-middleware v3 options - note `pathFilter`, not webpack-dev-server's `context` (see Known differences); rewrites per app; `devHttps: true` uses `@rsbuild/plugin-basic-ssl` for a self-signed cert, object form passes through to `server.https`. Overlay maps `{errors, runtimeErrors}` → `{errors, runtime}`; there is no `warnings` equivalent. |
 | React Fast Refresh with Hoist idioms | measured | See dev-server results. |
 | SWC minifier parity with the Terser stance | ✅ | `keep_classnames` / `keep_fnames` on both `compress` and `mangle`; gates confirm `constructor.name` survives (hoist's `@abstract` message and `xhName` depend on it). |
 | Prod output diff vs webpack | ✅ | Same layout (`<app>/index.html`, JS/CSS at root, `static/media/*`, `public/**`, `.br`/`.gz` twins, `.LICENSE.txt`, source maps). Chunk *composition* differs - see Known differences. |
