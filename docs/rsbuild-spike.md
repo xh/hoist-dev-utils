@@ -17,12 +17,12 @@ parity gates pass, and the payoff is large:
 
 | | webpack (`configureWebpack`) | Rsbuild (`configureRsbuild`) | ratio |
 |---|---|---|---|
-| Production build, wall clock | 137.6 s (123-133 s on reruns) | 28.9 s (27-37 s) | **~4.5x faster** |
-| Production build, peak RSS (process tree) | 4.7-5.7 GB | 1.4-1.6 GB | **~3.5x less** |
-| Dev server cold start to first served bundle (inline hoist) | 42.7 s | TBD_RSBUILD_COLD | |
-| Dev incremental rebuild, app model edit | 2.6 s + full page reload (4.2 s edit-to-reloaded) | TBD | |
-| Dev incremental rebuild, component edit | 2.0 s + full page reload (3.1 s edit-to-reloaded) | TBD | |
-| Dev server peak RSS | TBD_WEBPACK_MEM | TBD_RSBUILD_MEM | |
+| Production build, wall clock | 114-138 s across four runs | 29-37 s across three runs | **~4x faster** |
+| Production build, peak RSS (process tree) | 4.6-5.7 GB | 1.4-1.6 GB | **~3.5x less** |
+| Dev server cold start to first served bundle (inline hoist) | 32.5 s (42.7 s on a second run) | 5.0 s | **~6-8x faster** |
+| Dev incremental rebuild, app model edit | 2.8 s rebuild, 4.2 s edit-to-reloaded | 0.3 s rebuild, 0.4 s edit-to-reloaded | **~10x faster** | |
+| Dev incremental rebuild, component edit | 1.7 s rebuild, 2.6 s edit-to-reloaded | 0.3 s rebuild, 0.4 s edit-to-reloaded | **~7x faster** | |
+| Dev server peak RSS | 2.1 GB (needs `--max_old_space_size=3072`) | 1.3 GB (default heap) | -40% |
 | Total emitted JS (10 apps, minified) | 22.0 MB / 3.88 MB brotli | 18.3 MB / 3.67 MB brotli | -17% / -5% |
 | Total emitted CSS | 2.08 MB | 1.66 MB | -20% |
 | Initial JS payload, `/app/` | 14.3 MB / 2.44 MB brotli | 11.7 MB / 2.19 MB brotli | -18% / -10% |
@@ -30,6 +30,16 @@ parity gates pass, and the payoff is large:
 Two hoist-react-side issues were surfaced and fixed on the way (below), one of which is a hard
 prerequisite: **apps building with `configureRsbuild()` need hoist-react >= 88.0**. Nothing found
 argues against Rspack as the destination; the remaining work is soak, tuning and app migration.
+
+One expectation from the analysis did *not* materialize yet: React Fast Refresh never engaged for
+Toolbox edits - every JS/TS change fell back to a full reload. The fallback is a 0.4 s
+edit-to-reloaded cycle, so the dev-experience win is delivered regardless, but true hot-swapping of
+Hoist components is a follow-up (see Dev server measurements).
+
+The decorators migration (hoist-react #4333) is **not** a prerequisite in either direction, and this
+spike is the evidence: SWC's legacy mode reproduced Babel's behavior across every decorator Hoist
+uses. Rspack-first spends no app-source change budget; the later TC39 flip is a one-line
+`source.decorators.version` change here, to ship in its own release window.
 
 ## What was built
 
@@ -156,24 +166,45 @@ including the class-field cases that the issue flagged as the one real technical
   explicitly disabled (Hoist uses none, and it bloats every decorated class).
 - **`--env` flags** → `XH_*` environment variables / `--env-mode`. Release workflows will need the
   `appVersion` / `appBuild` overrides rewritten accordingly.
+- **Dev proxy option names** follow http-proxy-middleware v3 (`pathFilter`), not webpack-dev-server's
+  `context` - the first dev-server run proxied *every* request to Grails because of exactly this.
+  Anything an app passes via `devServerOptions.proxy` needs the same translation.
 
 ## Dev server measurements
 
 Toolbox `/app/`, inline hoist-react (the `startWithHoist` case XH developers live in), headless
-Chromium attached over CDP. "Edit → applied" is wall clock from the file write to either the HMR
-apply message or, for a full reload, the subsequent `load` event.
+Chromium attached over CDP, no Grails backend (the app boots to its first failed `/api/` call, which
+is enough to exercise the full module graph). "Edit → reloaded" is wall clock from the file write
+to the `load` event of the resulting page reload; "rebuild" is the server's own reported time.
 
 | | webpack-dev-server 6 | Rsbuild dev |
 |---|---|---|
-| Cold start (server up + first compile served) | 42.7 s | TBD_RSBUILD_COLD |
-| First page load (after compile) | 4.6 s | TBD |
-| Edit app model (`AppModel.ts`) | rebuild 2.6 s, full reload, 4.2 s | TBD |
-| Edit app component (`HomeTab.ts`, `hoistCmp.factory`) | rebuild 2.0 s, full reload, 3.1 s | TBD |
-| Edit hoist-react component (`Button.ts`) | TBD | TBD |
-| Edit SCSS (`Toolbox.scss`) | TBD | TBD |
-| Peak RSS (process tree) | TBD | TBD |
+| Cold start (server up + first compile served) | 32.5 s | 5.0 s |
+| First page load (after compile) | 5.5 s | 2.8 s |
+| Edit app model (`AppModel.ts`) | rebuild 2.8 s → full reload, 4.2 s | rebuild 0.3 s → full reload, 0.4 s |
+| Edit app component (`HomeTab.ts`, `hoistCmp.factory`) | rebuild 1.7 s → full reload, 2.6 s | rebuild 0.3 s → full reload, 0.4 s |
+| Edit hoist-react component (`Button.ts`, inline) | rebuild 2.0 s → full reload, 3.5 s | rebuild 0.3 s → full reload, 0.4 s |
+| Edit SCSS (`Toolbox.scss`) | rebuild 2.2 s, no reload observed (CSS hot-swapped) | rebuild 0.3 s, no reload observed (CSS hot-swapped) |
+| Peak RSS (process tree) | 2.1 GB | 1.3 GB |
 
-TBD_DEV_NOTES
+Notes:
+
+- **Fast Refresh did not engage** for any of the three JS/TS edits. Rsbuild's client logged
+  `HMR update failed, performing full reload: Error: Aborted because <module> is not accepted` -
+  the react-refresh runtime registers only modules whose exports are recognizable React
+  components, and Hoist's `hoistCmp.factory(...)` element-factory exports (functions returning
+  elements, not components) and model classes are not. The update therefore bubbles to the entry
+  and reloads the page - in 0.4 s, which is why this still reads as an order-of-magnitude
+  improvement over webpack's 2.6-4.2 s live reloads. Getting genuine hot-swapping for Hoist
+  components means teaching react-refresh about factory exports (e.g. registering the underlying
+  component from `hoistCmp.factory` via `$RefreshReg$`, or exporting the component alongside the
+  factory) - worth a small follow-up spike, not a blocker.
+- The CSS edits produced no console signal in either bundler, so the harness could not time the
+  swap; both servers rebuilt and neither reloaded the page, consistent with style hot-swapping.
+- Both servers were launched from the dev-utils checkout's own `node_modules`; webpack with the
+  `NODE_OPTIONS=--max_old_space_size=3072` Toolbox's scripts require, Rsbuild with defaults.
+- The Rsbuild dev server logs an error when no browser opener is available for
+  `devServerOpenPage` (`spawn xdg-open ENOENT`); harmless, but noisier than webpack-dev-server.
 
 ## Risk ledger (post-spike)
 
@@ -181,7 +212,7 @@ TBD_DEV_NOTES
 |---|---|
 | Babel↔SWC legacy decorator semantics | Retired for hoist-react >= 88: 34/34 gates identical. The class-field define/set question is settled explicitly in config. |
 | hoist-react module-graph fragility (#4640) | Contained, not fixed: `sideEffects: false` + `concatenateModules: false` reproduce webpack's regime. Bundle-size upside deferred until #4640 lands. |
-| Fast Refresh vs element-factory modules | TBD_FR_RISK |
+| Fast Refresh vs element-factory modules | Confirmed limitation: updates bubble to a full reload (0.4 s). Follow-up spike to register factory-wrapped components with react-refresh. |
 | pnpm resolution parity | Improved (Blueprint stubs no longer NODE_PATH-dependent). Loaders/plugins are all resolved from within dev-utils. |
 | Third-party webpack plugins on Rspack | `compression-webpack-plugin`, `webpack-bundle-analyzer`, html template all worked unchanged. `HoistManifestPlugin` runs on both. |
 | SWC preset-env compat data vs Babel's | Minor drift (`es.array.includes`); pinned core-js 3.0 keeps parity. |

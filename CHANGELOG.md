@@ -19,10 +19,11 @@
   hoist-react >= 88.0 (enforced), whose `@persist` decorator no longer depends on Babel-specific
   emit. See `docs/rsbuild-spike.md` for measurements against Toolbox and the remaining risk ledger
   (hoist-dev-utils #73).
-* Production builds via `configureRsbuild()` measured on Toolbox (10 entry points) at roughly a
-  quarter of the webpack wall-clock time and a third of the peak memory, with dev-server React Fast
-  Refresh replacing full-page live reloads for component edits. Output layout and runtime behavior
-  verified equivalent - see the spike doc.
+* Measured on Toolbox (10 entry points): production builds in roughly a quarter of the webpack
+  wall-clock time at a third of the peak memory; dev-server cold start ~6x faster and edit-to-reload
+  under half a second versus 2.6-4.2 s (React Fast Refresh does not yet engage for Hoist's
+  element-factory modules, so edits still reload the page - just an order of magnitude sooner).
+  Output layout and runtime behavior verified equivalent - see the spike doc.
 
 ### ⚙️ Technical
 
