@@ -1,5 +1,7 @@
 # Changelog
 
+## 16.0.0-SNAPSHOT - unreleased
+
 ## 15.0.2 - 2026-09-16
 
 ### 🐞 Bug Fixes
