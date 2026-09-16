@@ -4,10 +4,8 @@
 
 ### 🐞 Bug Fixes
 
-* `inlineHoist` mode now also aliases `ag-grid-community` to the app's copy, alongside the existing
-  `ag-grid-react` alias. The inline hoist-react checkout has its own ag-Grid install, and values
-  crossing copies fail `instanceof` checks - notably AG Grid's Theming API rejecting Hoist's grid
-  theme (error #240) and leaving grids unstyled.
+* `inlineHoist` mode now also aliases `ag-grid-community` to the app's copy, as it already did for
+  `ag-grid-react`.
 
 ## 15.0.1 - 2026-08-31
 
