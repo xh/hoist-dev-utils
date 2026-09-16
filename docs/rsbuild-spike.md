@@ -13,33 +13,40 @@ box - treat ratios as the signal, not the third digit.
 
 Port confirmed. `configureRsbuild()` builds all ten Toolbox apps with the same feature set from the
 same options, the three main apps boot to the same point as the webpack build, 34 of 34 runtime
-parity gates pass, and the payoff is large:
+parity gates pass **against the published hoist-react 87.3.0 with no framework change**, and the
+payoff is large. Two Rsbuild columns: the shipping default lowers Hoist's legacy decorators with
+Babel ahead of SWC (`decoratorTransform: 'babel'`, see Finding 1); the SWC-only column is what the
+same config yields once hoist-react's decorators no longer depend on Babel's emit.
 
-| | webpack (`configureWebpack`) | Rsbuild (`configureRsbuild`) | ratio |
+| | webpack (`configureWebpack`) | Rsbuild, Babel decorators (default) | Rsbuild, SWC decorators (post-TC39) |
 |---|---|---|---|
-| Production build, wall clock | 114-138 s across four runs | 29-37 s across three runs | **~4x faster** |
-| Production build, peak RSS (process tree) | 4.6-5.7 GB | 1.4-1.6 GB | **~3.5x less** |
-| Dev server cold start to first served bundle (inline hoist) | 32.5 s (42.7 s on a second run) | 5.0 s | **~6-8x faster** |
-| Dev incremental rebuild, app model edit | 2.8 s rebuild, 4.2 s edit-to-reloaded | 0.3 s rebuild, 0.4 s edit-to-reloaded | **~10x faster** |
-| Dev incremental rebuild, component edit | 1.7 s rebuild, 2.6 s edit-to-reloaded | 0.3 s rebuild, 0.4 s edit-to-reloaded | **~7x faster** |
-| Dev server peak RSS | 2.1 GB (needs `--max_old_space_size=3072`) | 1.3 GB (default heap) | -40% |
-| Total emitted JS (10 apps, minified) | 22.0 MB / 3.88 MB brotli | 18.3 MB / 3.67 MB brotli | -17% / -5% |
-| Total emitted CSS | 2.08 MB | 1.66 MB | -20% |
-| Initial JS payload, `/app/` | 14.3 MB / 2.44 MB brotli | 11.7 MB / 2.19 MB brotli | -18% / -10% |
+| Production build, wall clock | 114-138 s across four runs | 46-48 s (**~2.6x faster**) | 29-37 s (**~4x faster**) |
+| Production build, peak RSS (process tree) | 4.6-5.7 GB | 2.2-2.3 GB (**~2.3x less**) | 1.4-1.6 GB (**~3.5x less**) |
+| Dev server cold start to first served bundle (inline hoist) | 32.5 s (42.7 s on a second run) | 16.7 s (**~2x faster**) | 5.0 s (**~6x faster**) |
+| Dev incremental rebuild, app model edit | 2.8 s rebuild, 4.2 s edit-to-reloaded | 0.4 s rebuild, 0.5 s edit-to-reloaded | 0.3 s rebuild, 0.4 s edit-to-reloaded |
+| Dev incremental rebuild, component edit | 1.7 s rebuild, 2.6 s edit-to-reloaded | 0.3 s rebuild, 0.4 s edit-to-reloaded | 0.3 s rebuild, 0.4 s edit-to-reloaded |
+| Dev server peak RSS | 2.1 GB (needs `--max_old_space_size=3072`) | 1.6 GB (default heap) | 1.3 GB (default heap) |
+| Total emitted JS (10 apps, minified) | 22.0 MB / 3.88 MB brotli | 18.3 MB / 3.67 MB brotli (-17% / -5%) | same |
+| Total emitted CSS | 2.08 MB | 1.66 MB (-20%) | same |
+| Initial JS payload, `/app/` | 14.3 MB / 2.44 MB brotli | 11.7 MB / 2.19 MB brotli (-18% / -10%) | same |
 
-Two hoist-react-side issues were surfaced and fixed on the way (below), one of which is a hard
-prerequisite: **apps building with `configureRsbuild()` need hoist-react >= 88.0**. Nothing found
-argues against Rspack as the destination; the remaining work is soak, tuning and app migration.
+The Babel pass costs about 15 s on a cold compile (it is the same ~800-file transpile webpack pays)
+and nothing measurable on incremental rebuilds, where only the edited file is re-transpiled. It is
+the price of leaving hoist-react's decorator code untouched until the TC39 migration, and it still
+leaves every dev-loop metric an order of magnitude better than today.
+
+Nothing found argues against Rspack as the destination; the remaining work is soak, tuning and app
+migration. **`configureRsbuild()` shares `configureWebpack()`'s hoist-react floor (87.1).**
 
 One expectation from the analysis did *not* materialize yet: React Fast Refresh never engaged for
 Toolbox edits - every JS/TS change fell back to a full reload. The fallback is a 0.4 s
 edit-to-reloaded cycle, so the dev-experience win is delivered regardless, but true hot-swapping of
 Hoist components is a follow-up (see Dev server measurements).
 
-The decorators migration (hoist-react #4333) is **not** a prerequisite in either direction, and this
-spike is the evidence: SWC's legacy mode reproduced Babel's behavior across every decorator Hoist
-uses. Rspack-first spends no app-source change budget; the later TC39 flip is a one-line
-`source.decorators.version` change here, to ship in its own release window.
+The decorators migration (hoist-react #4333) is **not** a prerequisite: with Babel still lowering
+decorators, Rspack-first touches neither app source nor hoist-react. The TC39 flip later is two
+lines here (`source.decorators.version` and the `decoratorTransform` default), shipping in its own
+release window - and it is what unlocks the right-hand column above.
 
 ## What was built
 
@@ -56,7 +63,8 @@ uses. Rspack-first spends no app-source change budget; the later TC39 flip is a 
   content hashes) against the pre-refactor config built from the same checkout.
 - Toolbox: `rsbuild.config.mjs`, `build:rsbuild` / `start:rsbuild` / `startWithHoist:rsbuild`
   scripts, `@rsbuild/core` in `publicHoistPattern` for the `rsbuild` bin. Webpack stays the default.
-- hoist-react 88: `@persist` works under TypeScript-style decorator emit (see Findings).
+- No hoist-react change. A candidate `@persist` change was written, reviewed and **reverted** - see
+  Finding 1 for why.
 
 ## Feature parity checklist (issue #73 spike scope)
 
@@ -65,7 +73,7 @@ uses. Rspack-first spends no app-source change budget; the later TC39 flip is a 
 | All 10 entry points from `src/apps/*`, per-app HTML + manifest.json | ✅ | `source.entry` map + `html.outputStructure: 'nested'` + shared `static/index.html` template (parameters flattened to bundler-neutral names). Same `HoistManifestPlugin` on both compilers (`compiler.webpack` is aliased on Rspack). |
 | Raw-TS transpilation of `@xh/hoist` + `@xh/package-template` (pnpm parity) | ✅ | `source.include` of realpath'd `srcPath`, `hoistPath`, `babelIncludePaths`; SWC via `builtin:swc-loader`. Rsbuild also compiles every `.ts/.tsx` it meets by default, so this is belt-and-braces. |
 | `inlineHoist` alias mechanics | ✅ | Same aliases (`@xh/hoist`, `react`, `react-dom`, `ag-grid-react`), `resolve.aliasStrategy: 'prefer-alias'` so they beat any tsconfig `paths`. Validated: dev-mode inline build boots; 34/34 gates. |
-| Decorator parity gates, legacy mode; class-field semantics set explicitly | ✅ | 34 runtime gates, both bundlers × {published 87.3 prod, inline 88 dev, inline 88 prod} - see below. `useDefineForClassFields: true` and `decoratorMetadata: false` asserted in `tools.swc` (Rsbuild's legacy preset flips define-semantics *off*, which would have diverged from tsconfig and Babel). |
+| Decorator parity gates, legacy mode; class-field semantics set explicitly | ✅ | 34 runtime gates, both bundlers, published 87.3 production and inline dev/prod - see below. Default mode reuses Babel's decorator lowering outright. For `'swc'` mode, `useDefineForClassFields: true` and `decoratorMetadata: false` are asserted in `tools.swc` (Rsbuild's legacy preset flips define-semantics *off*, which would diverge from tsconfig and Babel). |
 | `xh*` globals | ✅ | `source.define`; `process.env` fallback retained. |
 | Changelog `.xhtmp` alias | ✅ | Shared `writeChangelogJson()`; gate reads the parsed versions. |
 | Blueprint icon stubs | ✅ | `rspack.NormalModuleReplacementPlugin` with the same three resolved-path regexes (matches after resolve, as webpack's does). Plain `resolve.alias` would *not* work - the barrel imports are relative. |
@@ -100,27 +108,42 @@ scripts) with 34 gates run in headless Chromium against each bundler's *built* o
 - Build integration: `xh*` globals, `process.env`, changelog alias, markdown raw + `?url`, image
   inline vs URL, FontAwesome rewrite, moment locales, SCSS applied, element factory rendering.
 
-| Run | webpack (Babel legacy) | Rsbuild (SWC legacy) |
-|---|---|---|
-| Published hoist-react 87.3.0, production | 34/34 (one gate is dev-only, skipped) | **bundle fails to load** - `TypeError: Cannot read properties of undefined (reading 'get')` from `@persist` |
-| Local hoist-react 88.0-SNAPSHOT (with fix), inline dev | 34/34 | 34/34 |
-| Local hoist-react 88.0-SNAPSHOT (with fix), production | 34/34 | 34/34 |
+| Run | webpack (Babel legacy) | Rsbuild, `decoratorTransform: 'babel'` (default) | Rsbuild, `decoratorTransform: 'swc'` |
+|---|---|---|---|
+| Published hoist-react 87.3.0, production | 34/34 (one gate is dev-only, skipped) | **34/34** | **bundle fails to load** - `TypeError: Cannot read properties of undefined (reading 'get')` from `@persist` |
+| Local hoist-react with an experimental emit-agnostic `@persist` (since reverted), inline dev | 34/34 | n/a | 34/34 |
+| Same, production | 34/34 | n/a | 34/34 |
 
 Every gate produced the same result under both transpilers wherever the bundle loaded at all -
-including the class-field cases that the issue flagged as the one real technical gate.
+including the class-field cases that the issue flagged as the one real technical gate. The SWC
+column is the evidence that SWC's legacy mode is otherwise a faithful stand-in for Babel's, which
+is what makes the eventual `'swc'` flip low-risk once `@persist` is emit-agnostic.
 
 ## Findings and fixes
 
-1. **`@persist` was Babel-coupled (hoist-react fix, required).** Babel's legacy decorator emit
-   passes field decorators a descriptor carrying a non-standard `initializer`, which `@persist`
-   wrapped to make the persisted value the property's initial value. TypeScript-style emit (SWC,
-   `tsc`) passes field decorators **no descriptor at all**, so `descriptor.get` threw at class
-   definition time - taking down the whole hoist-react bundle, in both the harness and Toolbox
-   (`@persist` is used inside hoist-react itself). Fixed in hoist-react 88: with no descriptor the
-   decorator records the property on the class and Hoist's `makeObservable()` override binds it to
-   its provider once field initializers have run, so the persisted value is in place before the
-   declaring constructor continues. `@bindable`, `@managed`, `@lookup` and MobX's own decorators
-   were already emit-agnostic. `configureRsbuild()` enforces the >= 88.0 floor.
+1. **`@persist` is Babel-coupled; resolved on the dev-utils side, not in hoist-react.** Babel's
+   legacy decorator emit passes field decorators a descriptor carrying a non-standard
+   `initializer`, which `@persist` wraps to make the persisted value the property's initial value.
+   TypeScript-style emit (SWC, `tsc`) passes field decorators **no descriptor at all**, so
+   `descriptor.get` throws at class definition time - taking down the whole hoist-react bundle, in
+   both the harness and Toolbox (`@persist` is used inside hoist-react itself). `@bindable`,
+   `@managed`, `@lookup` and MobX's own decorators are already emit-agnostic.
+
+   A hoist-react change making `@persist` work under both emits was written and put through an
+   adversarial review. Its Babel path was a provably inert refactor, but its SWC path was a second
+   semantic model - persisted values applied at `makeObservable(this)` rather than at field
+   initialization - with three observable divergences: sibling field initializers reading the
+   code default instead of the persisted value (Toolbox's `GridTestModel` does exactly this), a
+   silent no-op for classes that never call `makeObservable(this)` (the canonical doc example),
+   and looser `persistWith` ordering than Babel accepts. That is not a change to argue for right
+   before the TC39 migration rewrites the same decorator on the spec `init` hook, which gives
+   field-init timing on every transpiler. **It was reverted.**
+
+   Instead, `configureRsbuild()` defaults to `decoratorTransform: 'babel'`: `@rsbuild/plugin-babel`
+   runs `@babel/plugin-proposal-decorators` (legacy) with the same per-extension TypeScript
+   handling as `configureWebpack()` ahead of SWC, so decorated classes compile through the very
+   same plugin under both configs. Cost and payoff are in the table above. `'swc'` mode stays
+   available behind a hoist-react >= 88 floor for the post-TC39 world.
 2. **Module concatenation trips hoist-react's import cycles.** Rsbuild's production preset enables
    scope hoisting (`optimization.concatenateModules`), which merges modules into one function scope -
    so a circular import that webpack tolerated became `ReferenceError: Cannot access 'span' before
@@ -210,22 +233,25 @@ Notes:
 
 | Risk | Status |
 |---|---|
-| Babel↔SWC legacy decorator semantics | Retired for hoist-react >= 88: 34/34 gates identical. The class-field define/set question is settled explicitly in config. |
+| Babel↔SWC legacy decorator semantics | Moot in the default mode: Babel still lowers decorators, so semantics are identical by construction (34/34 on published 87.3). For the later `'swc'` flip, 34/34 gates were identical wherever `@persist` was not the blocker; the class-field define/set question is settled explicitly in config. |
 | hoist-react module-graph fragility (#4640) | Contained, not fixed: `sideEffects: false` + `concatenateModules: false` reproduce webpack's regime. Bundle-size upside deferred until #4640 lands. |
 | Fast Refresh vs element-factory modules | Confirmed limitation: updates bubble to a full reload (0.4 s). Follow-up spike to register factory-wrapped components with react-refresh. |
 | pnpm resolution parity | Improved (Blueprint stubs no longer NODE_PATH-dependent). Loaders/plugins are all resolved from within dev-utils. |
 | Third-party webpack plugins on Rspack | `compression-webpack-plugin`, `webpack-bundle-analyzer`, html template all worked unchanged. `HoistManifestPlugin` runs on both. |
 | SWC preset-env compat data vs Babel's | Minor drift (`es.array.includes`); pinned core-js 3.0 keeps parity. |
 | Release tooling | `--env appVersion=…` must become `XH_APP_VERSION=…`; Toolbox `buildRelease.yml` / `buildSnapshot.yml` untouched in this spike (still webpack). |
-| Decorators migration (#4333) interaction | Unchanged conclusion: independent. Flipping `source.decorators.version` to `2023-11` is a one-liner here, but per the analysis must ship in a separate release window. |
+| Decorators migration (#4333) interaction | Independent. After it lands: flip `source.decorators.version` to `2023-11`, default `decoratorTransform` to `'swc'`, drop `@rsbuild/plugin-babel` - and re-run the gate matrix in `2023-11` mode under both transpilers first (the TC39 branch already carries one Babel-specific workaround in `@managed`). Separate release window, per the analysis. |
 
 ## Suggested next steps (Ship phase)
 
-1. Release hoist-react 88 with the `@persist` change; publish dev-utils 16 SNAPSHOT with both configs.
+1. Publish dev-utils 16 SNAPSHOT with both configs; no hoist-react release is required.
 2. Switch Toolbox's default `start` / `build` scripts and CI to Rsbuild once a week or two of
    `startWithHoist:rsbuild` soak is clean; keep `webpack.config.js` through the transition.
 3. Tune `splitChunks` (or accept the current grouping), then revisit `concatenateModules` /
    `sideEffects` together with #4640.
 4. Migrate customer apps opportunistically: swap `webpack.config.js` for `rsbuild.config.mjs`, add
    `@rsbuild/core` to `publicHoistPattern`, rewrite release `--env` flags as `XH_*` variables.
-5. Update `docs/version-compatibility.md` in hoist-react (done for the 16.0 / 88.0 pairing).
+5. Update `docs/version-compatibility.md` in hoist-react (done for the 16.0 row; floor unchanged at 87.1).
+6. Validate on client apps, not just Toolbox - the `sideEffects: false` episode showed Toolbox is not
+   representative of the option surface client apps exercise (`extraModuleRules`, `resolveAliases`,
+   `targetBrowsers`, release `--env` plumbing).
