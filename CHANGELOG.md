@@ -1,5 +1,12 @@
 # Changelog
 
+## 16.0.0-SNAPSHOT - unreleased
+
+### 🐞 Bug Fixes
+
+* `inlineHoist` mode now also aliases `ag-grid-community` to the app's copy, as it already did for
+  `ag-grid-react`.
+
 ## 15.0.1 - 2026-08-31
 
 ### 🐞 Bug Fixes

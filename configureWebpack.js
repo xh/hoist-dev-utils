@@ -282,6 +282,7 @@ async function configureWebpack(env) {
         // Also ensure a single instance of ag-Grid when Hoist is inline, needed to support use of
         // `useGridMenuItem` hook.
         resolveAliases['ag-grid-react'] = path.resolve('./node_modules/ag-grid-react');
+        resolveAliases['ag-grid-community'] = path.resolve('./node_modules/ag-grid-community');
     }
 
     // When running inline, resolve inline Hoist's own node_modules package so we can tell Babel to exclude
