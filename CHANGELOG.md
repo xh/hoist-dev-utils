@@ -24,9 +24,10 @@
   ledger (hoist-dev-utils #73).
 * Measured on Toolbox (10 entry points): production builds in roughly a quarter of the webpack
   wall-clock time at a third of the peak memory; dev-server cold start ~6x faster and edit-to-reload
-  under half a second versus 2.6-4.2 s (React Fast Refresh does not yet engage for Hoist's
-  element-factory modules, so edits still reload the page - just an order of magnitude sooner).
-  Output layout and runtime behavior verified equivalent - see the spike doc.
+  under half a second versus 2.6-4.2 s (React Fast Refresh hot-swaps modules exporting
+  `hoistCmp({...})` components; Hoist's element-factory modules still reload the page - just an
+  order of magnitude sooner). Output layout and runtime behavior verified equivalent on Toolbox and
+  on a client app - see the spike doc.
 
 ### ⚙️ Technical
 

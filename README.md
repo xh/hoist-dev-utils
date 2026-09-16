@@ -66,8 +66,9 @@ for step-by-step details on the build process.
 As of v16 the package also exports `configureRsbuild()`, an [Rsbuild](https://rsbuild.rs)-based
 equivalent of `configureWebpack()` producing the same build features from the same options, with
 Rspack replacing webpack and SWC replacing Babel. Builds are several times faster, need far less
-memory, and the dev server hot-swaps edited React components via Fast Refresh rather than reloading
-the page. It shares `configureWebpack()`'s hoist-react floor - by default Hoist's legacy decorators
+memory, and the dev server hot-swaps stylesheet edits and modules exporting React components
+(`hoistCmp({...})`) in place, with element-factory modules falling back to a sub-second reload. It
+shares `configureWebpack()`'s hoist-react floor - by default Hoist's legacy decorators
 are still lowered by Babel (ahead of SWC), so no framework change is needed to adopt it. An app
 opts in with an `rsbuild.config.mjs`:
 

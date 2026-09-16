@@ -38,10 +38,15 @@ leaves every dev-loop metric an order of magnitude better than today.
 Nothing found argues against Rspack as the destination; the remaining work is soak, tuning and app
 migration. **`configureRsbuild()` shares `configureWebpack()`'s hoist-react floor (87.1).**
 
-One expectation from the analysis did *not* materialize yet: React Fast Refresh never engaged for
-Toolbox edits - every JS/TS change fell back to a full reload. The fallback is a 0.4 s
-edit-to-reloaded cycle, so the dev-experience win is delivered regardless, but true hot-swapping of
-Hoist components is a follow-up (see Dev server measurements).
+React Fast Refresh engages for modules whose exports react-refresh recognizes as components -
+`export const AppComponent = hoistCmp({...})` hot-swapped in place on JobSite - but not for Hoist's
+camelCase `hoistCmp.factory(...)` element-factory exports or model classes, which fall back to a
+sub-second full reload. Toolbox's edited files were all of the latter kind, which is why the first
+cut of this doc reported Fast Refresh as never engaging (see Dev server measurements).
+
+Validation against a real client app (JobSite, see below) found two defects Toolbox's checks had
+missed - stale CSS under dev HMR and minification of copied `public/` files - both since fixed in
+`configureRsbuild.js` and re-verified here.
 
 The decorators migration (hoist-react #4333) is **not** a prerequisite: with Babel still lowering
 decorators, Rspack-first touches neither app source nor hoist-react. The TC39 flip later is two
@@ -207,23 +212,33 @@ to the `load` event of the resulting page reload; "rebuild" is the server's own 
 | Edit app model (`AppModel.ts`) | rebuild 2.8 s → full reload, 4.2 s | rebuild 0.3 s → full reload, 0.4 s |
 | Edit app component (`HomeTab.ts`, `hoistCmp.factory`) | rebuild 1.7 s → full reload, 2.6 s | rebuild 0.3 s → full reload, 0.4 s |
 | Edit hoist-react component (`Button.ts`, inline) | rebuild 2.0 s → full reload, 3.5 s | rebuild 0.3 s → full reload, 0.4 s |
-| Edit SCSS (`Toolbox.scss`) | rebuild 2.2 s, no reload observed (CSS hot-swapped) | rebuild 0.3 s, no reload observed (CSS hot-swapped) |
+| Edit SCSS (`Toolbox.scss`), computed style asserted, published hoist-react rather than inline | rebuild 1.1 s → hot-swapped, 1.34 s | rebuild 0.2 s → hot-swapped, 0.41 s (after the dev filename fix - see Notes) |
 | Peak RSS (process tree) | 2.1 GB | 1.3 GB |
 
 Notes:
 
-- **Fast Refresh did not engage** for any of the three JS/TS edits. Rsbuild's client logged
+- **Fast Refresh did not engage** for any of the three Toolbox JS/TS edits. Rsbuild's client logged
   `HMR update failed, performing full reload: Error: Aborted because <module> is not accepted` -
   the react-refresh runtime registers only modules whose exports are recognizable React
-  components, and Hoist's `hoistCmp.factory(...)` element-factory exports (functions returning
-  elements, not components) and model classes are not. The update therefore bubbles to the entry
-  and reloads the page - in 0.4 s, which is why this still reads as an order-of-magnitude
-  improvement over webpack's 2.6-4.2 s live reloads. Getting genuine hot-swapping for Hoist
-  components means teaching react-refresh about factory exports (e.g. registering the underlying
-  component from `hoistCmp.factory` via `$RefreshReg$`, or exporting the component alongside the
-  factory) - worth a small follow-up spike, not a blocker.
-- The CSS edits produced no console signal in either bundler, so the harness could not time the
-  swap; both servers rebuilt and neither reloaded the page, consistent with style hot-swapping.
+  components (PascalCase bindings, including call results such as `hoistCmp({...})`), and Hoist's
+  camelCase `hoistCmp.factory(...)` element-factory exports and model classes are not. The update
+  therefore bubbles to the entry and reloads the page - in 0.4 s, which is why this still reads as
+  an order-of-magnitude improvement over webpack's 2.6-4.2 s live reloads. JobSite's
+  `AppComponent.ts` (`export const AppComponent = hoistCmp({...})`) *did* hot-swap in place, so the
+  limitation is per-module, not per-bundler. Getting hot-swapping for factory modules means
+  teaching react-refresh about them (e.g. registering the underlying component from
+  `hoistCmp.factory` via `$RefreshReg$`, or exporting the component alongside the factory) - worth
+  a small follow-up spike, not a blocker.
+- **CSS HMR was broken in the first cut, and this doc mis-reported it.** The benchmark harness only
+  watched for reloads and console messages; the CSS edit produced neither, and "no reload" was
+  written up as "hot-swapped". The JobSite validation asserted the computed style instead and found
+  the Rsbuild page keeping stale styles indefinitely. Root cause: `output.filename.css` was
+  `[name].[contenthash:8].css` in dev as well as prod. Rsbuild extracts CSS to real files in dev and
+  hot-swaps by re-fetching the `<link>` the page already holds with a cache-busting query - so the
+  browser re-read the *old* hashed file (still served from memory) while the rebuild landed under a
+  new hash. Fix: JS/CSS filenames are hashed in production only (Rsbuild's own default). Re-verified
+  by asserting a custom property from the edited SCSS in the live page: applied in 0.41 s, no
+  reload. webpack (style-loader in dev, CSS rides JS HMR) was never affected.
 - Both servers were launched from the dev-utils checkout's own `node_modules`; webpack with the
   `NODE_OPTIONS=--max_old_space_size=3072` Toolbox's scripts require, Rsbuild with defaults.
 - The Rsbuild dev server logs an error when no browser opener is available for
@@ -235,7 +250,10 @@ Notes:
 |---|---|
 | Babel↔SWC legacy decorator semantics | Moot in the default mode: Babel still lowers decorators, so semantics are identical by construction (34/34 on published 87.3). For the later `'swc'` flip, 34/34 gates were identical wherever `@persist` was not the blocker; the class-field define/set question is settled explicitly in config. |
 | hoist-react module-graph fragility (#4640) | Contained, not fixed: `sideEffects: false` + `concatenateModules: false` reproduce webpack's regime. Bundle-size upside deferred until #4640 lands. |
-| Fast Refresh vs element-factory modules | Confirmed limitation: updates bubble to a full reload (0.4 s). Follow-up spike to register factory-wrapped components with react-refresh. |
+| Fast Refresh vs element-factory modules | Per-module limitation: modules exporting `hoistCmp({...})` components hot-swap (JobSite); camelCase `hoistCmp.factory` exports and models bubble to a full reload (0.4 s). Follow-up spike to register factory-wrapped components with react-refresh. |
+| Dev CSS HMR delivery | Was broken (stale hashed file re-fetched) and missed by the Toolbox harness; fixed (unhashed dev filenames) and verified by asserting computed style. |
+| `public/` files altered by minimizers | Rspack's SWC / Lightning CSS minimizers processed `output.copy` assets (webpack's Terser config left them alone). Fixed with `info: {minimized: true}` on the copy patterns; hoist's `msal-redirect-bridge.min.js` and `preflight.js` now byte-identical to source. |
+| Missing-export strictness | Both configs treat a missing named export as an error (`strictExportPresence` / `exportsPresence: 'error'`), but webpack still emits a bundle while Rspack emits nothing. Fail-fast, and a workflow change when working through framework drift in `inlineHoist` mode. |
 | pnpm resolution parity | Improved (Blueprint stubs no longer NODE_PATH-dependent). Loaders/plugins are all resolved from within dev-utils. |
 | Third-party webpack plugins on Rspack | `compression-webpack-plugin`, `webpack-bundle-analyzer`, html template all worked unchanged. `HoistManifestPlugin` runs on both. |
 | SWC preset-env compat data vs Babel's | Minor drift (`es.array.includes`); pinned core-js 3.0 keeps parity. |
@@ -252,6 +270,48 @@ Notes:
 4. Migrate customer apps opportunistically: swap `webpack.config.js` for `rsbuild.config.mjs`, add
    `@rsbuild/core` to `publicHoistPattern`, rewrite release `--env` flags as `XH_*` variables.
 5. Update `docs/version-compatibility.md` in hoist-react (done for the 16.0 row; floor unchanged at 87.1).
-6. Validate on client apps, not just Toolbox - the `sideEffects: false` episode showed Toolbox is not
-   representative of the option surface client apps exercise (`extraModuleRules`, `resolveAliases`,
-   `targetBrowsers`, release `--env` plumbing).
+6. Validate on more client apps, not just Toolbox - the `sideEffects: false` episode showed Toolbox is
+   not representative of the option surface client apps exercise (`extraModuleRules`,
+   `resolveAliases`, `targetBrowsers`, release `--env` plumbing). JobSite is done (below) and
+   should be re-run against the two fixes; apps using `extraModuleRules` / `resolveAliases` are the
+   next most valuable targets.
+7. File the pre-existing webpack JS HMR failure JobSite exhibits
+   (`self.webpackHotUpdatejobsite is not a function`, reproduced on published dev-utils 15.0.1) as
+   its own issue - unrelated to this work, but it means JobSite developers have had no JS HMR under
+   webpack at all.
+
+## Client-app validation: JobSite
+
+Run by a local agent against JobSite (2 entry points, pnpm, 6 `webpack.config.js` options, 12 SCSS
+files) on an M1 Max, with sibling `../hoist-react` and `../hoist-dev-utils` checkouts on the spike
+branch, *before* the two fixes above. Single runs.
+
+| | webpack | Rsbuild |
+|---|---|---|
+| Production build wall clock | 42.2 s | 22.2 s |
+| Production build peak RSS | 4.12 GiB | 1.60 GiB |
+| JS / CSS emitted (raw) | 15.92 MB / 1.36 MB | 15.01 MB / 1.16 MB |
+| Initial payload `/app/` (raw / brotli) | 13.26 / 2.06 MB | 11.77 / 1.91 MB |
+| Dev cold start → first served page | 10.6 s | 4.4 s |
+| Dev peak RSS at ready | 1.69 GiB (needs `--max_old_space_size=3072`) | 1.42 GiB (default heap) |
+| Edit model (`AppModel.ts`) | rebuild 464 ms → full reload, 526 ms | rebuild 90 ms → full reload, 76 ms |
+| Edit component (`AppComponent.ts`, `hoistCmp({...})`) | rebuild 397 ms → full reload, 464 ms | rebuild 70 ms → hot-swap, 183 ms |
+| Edit SCSS (`App.scss`) | hot-swapped, verified | never reached the browser (fixed since, see above) |
+
+Runtime parity of the production builds, served behind an nginx-equivalent static server against a
+live Grails backend: identical across the login → dashboard flow, five data screens (row/column
+counts, grid totals down to money and date formatting, Highcharts, FontAwesome icon counts), the
+Blueprint app menu (21 stubbed icons, no full set), the markdown changelog dialog, an `@persist`
+round-trip surviving reload, money masking, fonts (all woff2 byte-identical) and the admin console
+with a deep link. Console output identical (17 distinct message shapes on both). Tilde SCSS imports
+(`url('~@ibm/plex-sans/...')`) resolved under `@rsbuild/plugin-sass`. `manifest.json` identical
+modulo hashes; `public/**` file sets identical with app files winning over hoist's.
+
+The only migration work was the `--env` → `XH_*` rewrite: two workflow lines
+(`buildRelease.yml`, `buildSnapshot.yml`), verified by building with `XH_APP_VERSION` /
+`XH_APP_BUILD` and finding both baked into the vendor chunk and `manifest.json` exactly as the
+webpack `--env` control run did.
+
+Findings, all now recorded in the risk ledger: dev CSS HMR broken (fixed); `public/` files
+minified (fixed); Rspack emits nothing on a missing export where webpack emits with errors (kept as
+a documented difference); JobSite's webpack JS HMR is broken independently of this work.

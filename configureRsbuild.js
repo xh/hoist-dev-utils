@@ -337,8 +337,9 @@ async function configureRsbuild(env) {
 
         plugins: [
             // React via SWC - automatic JSX runtime, plus React Fast Refresh in dev. Note Fast
-            // Refresh preserves state only for modules that export React components - Hoist's
-            // element-factory exports and model classes fall back to a full reload of the page.
+            // Refresh hot-swaps only modules whose exports it recognizes as React components (e.g.
+            // `export const AppComponent = hoistCmp({...})`) - Hoist's camelCase element-factory
+            // exports and model classes fall back to a (sub-second) full reload of the page.
             pluginReact({
                 swcReactOptions: {runtime: 'automatic'},
                 // Rsbuild's React-specific vendor chunking is tied to its own split presets.
@@ -451,9 +452,13 @@ async function configureRsbuild(env) {
                 media: 'static/media',
                 assets: 'static/media'
             },
+            // Hash JS/CSS filenames in production only (Rsbuild's own default). In dev, CSS is
+            // extracted to real files and hot-swapped by re-fetching the `<link>` the page already
+            // holds - a hashed dev filename breaks that, leaving the browser re-reading the stale
+            // pre-edit file while the rebuild lands under a new name.
             filename: {
-                js: '[name].[contenthash:8].js',
-                css: '[name].[contenthash:8].css',
+                js: prodBuild ? '[name].[contenthash:8].js' : '[name].js',
+                css: prodBuild ? '[name].[contenthash:8].css' : '[name].css',
                 image: '[name].[contenthash:8][ext]',
                 svg: '[name].[contenthash:8][ext]',
                 font: '[name].[contenthash:8][ext]',
@@ -471,10 +476,15 @@ async function configureRsbuild(env) {
             dataUriLimit: {image: 10000, svg: 0, font: 0, media: 0, assets: 0},
             sourceMap: {js: devtool, css: !!devtool},
             // Copy /public directories from HR and App into the output - App files should win.
-            // Note that this includes preflight.js from HR, referenced from index.html.
+            // Note that this includes preflight.js from HR, referenced from index.html. Copied
+            // files are flagged `minimized` so the JS/CSS minimizers leave them byte-for-byte
+            // intact (as webpack does) - they were never compiled here, and some are shipped
+            // pre-minified.
             copy: _.compact([
-                {from: path.resolve(hoistPath, 'public'), to: 'public'},
-                copyPublicAssets ? {from: publicAssetsPath, to: 'public'} : undefined
+                {from: path.resolve(hoistPath, 'public'), to: 'public', info: {minimized: true}},
+                copyPublicAssets
+                    ? {from: publicAssetsPath, to: 'public', info: {minimized: true}}
+                    : undefined
             ]),
             minify: {
                 js: prodBuild && minify,
