@@ -69,7 +69,7 @@ Rspack replacing webpack and SWC replacing Babel. Builds are several times faste
 memory, and the dev server hot-swaps stylesheet edits and modules exporting React components
 (`hoistCmp({...})`) in place, with element-factory modules falling back to a sub-second reload. It
 shares `configureWebpack()`'s hoist-react floor - by default Hoist's legacy decorators
-are still lowered by Babel (ahead of SWC), so no framework change is needed to adopt it. An app
+are still transformed by Babel (ahead of SWC), so no framework change is needed to adopt it. An app
 opts in with an `rsbuild.config.mjs`:
 
 ```javascript

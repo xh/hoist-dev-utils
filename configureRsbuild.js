@@ -102,11 +102,11 @@ const hoistReactPkg = resolveAppPackage('@xh/hoist', basePath),
  * @param {string} [env.preloadSpinnerColor] - stroke color for the preloader spinner SVG. Defaults to a neutral gray (#888).
  * @param {string[]} [env.targetBrowsers] - array of browserslist queries specifying target browsers for JS
  *      transpiling, polyfill selection and CSS prefixing.
- * @param {string} [env.decoratorTransform='babel'] - which transpiler lowers Hoist's legacy (TypeScript
+ * @param {string} [env.decoratorTransform='babel'] - which transpiler transforms Hoist's legacy (TypeScript
  *      `experimentalDecorators`) decorators. `'babel'` (default) runs Babel's `@babel/plugin-proposal-decorators` in
  *      legacy mode ahead of SWC, exactly as `configureWebpack()` does - so decorator semantics are identical to the
  *      webpack build by construction, at the cost of a Babel pass over app and hoist-react source. `'swc'` uses
- *      SWC's own legacy-decorator lowering: faster, but its TypeScript-style emit passes field decorators no
+ *      SWC's own legacy-decorator transform: faster, but its TypeScript-style emit passes field decorators no
  *      descriptor, which hoist-react's `@persist` cannot work with before the TC39 decorators migration - so this
  *      mode enforces a higher hoist-react floor. Once hoist-react ships transpiler-agnostic decorators the default
  *      flips to `'swc'` and the Babel pass goes away.
@@ -215,7 +215,7 @@ async function configureRsbuild(env) {
     if (analyzeBundles) logMsg('🎁  Bundle analysis enabled');
     if (buildCache) logMsg('💾  Persistent build cache enabled');
     logMsg(
-        `🎀  Legacy decorators lowered by ${decoratorTransform === 'babel' ? 'Babel (ahead of SWC)' : 'SWC'}`
+        `Legacy decorators transformed by ${decoratorTransform === 'babel' ? 'Babel (ahead of SWC)' : 'SWC'}`
     );
     if (prodBuild && precompressAssets) logMsg('🗜️   Asset pre-compression enabled');
     logSep();

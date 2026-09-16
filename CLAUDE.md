@@ -24,7 +24,7 @@ The library is two peer config modules over a small shared core:
   [Rsbuild](https://rsbuild.rs) (Rspack + SWC) config for the same `env` options, plus a
   `readCliEnv()` helper mapping `XH_*` environment variables onto env options (the Rsbuild CLI has
   no `--env key=value`). Added in v16 as the Rspack migration spike - see `docs/rsbuild-spike.md`
-  for the feature-parity checklist, measurements and open risks. By default it lowers Hoist's legacy
+  for the feature-parity checklist, measurements and open risks. By default it transforms Hoist's legacy
   decorators with Babel ahead of SWC (`decoratorTransform: 'babel'`), so it shares the webpack
   path's hoist-react floor; `'swc'` mode is reserved for TC39-era hoist-react (>= 88).
 - **`lib/common.js`** - bundler-agnostic helpers shared by both (version checks, entry discovery,

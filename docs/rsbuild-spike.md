@@ -14,7 +14,7 @@ box - treat ratios as the signal, not the third digit.
 Port confirmed. `configureRsbuild()` builds all ten Toolbox apps with the same feature set from the
 same options, the three main apps boot to the same point as the webpack build, 34 of 34 runtime
 parity gates pass **against the published hoist-react 87.3.0 with no framework change**, and the
-payoff is large. Two Rsbuild columns: the shipping default lowers Hoist's legacy decorators with
+payoff is large. Two Rsbuild columns: the shipping default transforms Hoist's legacy decorators with
 Babel ahead of SWC (`decoratorTransform: 'babel'`, see Finding 1); the SWC-only column is what the
 same config yields once hoist-react's decorators no longer depend on Babel's emit.
 
@@ -48,7 +48,7 @@ Validation against a real client app (JobSite, see below) found two defects Tool
 missed - stale CSS under dev HMR and minification of copied `public/` files - both since fixed in
 `configureRsbuild.js` and re-verified here.
 
-The decorators migration (hoist-react #4333) is **not** a prerequisite: with Babel still lowering
+The decorators migration (hoist-react #4333) is **not** a prerequisite: with Babel still transforming
 decorators, Rspack-first touches neither app source nor hoist-react. The TC39 flip later is two
 lines here (`source.decorators.version` and the `decoratorTransform` default), shipping in its own
 release window - and it is what unlocks the right-hand column above.
@@ -78,7 +78,7 @@ release window - and it is what unlocks the right-hand column above.
 | All 10 entry points from `src/apps/*`, per-app HTML + manifest.json | ✅ | `source.entry` map + `html.outputStructure: 'nested'` + shared `static/index.html` template (parameters flattened to bundler-neutral names). Same `HoistManifestPlugin` on both compilers (`compiler.webpack` is aliased on Rspack). |
 | Raw-TS transpilation of `@xh/hoist` + `@xh/package-template` (pnpm parity) | ✅ | `source.include` of realpath'd `srcPath`, `hoistPath`, `babelIncludePaths`; SWC via `builtin:swc-loader`. Rsbuild also compiles every `.ts/.tsx` it meets by default, so this is belt-and-braces. |
 | `inlineHoist` alias mechanics | ✅ | Same aliases (`@xh/hoist`, `react`, `react-dom`, `ag-grid-react`), `resolve.aliasStrategy: 'prefer-alias'` so they beat any tsconfig `paths`. Validated: dev-mode inline build boots; 34/34 gates. |
-| Decorator parity gates, legacy mode; class-field semantics set explicitly | ✅ | 34 runtime gates, both bundlers, published 87.3 production and inline dev/prod - see below. Default mode reuses Babel's decorator lowering outright. For `'swc'` mode, `useDefineForClassFields: true` and `decoratorMetadata: false` are asserted in `tools.swc` (Rsbuild's legacy preset flips define-semantics *off*, which would diverge from tsconfig and Babel). |
+| Decorator parity gates, legacy mode; class-field semantics set explicitly | ✅ | 34 runtime gates, both bundlers, published 87.3 production and inline dev/prod - see below. Default mode reuses Babel's decorator transform outright. For `'swc'` mode, `useDefineForClassFields: true` and `decoratorMetadata: false` are asserted in `tools.swc` (Rsbuild's legacy preset flips define-semantics *off*, which would diverge from tsconfig and Babel). |
 | `xh*` globals | ✅ | `source.define`; `process.env` fallback retained. |
 | Changelog `.xhtmp` alias | ✅ | Shared `writeChangelogJson()`; gate reads the parsed versions. |
 | Blueprint icon stubs | ✅ | `rspack.NormalModuleReplacementPlugin` with the same three resolved-path regexes (matches after resolve, as webpack's does). Plain `resolve.alias` would *not* work - the barrel imports are relative. |
@@ -252,7 +252,7 @@ Notes:
 
 | Risk | Status |
 |---|---|
-| Babel↔SWC legacy decorator semantics | Moot in the default mode: Babel still lowers decorators, so semantics are identical by construction (34/34 on published 87.3). For the later `'swc'` flip, 34/34 gates were identical wherever `@persist` was not the blocker; the class-field define/set question is settled explicitly in config. |
+| Babel↔SWC legacy decorator semantics | Moot in the default mode: Babel still transforms decorators, so semantics are identical by construction (34/34 on published 87.3). For the later `'swc'` flip, 34/34 gates were identical wherever `@persist` was not the blocker; the class-field define/set question is settled explicitly in config. |
 | hoist-react module-graph fragility (#4640) | Contained, not fixed: `sideEffects: false` + `concatenateModules: false` reproduce webpack's regime. Bundle-size upside deferred until #4640 lands. |
 | Fast Refresh vs element-factory modules | Per-module limitation: modules exporting `hoistCmp({...})` components hot-swap (JobSite); camelCase `hoistCmp.factory` exports and models bubble to a full reload (0.4 s). Follow-up spike to register factory-wrapped components with react-refresh. |
 | Dev CSS HMR delivery | Was broken (stale hashed file re-fetched) and missed by the Toolbox harness; fixed (unhashed dev filenames) and verified by asserting computed style. |
