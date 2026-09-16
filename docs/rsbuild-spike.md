@@ -192,6 +192,10 @@ is what makes the eventual `'swc'` flip low-risk once `@persist` is emit-agnosti
   alternative worth trying later.
 - **Decorator metadata**: Rsbuild's legacy preset turns on `emitDecoratorMetadata`-style output;
   explicitly disabled (Hoist uses none, and it bloats every decorated class).
+- **No `.LICENSE.txt` sidecar for copied `public/` JS.** webpack's Terser pass minifies hoist's
+  `msal-redirect-bridge.min.js` and extracts its license banner to `msal-redirect-bridge.min.js.LICENSE.txt`;
+  Rsbuild now copies the file byte-for-byte with the banner inline and emits no sidecar. Not a copy
+  failure - the Rsbuild output is the more faithful of the two.
 - **`--env` flags** → `XH_*` environment variables / `--env-mode`. Release workflows will need the
   `appVersion` / `appBuild` overrides rewritten accordingly.
 - **Dev proxy option names** follow http-proxy-middleware v3 (`pathFilter`), not webpack-dev-server's
@@ -315,3 +319,12 @@ webpack `--env` control run did.
 Findings, all now recorded in the risk ledger: dev CSS HMR broken (fixed); `public/` files
 minified (fixed); Rspack emits nothing on a missing export where webpack emits with errors (kept as
 a documented difference); JobSite's webpack JS HMR is broken independently of this work.
+
+**Re-validation at `38fa4ff` (both fixes): PASS, no regressions.** Dev filenames unhashed
+(`app.js` / `app.css`; prod still `app.<hash>.js`). SCSS edits asserted via computed style: entry
+chunk `App.scss` applied in 80 ms, non-entry chunk `ClientReport.scss` in 76 ms, no reload either
+time; dev cold start 4.7 s. Prod build 19.6 s, 0 warnings / 0 errors; every file under
+`build/public/` with a source is byte-identical to it (`error-pages.css` 676 B, `msal-redirect-bridge.min.js`
+6460 B), while entry chunks remain single-line minified. Login → dashboard, a data screen with grid
+totals, the Blueprint menu (21 stubbed icons) and the changelog dialog identical to webpack's build
+against live Grails, console identical.
