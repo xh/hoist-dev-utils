@@ -279,9 +279,11 @@ async function configureWebpack(env) {
         resolveAliases['react'] = path.resolve('./node_modules/react');
         resolveAliases['react-dom'] = path.resolve('./node_modules/react-dom');
 
-        // Also ensure a single instance of ag-Grid when Hoist is inline, needed to support use of
-        // `useGridMenuItem` hook.
+        // Likewise a single instance of ag-Grid - the inline hoist-react checkout has its own copy,
+        // and values crossing copies fail `instanceof` checks (the `useGridMenuItem` hook, and the
+        // Theming API rejecting Hoist's theme with AG Grid error #240).
         resolveAliases['ag-grid-react'] = path.resolve('./node_modules/ag-grid-react');
+        resolveAliases['ag-grid-community'] = path.resolve('./node_modules/ag-grid-community');
     }
 
     // When running inline, resolve inline Hoist's own node_modules package so we can tell Babel to exclude
