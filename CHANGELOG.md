@@ -1,6 +1,6 @@
 # Changelog
 
-## 16.0.0-SNAPSHOT
+## 16.0.0-SNAPSHOT - unreleased
 
 ### 🎁 New Features
 
@@ -49,6 +49,13 @@
 * @rsbuild/plugin-react `added @ 2.1`
 * @rsbuild/plugin-sass `added @ 2.0`
 * @rsbuild/plugin-basic-ssl `added @ 1.2`
+
+## 15.0.2 - 2026-09-16
+
+### 🐞 Bug Fixes
+
+* `inlineHoist` mode now also aliases `ag-grid-community` to the app's copy, as it already did for
+  `ag-grid-react`.
 
 ## 15.0.1 - 2026-08-31
 
