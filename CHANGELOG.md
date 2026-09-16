@@ -14,11 +14,14 @@
   deep-import rewriting, SCSS, markdown-as-text (+ `?url`), per-app `index.html` and
   `manifest.json`, moment locale stripping, and pre-compressed assets. New options: `swcOptions`
   (replaces `babelPresetEnvOptions`), `minifyOptions` (replaces `terserOptions`), `logLevel`,
-  `minify`, `buildCache`. Build-time overrides arrive as `XH_*` environment variables via the
-  exported `readCliEnv()` helper, as the Rsbuild CLI has no `--env key=value` flag. Requires
-  hoist-react >= 88.0 (enforced), whose `@persist` decorator no longer depends on Babel-specific
-  emit. See `docs/rsbuild-spike.md` for measurements against Toolbox and the remaining risk ledger
-  (hoist-dev-utils #73).
+  `minify`, `buildCache`, `decoratorTransform`. Build-time overrides arrive as `XH_*` environment
+  variables via the exported `readCliEnv()` helper, as the Rsbuild CLI has no `--env key=value`
+  flag. Hoist's legacy decorators are lowered by Babel ahead of SWC by default
+  (`decoratorTransform: 'babel'`) - the same plugin and mode as `configureWebpack()`, so decorated
+  classes compile identically and the hoist-react floor is unchanged at 87.1. The `'swc'` mode
+  drops that Babel pass but requires hoist-react with transpiler-agnostic decorators (>= 88,
+  enforced). See `docs/rsbuild-spike.md` for measurements against Toolbox and the remaining risk
+  ledger (hoist-dev-utils #73).
 * Measured on Toolbox (10 entry points): production builds in roughly a quarter of the webpack
   wall-clock time at a third of the peak memory; dev-server cold start ~6x faster and edit-to-reload
   under half a second versus 2.6-4.2 s (React Fast Refresh does not yet engage for Hoist's
@@ -42,6 +45,7 @@
 ### 📚 Libraries
 
 * @rsbuild/core `added @ 2.2`
+* @rsbuild/plugin-babel `added @ 2.1`
 * @rsbuild/plugin-react `added @ 2.1`
 * @rsbuild/plugin-sass `added @ 2.0`
 * @rsbuild/plugin-basic-ssl `added @ 1.2`

@@ -26,6 +26,7 @@
         "@babel/preset-env": "^7.29.7",
         "@babel/preset-react": "^7.29.7",
         "@rsbuild/core": "~2.2.5",
+        "@rsbuild/plugin-babel": "~2.1.0",
         "@rsbuild/plugin-basic-ssl": "~1.2.3",
         "@rsbuild/plugin-react": "~2.1.0",
         "@rsbuild/plugin-sass": "~2.0.1",

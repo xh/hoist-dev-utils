@@ -13,6 +13,7 @@ const _ = require('lodash'),
     {rspack, version: rsbuildVersion} = require('@rsbuild/core'),
     {pluginReact} = require('@rsbuild/plugin-react'),
     {pluginSass} = require('@rsbuild/plugin-sass'),
+    {pluginBabel} = require('@rsbuild/plugin-babel'),
     HoistManifestPlugin = require('./lib/HoistManifestPlugin'),
     basePath = fs.realpathSync(process.cwd());
 
@@ -101,6 +102,14 @@ const hoistReactPkg = resolveAppPackage('@xh/hoist', basePath),
  * @param {string} [env.preloadSpinnerColor] - stroke color for the preloader spinner SVG. Defaults to a neutral gray (#888).
  * @param {string[]} [env.targetBrowsers] - array of browserslist queries specifying target browsers for JS
  *      transpiling, polyfill selection and CSS prefixing.
+ * @param {string} [env.decoratorTransform='babel'] - which transpiler lowers Hoist's legacy (TypeScript
+ *      `experimentalDecorators`) decorators. `'babel'` (default) runs Babel's `@babel/plugin-proposal-decorators` in
+ *      legacy mode ahead of SWC, exactly as `configureWebpack()` does - so decorator semantics are identical to the
+ *      webpack build by construction, at the cost of a Babel pass over app and hoist-react source. `'swc'` uses
+ *      SWC's own legacy-decorator lowering: faster, but its TypeScript-style emit passes field decorators no
+ *      descriptor, which hoist-react's `@persist` cannot work with before the TC39 decorators migration - so this
+ *      mode enforces a higher hoist-react floor. Once hoist-react ships transpiler-agnostic decorators the default
+ *      flips to `'swc'` and the Babel pass goes away.
  * @param {Object|Function} [env.swcOptions] - overrides for Rspack's `builtin:swc-loader` options, applied on top
  *      of the defaults set here - either an object to deep-merge, or a function receiving the options to mutate.
  *      Replaces `babelPresetEnvOptions`, which has no equivalent and is rejected if passed.
@@ -174,6 +183,7 @@ async function configureRsbuild(env) {
         preloadBackgroundColor = env.preloadBackgroundColor || 'white',
         preloadSpinnerColor = env.preloadSpinnerColor || '#888',
         logLevel = env.logLevel || 'info',
+        decoratorTransform = env.decoratorTransform || 'babel',
         targetBrowsers = env.targetBrowsers || DEFAULT_TARGET_BROWSERS,
         swcOptions = env.swcOptions || {},
         minifyOptions = env.minifyOptions || {},
@@ -181,7 +191,14 @@ async function configureRsbuild(env) {
         sourceMaps = parseFlag(env.sourceMaps, true),
         buildDate = new Date();
 
-    checkHoistReactVersion(hoistReactPkg, inlineHoist, MIN_HOIST_REACT_VERSION_RSBUILD);
+    if (!['babel', 'swc'].includes(decoratorTransform)) {
+        throw `Unknown "decoratorTransform" value "${decoratorTransform}" - expected 'babel' or 'swc'.`;
+    }
+    checkHoistReactVersion(
+        hoistReactPkg,
+        inlineHoist,
+        decoratorTransform === 'swc' ? MIN_HOIST_REACT_VERSION_RSBUILD : undefined
+    );
 
     process.env.NODE_ENV = prodBuild ? 'production' : 'development';
     process.env.REACT_NODE_ENV = reactProdMode ? 'production' : 'development';
@@ -197,6 +214,9 @@ async function configureRsbuild(env) {
     if (reactProdMode) logMsg('⚛️   React Production mode enabled');
     if (analyzeBundles) logMsg('🎁  Bundle analysis enabled');
     if (buildCache) logMsg('💾  Persistent build cache enabled');
+    logMsg(
+        `🎀  Legacy decorators lowered by ${decoratorTransform === 'babel' ? 'Babel (ahead of SWC)' : 'SWC'}`
+    );
     if (prodBuild && precompressAssets) logMsg('🗜️   Asset pre-compression enabled');
     logSep();
     logMsg('📚  Key libraries:');
@@ -333,6 +353,18 @@ async function configureRsbuild(env) {
             // Lightning CSS loader, driven by the same browserslist targets as SWC - so no
             // postcss/autoprefixer stage is needed here.
             pluginSass(),
+
+            // Legacy decorators via Babel, ahead of SWC - the same plugin, mode and per-extension
+            // TypeScript handling as configureWebpack's babel-loader, so decorated classes compile
+            // identically under both configs. SWC then receives plain JS (+ JSX in .tsx) and does
+            // everything else. See `decoratorTransform` above.
+            ...(decoratorTransform === 'babel'
+                ? [
+                      pluginBabel({
+                          babelLoaderOptions: () => legacyDecoratorBabelOptions(targetBrowsers)
+                      })
+                  ]
+                : []),
 
             // Self-signed cert for `devHttps: true`, mirroring webpack-dev-server's built-in behavior.
             ...(devHttps === true ? [require('@rsbuild/plugin-basic-ssl').pluginBasicSsl()] : [])
@@ -696,6 +728,45 @@ async function configureRsbuild(env) {
 //------------------------
 // Implementation
 //------------------------
+// Babel options for `decoratorTransform: 'babel'` - a deliberate subset of configureWebpack's
+// babel-loader config: the per-extension TypeScript strip (JSX parsed only in .tsx, so angle-bracket
+// type assertions stay valid in plain .ts) always ahead of the legacy decorators plugin, plus the
+// class-field transforms that plugin requires. No preset-react, no core-js: SWC handles JSX,
+// syntax lowering and polyfills downstream.
+function legacyDecoratorBabelOptions(targetBrowsers) {
+    const decorators = [require.resolve('@babel/plugin-proposal-decorators'), {version: 'legacy'}],
+        typescript = opts => [
+            require.resolve('@babel/plugin-transform-typescript'),
+            {allowDeclareFields: true, ...opts}
+        ];
+    return {
+        babelrc: false,
+        configFile: false,
+        compact: false,
+        presets: [
+            [
+                require.resolve('@babel/preset-env'),
+                {
+                    targets: targetBrowsers.join(', '),
+                    bugfixes: true,
+                    useBuiltIns: false,
+                    // Interop transforms required while legacy decorators are in use - Babel must
+                    // compile the class elements it decorates (as in configureWebpack).
+                    include: [
+                        'transform-class-properties',
+                        'transform-private-methods',
+                        'transform-private-property-in-object'
+                    ]
+                }
+            ]
+        ],
+        overrides: [
+            {test: /\.tsx$/, plugins: [typescript({isTSX: true}), decorators]},
+            {exclude: /\.tsx$/, plugins: [typescript(), decorators]}
+        ]
+    };
+}
+
 // Emit pre-compressed `.br` and `.gz` copies of bundled assets alongside the originals, for direct
 // serving by nginx via `brotli_static` / `gzip_static`. Doing this at build time is what makes
 // brotli quality 11 usable at all - it is far too slow to run per-request - and it drops the cost of
@@ -771,6 +842,7 @@ function readCliEnv(processEnv = process.env) {
         XH_ANALYZE_BUNDLES: 'analyzeBundles',
         XH_BUILD_CACHE: 'buildCache',
         XH_MINIFY: 'minify',
+        XH_DECORATOR_TRANSFORM: 'decoratorTransform',
         XH_DEV_HOST: 'devHost',
         XH_DEV_HTTPS: 'devHttps',
         XH_DEV_GRAILS_PORT: 'devGrailsPort',
