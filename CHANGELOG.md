@@ -14,7 +14,7 @@
   deep-import rewriting, SCSS, markdown-as-text (+ `?url`), per-app `index.html` and
   `manifest.json`, moment locale stripping, and pre-compressed assets. New options: `swcOptions`
   (replaces `babelPresetEnvOptions`), `minifyOptions` (replaces `terserOptions`), `logLevel`,
-  `minify`, `buildCache`, `decoratorTransform`. Build-time overrides arrive as `XH_*` environment
+  `minify`, `buildCache`, `decoratorTransform`, `devLiveReload`. Build-time overrides arrive as `XH_*` environment
   variables via the exported `readCliEnv()` helper, as the Rsbuild CLI has no `--env key=value`
   flag. Hoist's legacy decorators are transformed by Babel ahead of SWC by default
   (`decoratorTransform: 'babel'`) - the same plugin and mode as `configureWebpack()`, so decorated
@@ -27,7 +27,11 @@
   under half a second versus 2.6-4.2 s (React Fast Refresh hot-swaps modules exporting
   `hoistCmp({...})` components; Hoist's element-factory modules still reload the page - just an
   order of magnitude sooner). Output layout and runtime behavior verified equivalent on Toolbox and
-  on a client app - see the spike doc.
+  on two client apps (one pnpm, one yarn v1) - see the spike doc.
+* Added `devLiveReload` option to both `configureWebpack()` and `configureRsbuild()` - `false`
+  stops the dev server from reloading the page when an edit cannot be hot-swapped, the config-level
+  equivalent of webpack-dev-server's `--no-live-reload` flag (which has no Rsbuild counterpart).
+  Read from `XH_DEV_LIVE_RELOAD` by `readCliEnv()`.
 
 ### ⚙️ Technical
 

@@ -143,6 +143,10 @@ const hoistReactPkg = resolveAppPackage('@xh/hoist', basePath),
  * @param {number} [env.devWebpackPort] - port on which to start the dev server. (Historic name retained.) Dev-mode only.
  * @param {string} [env.devServerOpenPage] - path to auto-open when the dev server starts. Leave null to disable
  *      automatic page open on startup. Dev-mode only.
+ * @param {boolean} [env.devLiveReload=true] - false to stop the dev server from reloading the page when an edit
+ *      cannot be hot-swapped (the equivalent of webpack-dev-server's `--no-live-reload`). Hot-swaps of CSS and
+ *      Fast-Refresh-eligible components still apply; other edits are rebuilt but not applied until a manual
+ *      reload. Dev-mode only.
  * @param {(boolean|Object)} [env.devHttps] - `true` to run the dev server locally over SSL with an auto-generated
  *      self-signed cert (browser will warn). Or provide an object of Node `https.createServer` options to enable SSL
  *      while specifying a custom cert/key. Default `false` runs locally over HTTP only. Dev-mode only.
@@ -166,6 +170,7 @@ async function configureRsbuild(env) {
         buildCache = parseFlag(env.buildCache, false) === true,
         minify = parseFlag(env.minify, true) === true,
         devClientOverlay = env.devClientOverlay ?? {errors: true, runtimeErrors: false},
+        devLiveReload = parseFlag(env.devLiveReload, true) === true,
         devHost = env.devHost ? env.devHost.toLowerCase() : 'localhost',
         devHttps = prodBuild ? null : _.isPlainObject(env.devHttps) ? env.devHttps : !!env.devHttps,
         devGrailsPort = env.devGrailsPort || 8080,
@@ -542,6 +547,9 @@ async function configureRsbuild(env) {
             ? undefined
             : {
                   progressBar: true,
+                  // Full-page fallback when an update cannot be hot-applied (models, element-factory
+                  // modules) - off for webpack-dev-server's `--no-live-reload` workflow.
+                  liveReload: devLiveReload,
                   client: {
                       overlay:
                           devClientOverlay === false
@@ -858,6 +866,7 @@ function readCliEnv(processEnv = process.env) {
         XH_DEV_HTTPS: 'devHttps',
         XH_DEV_GRAILS_PORT: 'devGrailsPort',
         XH_DEV_PORT: 'devWebpackPort',
+        XH_DEV_LIVE_RELOAD: 'devLiveReload',
         XH_LOG_LEVEL: 'logLevel'
     };
     const ret = {};

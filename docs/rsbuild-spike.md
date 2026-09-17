@@ -89,6 +89,7 @@ release window - and it is what unlocks the right-hand column above.
 | Public-dir copy (hoist + app, app wins) | ✅ | `output.copy` (CopyRspackPlugin); Rsbuild's own `server.publicDir` disabled. `preflight.js` cache-busted by a content hash rather than the compilation hash. |
 | Dev server: Grails proxy, per-app `historyApiFallback`, HTTPS, overlay | ✅ (HTTPS untested) | http-proxy-middleware v3 options - note `pathFilter`, not webpack-dev-server's `context` (see Known differences); rewrites per app; `devHttps: true` uses `@rsbuild/plugin-basic-ssl` for a self-signed cert, object form passes through to `server.https`. Overlay maps `{errors, runtimeErrors}` → `{errors, runtime}`; there is no `warnings` equivalent. |
 | React Fast Refresh with Hoist idioms | measured | See dev-server results. |
+| `--no-live-reload` workflow | ✅ | New `devLiveReload` option on both configs (`XH_DEV_LIVE_RELOAD` on the CLI side): `dev.liveReload` on Rsbuild, `devServer.liveReload` on webpack. Rsbuild's client still logs "performing full reload" on a non-accepted update, but its `fullReload()` is gated on the flag and no navigation occurs - verified with a model edit against Toolbox. |
 | SWC minifier parity with the Terser stance | ✅ | `keep_classnames` / `keep_fnames` on both `compress` and `mangle`; gates confirm `constructor.name` survives (hoist's `@abstract` message and `xhName` depend on it). |
 | Prod output diff vs webpack | ✅ | Same layout (`<app>/index.html`, JS/CSS at root, `static/media/*`, `public/**`, `.br`/`.gz` twins, `.LICENSE.txt`, source maps). Chunk *composition* differs - see Known differences. |
 | Measurements | ✅ | Table above and below. |
@@ -195,7 +196,10 @@ is what makes the eventual `'swc'` flip low-risk once `@persist` is emit-agnosti
 - **No `.LICENSE.txt` sidecar for copied `public/` JS.** webpack's Terser pass minifies hoist's
   `msal-redirect-bridge.min.js` and extracts its license banner to `msal-redirect-bridge.min.js.LICENSE.txt`;
   Rsbuild now copies the file byte-for-byte with the banner inline and emits no sidecar. Not a copy
-  failure - the Rsbuild output is the more faithful of the two.
+  failure - the Rsbuild output is the more faithful of the two. Same root, opposite direction:
+  Rsbuild emits `.br` / `.gz` twins for `public/preflight.js` and webpack does not, because the
+  verbatim 1895 B file clears the 1024 B compression threshold while webpack's minified 1020 B copy
+  does not.
 - **`--env` flags** → `XH_*` environment variables / `--env-mode`. Release workflows will need the
   `appVersion` / `appBuild` overrides rewritten accordingly.
 - **Dev proxy option names** follow http-proxy-middleware v3 (`pathFilter`), not webpack-dev-server's
@@ -256,7 +260,8 @@ Notes:
 | hoist-react module-graph fragility (#4640) | Contained, not fixed: `sideEffects: false` + `concatenateModules: false` reproduce webpack's regime. Bundle-size upside deferred until #4640 lands. |
 | Fast Refresh vs element-factory modules | Per-module limitation: modules exporting `hoistCmp({...})` components hot-swap (JobSite); camelCase `hoistCmp.factory` exports and models bubble to a full reload (0.4 s). Follow-up spike to register factory-wrapped components with react-refresh. |
 | Dev CSS HMR delivery | Was broken (stale hashed file re-fetched) and missed by the Toolbox harness; fixed (unhashed dev filenames) and verified by asserting computed style. |
-| `public/` files altered by minimizers | Rspack's SWC / Lightning CSS minimizers processed `output.copy` assets (webpack's Terser config left them alone). Fixed with `info: {minimized: true}` on the copy patterns; hoist's `msal-redirect-bridge.min.js` and `preflight.js` now byte-identical to source. |
+| `public/` files altered by minimizers | Rspack's SWC / Lightning CSS minimizers processed `output.copy` assets. Fixed with `info: {minimized: true}` on the copy patterns; every copied file is now byte-identical to its source (verified on Toolbox, JobSite and Veracity). Note webpack has never been clean here either: Terser processes every emitted `.js`, so it minifies hoist's `preflight.js` (1895 → 1020 B) and `msal-redirect-bridge.min.js` and extracts the latter's banner to a `.LICENSE.txt`; only CSS was untouched, because the webpack config has no CSS minimizer at all. The Rsbuild output is the one that honors the `copyPublicAssets` contract. |
+| Package-manager layouts | pnpm (strict) is where the config was built; Toolbox and JobSite validated on it. yarn v1 (hoisted) validated on Veracity: native optional deps install, the `rsbuild` bin is on the script path with no configuration, singletons dedupe. npm is untested but shares yarn's hoisting model. One yarn/npm-only wrinkle: `sass-embedded` duplicates (see the Veracity section). |
 | Missing-export strictness | Both configs treat a missing named export as an error (`strictExportPresence` / `exportsPresence: 'error'`), but webpack still emits a bundle while Rspack emits nothing. Fail-fast, and a workflow change when working through framework drift in `inlineHoist` mode. |
 | pnpm resolution parity | Improved (Blueprint stubs no longer NODE_PATH-dependent). Loaders/plugins are all resolved from within dev-utils. |
 | Third-party webpack plugins on Rspack | `compression-webpack-plugin`, `webpack-bundle-analyzer`, html template all worked unchanged. `HoistManifestPlugin` runs on both. |
@@ -279,7 +284,14 @@ Notes:
    `resolveAliases`, `targetBrowsers`, release `--env` plumbing). JobSite is done (below) and
    should be re-run against the two fixes; apps using `extraModuleRules` / `resolveAliases` are the
    next most valuable targets.
-7. File the pre-existing webpack JS HMR failure JobSite exhibits
+7. Record a package-manager support statement in hoist-react's `docs/version-compatibility.md`
+   row for dev-utils 16: pnpm recommended and primary, yarn v1 validated, npm expected to behave as
+   yarn (hoisted) but untested. Migrating an app's package manager is independent of the bundler
+   switch and should land as its own commit first, so that a regression is attributable.
+8. Consider warning on unrecognized `env` keys in both configs. Veracity has been passing
+   `dupePackageCheckExcludes` (dead since the duplicate-package checker was removed in 15.x) with
+   no signal from either config.
+9. File the pre-existing webpack JS HMR failure JobSite exhibits
    (`self.webpackHotUpdatejobsite is not a function`, reproduced on published dev-utils 15.0.1) as
    its own issue - unrelated to this work, but it means JobSite developers have had no JS HMR under
    webpack at all.
@@ -328,3 +340,51 @@ time; dev cold start 4.7 s. Prod build 19.6 s, 0 warnings / 0 errors; every file
 6460 B), while entry chunks remain single-line minified. Login → dashboard, a data screen with grid
 totals, the Blueprint menu (21 stubbed icons) and the changelog dialog identical to webpack's build
 against live Grails, console identical.
+
+## Client-app validation: Veracity (yarn v1)
+
+Run by a local agent against Veracity (4 entry points, yarn 1.22 classic, 8 `webpack.config.js`
+options, 89 SCSS files, `@xh/hoist` 87.3) on an M1 Mac at `38fa4ff`, with no backend available.
+Purpose: does a hoisted, non-pnpm layout adopt `configureRsbuild()` as published, and what are a
+yarn app's migration steps. **Yes, with no dev-utils packaging change.** Single runs.
+
+| | webpack | Rsbuild |
+|---|---|---|
+| Production build wall clock | 59.5 s | 29.1 s |
+| Production build peak RSS | 5.11 GiB | 2.39 GiB |
+| JS / CSS emitted (raw) | 21.61 MB / 1.58 MB | 20.60 MB / 1.35 MB |
+| Initial payload `/app/` (raw / brotli) | 16.84 / 2.84 MB | 14.99 / 2.64 MB |
+| Dev cold start → first served page | not run | 6.9 s, default Node heap (webpack script needs 3 GB) |
+| Edit SCSS (`core.scss`), computed style asserted | not run | hot-swapped, 1.02 s, no reload |
+| Edit component (`App.ts`, `hoistCmp({...})`) | not run | rebuild 0.10 s → hot-swap, no reload |
+| Edit model (`AppModel.ts`) | not run | rebuild 0.13 s → full reload, 203 ms |
+
+Install shape under yarn: the host-platform `@rspack/binding-*` and `sass-embedded-*` optional
+dependencies installed with no `optional dependency skipped` or `engines` warning; the `rsbuild` bin
+landed in `node_modules/.bin` with no configuration (pnpm needs `publicHoistPattern` because it
+links only direct dependencies' bins); `@rsbuild/core`, `@rspack/core`, `@rspack/binding`, `react`
+and `react-dom` each resolved to exactly one copy; a repeat `yarn install` left `yarn.lock`
+byte-identical. Static output parity: `manifest.json` byte-identical on all four entries; every
+`public/**` file byte-identical to source on the Rsbuild side (webpack's are not - see the risk
+ledger); the pre-login console identical for both builds served statically (one message each,
+Hoist's exception handler reporting the missing backend).
+
+Yarn-specific findings:
+
+- **Testing a local dev-utils checkout from a yarn app: use a tarball.** `yarn add -D file:<dir>`
+  copies the whole working tree, `node_modules` included (296 MB against the published package's 42
+  KB), and the nested pnpm store then *wins* resolution for dev-utils' dependencies - exactly the
+  shadowing the exercise is meant to avoid. `npm pack --pack-destination <tmp>` in the checkout
+  (which honors `files`) followed by `yarn add -D file:<tmp>/<tarball>.tgz` is the correct method.
+- **`sass-embedded` duplicates under a hoisted layout.** dev-utils pins `~1.103.1` (for the webpack
+  path's `sass-loader`); `@rsbuild/plugin-sass` declares `^1.100.0`, which yarn resolved to 1.104.1
+  and nested under the plugin. Two ~10 MB native binaries, both genuinely used, builds clean. pnpm
+  dedupes onto one. A yarn or npm app can collapse it with a `resolutions` / `overrides` entry;
+  alternatively dev-utils could carry a caret range for this one dependency so both specs resolve
+  together at install time. Open, minor.
+- **One option with no translation:** the app's `startWithoutReload` script
+  (`webpack-dev-server --no-live-reload`). Closed by the new `devLiveReload` option /
+  `XH_DEV_LIVE_RELOAD` on both configs.
+- **CI lives outside the app repo** (a shared organization workflow), so the `--env` → `XH_*`
+  rewrite has to be audited there. Expect this pattern at other clients.
+- Install warnings were all pre-existing (React 19 peers on `^18` libraries, yarn workspaces notice).

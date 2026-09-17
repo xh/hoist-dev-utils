@@ -123,6 +123,10 @@ const hoistReactPkg = resolveAppPackage('@xh/hoist', basePath),
  * @param {number} [env.devWebpackPort] - port on which to start webpack-dev-server. Dev-mode only.
  * @param {string} [env.devServerOpenPage] - path to auto-open when webpack-dev-server starts. Leave null to disable
  *      automatic page open on startup. Dev-mode only.
+ * @param {boolean} [env.devLiveReload=true] - false to stop the dev server from reloading the page when an edit
+ *      cannot be hot-swapped (the `--no-live-reload` CLI flag as a config option). Hot-swaps of CSS and
+ *      Fast-Refresh-eligible components still apply; other edits are rebuilt but not applied until a manual
+ *      reload. Dev-mode only.
  *  @param {(boolean|Object)} [env.devHttps] - `true` to run webpack-dev-server locally over SSL w/o providing a cert
  *      (browser will warn). Or provide an object that will be passed to `devServer.server.options` to enable SSL and
  *      while specifying a custom cert/key. Default `false` runs locally over HTTP only. Dev-mode only.
@@ -146,6 +150,7 @@ async function configureWebpack(env) {
             runtimeErrors: false
         },
         devHost = env.devHost ? env.devHost.toLowerCase() : 'localhost',
+        devLiveReload = parseFlag(env.devLiveReload, true) === true,
         devHttps = prodBuild ? null : _.isPlainObject(env.devHttps) ? env.devHttps : !!env.devHttps,
         devGrailsPort = env.devGrailsPort || 8080,
         devWebpackPort = env.devWebpackPort || 3000,
@@ -725,6 +730,7 @@ async function configureWebpack(env) {
                   host: devHost,
                   port: devWebpackPort,
                   hot: true, // Hot module replacement is only supported for SCSS. JS/TS files trigger live reload.
+                  liveReload: devLiveReload,
                   client: {overlay: devClientOverlay},
                   server:
                       devHttps === true
