@@ -266,8 +266,8 @@ Notes:
 | hoist-react module-graph fragility (#4640) | Contained, not fixed: `sideEffects: false` + `concatenateModules: false` reproduce webpack's regime. Bundle-size upside deferred until #4640 lands. |
 | Fast Refresh vs element-factory modules | Per-module limitation: modules exporting `hoistCmp({...})` components hot-swap (JobSite); camelCase `hoistCmp.factory` exports and models bubble to a full reload (0.4 s). Follow-up spike to register factory-wrapped components with react-refresh. |
 | Dev CSS HMR delivery | Was broken (stale hashed file re-fetched) and missed by the Toolbox harness; fixed (unhashed dev filenames) and verified by asserting computed style. |
-| `public/` files altered by minimizers | Rspack's SWC / Lightning CSS minimizers processed `output.copy` assets. Fixed with `info: {minimized: true}` on the copy patterns; every copied file is now byte-identical to its source (verified on Toolbox, JobSite and Veracity). Note webpack has never been clean here either: Terser processes every emitted `.js`, so it minifies hoist's `preflight.js` (1895 → 1020 B) and `msal-redirect-bridge.min.js` and extracts the latter's banner to a `.LICENSE.txt`; only CSS was untouched, because the webpack config has no CSS minimizer at all. The Rsbuild output is the one that honors the `copyPublicAssets` contract. |
-| Package-manager layouts | pnpm (strict) is where the config was built; Toolbox and JobSite validated on it. yarn v1 (hoisted) validated on Veracity: native optional deps install, the `rsbuild` bin is on the script path with no configuration, singletons dedupe. npm is untested but shares yarn's hoisting model. One yarn/npm-only wrinkle: `sass-embedded` duplicates (see the Veracity section). |
+| `public/` files altered by minimizers | Rspack's SWC / Lightning CSS minimizers processed `output.copy` assets. Fixed with `info: {minimized: true}` on the copy patterns; every copied file is now byte-identical to its source (verified on Toolbox, JobSite and a yarn v1 client app). Note webpack has never been clean here either: Terser processes every emitted `.js`, so it minifies hoist's `preflight.js` (1895 → 1020 B) and `msal-redirect-bridge.min.js` and extracts the latter's banner to a `.LICENSE.txt`; only CSS was untouched, because the webpack config has no CSS minimizer at all. The Rsbuild output is the one that honors the `copyPublicAssets` contract. |
+| Package-manager layouts | pnpm (strict) is where the config was built; Toolbox and JobSite validated on it. yarn v1 (hoisted) validated on a client app: native optional deps install, the `rsbuild` bin is on the script path with no configuration, singletons dedupe. npm is untested but shares yarn's hoisting model. One yarn/npm-only wrinkle: `sass-embedded` duplicates (see the yarn v1 section). |
 | Missing-export strictness | Both configs treat a missing named export as an error (`strictExportPresence` / `exportsPresence: 'error'`), but webpack still emits a bundle while Rspack emits nothing. Fail-fast, and a workflow change when working through framework drift in `inlineHoist` mode. |
 | pnpm resolution parity | Improved (Blueprint stubs no longer NODE_PATH-dependent). Loaders/plugins are all resolved from within dev-utils. |
 | Third-party webpack plugins on Rspack | `compression-webpack-plugin`, `webpack-bundle-analyzer`, html template all worked unchanged. `HoistManifestPlugin` runs on both. |
@@ -296,7 +296,7 @@ Notes:
    yarn (hoisted) but untested. Migrating an app's package manager is independent of the bundler
    switch and should land as its own commit first, so that a regression is attributable.
 8. Done: both configs warn on unrecognized `env` keys (`warnUnknownOptions()` in `lib/common.js`,
-   against the union of both configs' options). Prompted by Veracity passing
+   against the union of both configs' options). Prompted by a client app passing
    `dupePackageCheckExcludes`, dead since the duplicate-package checker was removed in 15.x, with no
    signal from either config.
 9. File the pre-existing webpack JS HMR failure JobSite exhibits
@@ -349,9 +349,9 @@ time; dev cold start 4.7 s. Prod build 19.6 s, 0 warnings / 0 errors; every file
 totals, the Blueprint menu (21 stubbed icons) and the changelog dialog identical to webpack's build
 against live Grails, console identical.
 
-## Client-app validation: Veracity (yarn v1)
+## Client-app validation: a yarn v1 client app
 
-Run by a local agent against Veracity (4 entry points, yarn 1.22 classic, 8 `webpack.config.js`
+Run by a local agent against a private client app (4 entry points, yarn 1.22 classic, 8 `webpack.config.js`
 options, 89 SCSS files, `@xh/hoist` 87.3) on an M1 Mac at `38fa4ff`, with no backend available.
 Purpose: does a hoisted, non-pnpm layout adopt `configureRsbuild()` as published, and what are a
 yarn app's migration steps. **Yes, with no dev-utils packaging change.** Single runs.
