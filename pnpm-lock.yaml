@@ -191,7 +191,7 @@ importers:
         specifier: ~8.2.1
         version: 8.2.1(postcss@8.5.26)(typescript@5.9.3)(webpack@5.110.2)
       sass-embedded:
-        specifier: ~1.103.1
+        specifier: ^1.103.1
         version: 1.103.1
       sass-loader:
         specifier: ~17.0.1

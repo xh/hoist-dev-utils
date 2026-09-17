@@ -33,8 +33,17 @@
   stops the dev server from reloading the page when an edit cannot be hot-swapped, the config-level
   equivalent of webpack-dev-server's `--no-live-reload` flag (which has no Rsbuild counterpart).
   Read from `XH_DEV_LIVE_RELOAD` by `readCliEnv()`.
+* Both `configureWebpack()` and `configureRsbuild()` now warn about `env` options they do not
+  recognize (misspelled, or removed in an earlier release) instead of ignoring them silently. A
+  warning in the build banner, not an error; options belonging to the other config are accepted
+  without comment so one options object can serve both.
 
 ### ⚙️ Technical
+
+* `sass-embedded` is now specified as `^1.103.1` rather than a tilde range. `@rsbuild/plugin-sass`
+  depends on the same package at `^1.100.0`; under hoisting package managers (yarn, npm) the two
+  ranges resolved to different versions and installed two copies of the ~10 MB native binary. A
+  caret lets both resolve to one version at install time.
 
 * Extracted the bundler-agnostic parts of `configureWebpack.js` (hoist-react version check,
   entry discovery, CHANGELOG parsing, Blueprint icon stubs, manifest content, logging) into

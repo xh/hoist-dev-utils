@@ -295,9 +295,10 @@ Notes:
    row for dev-utils 16: pnpm recommended and primary, yarn v1 validated, npm expected to behave as
    yarn (hoisted) but untested. Migrating an app's package manager is independent of the bundler
    switch and should land as its own commit first, so that a regression is attributable.
-8. Consider warning on unrecognized `env` keys in both configs. Veracity has been passing
-   `dupePackageCheckExcludes` (dead since the duplicate-package checker was removed in 15.x) with
-   no signal from either config.
+8. Done: both configs warn on unrecognized `env` keys (`warnUnknownOptions()` in `lib/common.js`,
+   against the union of both configs' options). Prompted by Veracity passing
+   `dupePackageCheckExcludes`, dead since the duplicate-package checker was removed in 15.x, with no
+   signal from either config.
 9. File the pre-existing webpack JS HMR failure JobSite exhibits
    (`self.webpackHotUpdatejobsite is not a function`, reproduced on published dev-utils 15.0.1) as
    its own issue - unrelated to this work, but it means JobSite developers have had no JS HMR under
@@ -386,9 +387,8 @@ Yarn-specific findings:
 - **`sass-embedded` duplicates under a hoisted layout.** dev-utils pins `~1.103.1` (for the webpack
   path's `sass-loader`); `@rsbuild/plugin-sass` declares `^1.100.0`, which yarn resolved to 1.104.1
   and nested under the plugin. Two ~10 MB native binaries, both genuinely used, builds clean. pnpm
-  dedupes onto one. A yarn or npm app can collapse it with a `resolutions` / `overrides` entry;
-  alternatively dev-utils could carry a caret range for this one dependency so both specs resolve
-  together at install time. Open, minor.
+  dedupes onto one. Resolved on the dev-utils side: `sass-embedded` is now `^1.103.1`, so both
+  specs resolve to a single version at install time under any package manager.
 - **One option with no translation:** the app's `startWithoutReload` script
   (`webpack-dev-server --no-live-reload`). Closed by the new `devLiveReload` option /
   `XH_DEV_LIVE_RELOAD` on both configs.

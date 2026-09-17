@@ -33,6 +33,7 @@ const {
     generateBlueprintIconStubs,
     safeRealpath,
     parseFlag,
+    warnUnknownOptions,
     logSep,
     logMsg
 } = require('./lib/common');
@@ -330,6 +331,7 @@ async function configureRsbuild(env) {
     logMsg('🎁  App bundle entry points:');
     clientAppNames.forEach(it => logMsg(`  > ${it}`));
     logSep();
+    warnUnknownOptions(env);
     logMsg('🤕  Something going wrong?');
     logMsg('  > support@xh.io');
     logMsg('  > https://xh.io/contact/');
