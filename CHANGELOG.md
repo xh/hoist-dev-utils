@@ -16,7 +16,8 @@
   (replaces `babelPresetEnvOptions`), `minifyOptions` (replaces `terserOptions`), `logLevel`,
   `minify`, `buildCache`, `decoratorTransform`, `devLiveReload`. Build-time overrides arrive as `XH_*` environment
   variables via the exported `readCliEnv()` helper, as the Rsbuild CLI has no `--env key=value`
-  flag. Hoist's legacy decorators are transformed by Babel ahead of SWC by default
+  flag - set in CI, or in the `.env` / `.env.local` / `.env.<mode>` files Rsbuild's CLI loads before
+  evaluating the config. Hoist's legacy decorators are transformed by Babel ahead of SWC by default
   (`decoratorTransform: 'babel'`) - the same plugin and mode as `configureWebpack()`, so decorated
   classes compile identically and the hoist-react floor is unchanged at 87.1. The `'swc'` mode
   drops that Babel pass but requires hoist-react with transpiler-agnostic decorators (>= 88,

@@ -842,11 +842,19 @@ function rejectUnsupported(env) {
 
 /**
  * Read the standard `XH_*` environment variables into env options, for CLI-driven overrides
- * (Rsbuild's CLI has no `--env key=value` flag). Spread the result into the config passed to
+ * (Rsbuild's CLI has no `--env key=value` flag, and we deliberately do not emulate one - the name is
+ * taken by Rsbuild's own dotenv toggle). Spread the result into the config passed to
  * `configureRsbuild()` after the app's own defaults, e.g.:
  *
  *      XH_PROD_BUILD=true XH_APP_VERSION=1.2.3 rsbuild build
  *      XH_INLINE_HOIST=true rsbuild dev
+ *
+ * The same variables can live in dotenv files, which Rsbuild's CLI loads into `process.env` before
+ * it evaluates the config file: `.env`, `.env.local`, `.env.<mode>` and `.env.<mode>.local` in the
+ * app directory, with `<mode>` from `--env-mode`. So `XH_PROD_BUILD=true` in `.env.prod` applies to
+ * every `rsbuild build --env-mode prod`, and a gitignored `.env.local` is the place for a developer's
+ * own `XH_DEV_HOST` or `XH_DEV_LIVE_RELOAD=false`. Only `PUBLIC_`-prefixed variables are exposed to
+ * client code by Rsbuild; `XH_*` values stay build-time.
  *
  * Boolean-ish values ('true' / 'false') are normalized; unset variables are omitted so app
  * defaults win.

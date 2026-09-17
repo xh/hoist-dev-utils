@@ -200,8 +200,14 @@ is what makes the eventual `'swc'` flip low-risk once `@persist` is emit-agnosti
   Rsbuild emits `.br` / `.gz` twins for `public/preflight.js` and webpack does not, because the
   verbatim 1895 B file clears the 1024 B compression threshold while webpack's minified 1020 B copy
   does not.
-- **`--env` flags** → `XH_*` environment variables / `--env-mode`. Release workflows will need the
-  `appVersion` / `appBuild` overrides rewritten accordingly.
+- **`--env` flags** → `--env-mode` for the build mode, `XH_*` environment variables for CI
+  overrides, and the same variables in `.env` / `.env.local` / `.env.<mode>` files (loaded by
+  Rsbuild's CLI into `process.env` before the config runs - verified: `XH_APP_VERSION` in
+  `.env.probe` reached the banner via `--env-mode probe`) for per-mode and per-developer defaults.
+  Release workflows need their `appVersion` / `appBuild` overrides rewritten as variables. A
+  dev-utils bin re-introducing `--env key=value` was considered and rejected: Rsbuild's own `--env`
+  is a dotenv toggle, so the name would carry two meanings, the concept is webpack-cli-specific,
+  and the script lines change anyway with the command name.
 - **Dev proxy option names** follow http-proxy-middleware v3 (`pathFilter`), not webpack-dev-server's
   `context` - the first dev-server run proxied *every* request to Grails because of exactly this.
   Anything an app passes via `devServerOptions.proxy` needs the same translation.
@@ -277,7 +283,8 @@ Notes:
 3. Tune `splitChunks` (or accept the current grouping), then revisit `concatenateModules` /
    `sideEffects` together with #4640.
 4. Migrate customer apps opportunistically: swap `webpack.config.js` for `rsbuild.config.mjs`, add
-   `@rsbuild/core` to `publicHoistPattern`, rewrite release `--env` flags as `XH_*` variables.
+   `@rsbuild/core` to `publicHoistPattern` (pnpm only), rewrite release `--env` flags as `XH_*`
+   variables, and fold `startWith...` script variants into a gitignored `.env.local`.
 5. Update `docs/version-compatibility.md` in hoist-react (done for the 16.0 row; floor unchanged at 87.1).
 6. Validate on more client apps, not just Toolbox - the `sideEffects: false` episode showed Toolbox is
    not representative of the option surface client apps exercise (`extraModuleRules`,

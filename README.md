@@ -88,11 +88,23 @@ export default ({envMode}) =>
     });
 ```
 
-Run with `rsbuild dev` / `rsbuild build --env-mode prod`. Rsbuild's CLI has no `--env key=value`
-flag, so build-time overrides arrive as environment variables mapped by `readCliEnv()` - e.g.
-`XH_APP_VERSION=1.2.3 XH_APP_BUILD=abc123 rsbuild build --env-mode prod`. Under pnpm, add
-`@rsbuild/core` to the app's `publicHoistPattern` so the `rsbuild` bin is on the script path (as
-Toolbox does for `webpack`). Options that have no SWC equivalent (`babelPresetEnvOptions`,
+Run with `rsbuild dev` / `rsbuild build --env-mode prod`. Build-time options reach
+`configureRsbuild()` in three layers, none of them webpack's `--env key=value` (Rsbuild's CLI has
+no such flag, and its own `--env` means something else):
+
+1. **Mode** - `--env-mode prod` / `--env-mode inlineHoist`, mapped in the app's config onto
+   `prodBuild` / `inlineHoist` as above.
+2. **CI overrides** - `XH_*` environment variables mapped by `readCliEnv()`, e.g.
+   `XH_APP_VERSION=1.2.3 XH_APP_BUILD=abc123 rsbuild build --env-mode prod`.
+3. **Per-mode and per-developer defaults** - the same `XH_*` variables in dotenv files, which
+   Rsbuild loads into `process.env` before evaluating the config: `.env`, `.env.local`,
+   `.env.<mode>` and `.env.<mode>.local` in the app directory. A gitignored `.env.local` is where a
+   developer's `XH_DEV_HOST` or `XH_DEV_LIVE_RELOAD=false` belongs, replacing the one-off
+   `startWith...` script variants of the webpack era. Only `PUBLIC_`-prefixed variables are exposed
+   to client code; `XH_*` values stay build-time.
+
+Under pnpm, add `@rsbuild/core` to the app's `publicHoistPattern` so the `rsbuild` bin is on the
+script path (as Toolbox does for `webpack`); yarn and npm hoist it with no configuration. Options that have no SWC equivalent (`babelPresetEnvOptions`,
 `terserOptions`) are rejected with a pointer to their replacements (`swcOptions`, `minifyOptions`).
 See [`docs/rsbuild-spike.md`](docs/rsbuild-spike.md) for the parity table, Toolbox measurements
 and known differences.
