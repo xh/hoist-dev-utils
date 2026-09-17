@@ -44,7 +44,6 @@
   depends on the same package at `^1.100.0`; under hoisting package managers (yarn, npm) the two
   ranges resolved to different versions and installed two copies of the ~10 MB native binary. A
   caret lets both resolve to one version at install time.
-
 * Extracted the bundler-agnostic parts of `configureWebpack.js` (hoist-react version check,
   entry discovery, CHANGELOG parsing, Blueprint icon stubs, manifest content, logging) into
   `lib/common.js`, and the per-app `manifest.json` plugin into `lib/HoistManifestPlugin.js`, both
