@@ -20,6 +20,13 @@ Decorator release - moves the build from legacy decorators to the TC39 Stage 3 s
   decorator transform desugars decorated classes into static blocks, and the build fails without
   it.
 
+## 15.0.2 - 2026-09-16
+
+### 🐞 Bug Fixes
+
+* `inlineHoist` mode now also aliases `ag-grid-community` to the app's copy, as it already did for
+  `ag-grid-react`.
+
 ## 15.0.1 - 2026-08-31
 
 ### 🐞 Bug Fixes
