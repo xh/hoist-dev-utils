@@ -9,10 +9,10 @@ Decorator release - moves the build from legacy decorators to the TC39 Stage 3 s
 * **Requires hoist-react >= 88.**
 * **TC39 decorators.** `@babel/plugin-proposal-decorators` flips from `{version: 'legacy'}` to
   `{version: '2023-11'}` (the current spec revision), matching hoist-react v88's move to TC39
-  Stage 3 decorators. The two
-  releases must be taken together - the transform is a build-wide setting, so it applies to
-  hoist-react source and app source alike, and neither version pairs with the other's decorator
-  syntax. App code requires corresponding changes: see the hoist-react v88 release notes.
+  Stage 3 decorators. The two releases must be taken together - the transform is a build-wide
+  setting, so it applies to hoist-react source and app source alike, and neither version pairs
+  with the other's decorator syntax. App code requires corresponding changes: see the
+  hoist-react v88 release notes.
 
 ### ⚙️ Technical
 

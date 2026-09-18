@@ -512,13 +512,9 @@ async function configureWebpack(env) {
                                                 // Opt-in for Babel 7; default in Babel 8.
                                                 bugfixes: true,
 
-                                                // Class-element transforms the decorators plugin
-                                                // requires - it desugars decorated classes into
-                                                // static blocks and private elements, and Babel must
-                                                // be able to compile those. Without the static-block
-                                                // entry the build fails outright on any decorated
-                                                // class. Drop only if targets ever cover all four
-                                                // natively AND the plugin no longer needs them.
+                                                // Class-element transforms required by the decorators
+                                                // plugin, which desugars decorated classes into static
+                                                // blocks and private elements. Build fails without them.
                                                 include: [
                                                     'transform-class-properties',
                                                     'transform-class-static-block',
@@ -861,15 +857,9 @@ async function configureWebpack(env) {
 //------------------------
 // Babel plugins shared by both per-extension branches of the loader's `overrides` config.
 const sharedBabelPlugins = [
-    // Support TC39 Stage 3 decorators, used by hoist-react and compatible apps. `2023-11` is the
-    // current spec revision and the newest Babel supports - field/accessor `addInitializer`
-    // callbacks run right after the element initializes, and output is slightly smaller than
-    // `2023-05`.
-    // See notes @ https://babeljs.io/docs/babel-plugin-proposal-decorators
-    // and https://mobx.js.org/enabling-decorators.html
-    // Apps upgrading from legacy decorators must also add the `accessor` keyword to
-    // `@observable` / `@bindable` fields and remove `makeObservable(this)` calls - see the
-    // hoist-react upgrade notes.
+    // TC39 Stage 3 decorators, as used by hoist-react. `2023-11` is the latest spec revision Babel
+    // supports. See https://babeljs.io/docs/babel-plugin-proposal-decorators and
+    // https://mobx.js.org/enabling-decorators.html
     [require.resolve('@babel/plugin-proposal-decorators'), {version: '2023-11'}],
 
     // Avoid importing every FA icon ever made.
