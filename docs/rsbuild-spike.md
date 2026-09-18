@@ -149,7 +149,10 @@ is what makes the eventual `'swc'` flip low-risk once `@persist` is emit-agnosti
    runs `@babel/plugin-proposal-decorators` (legacy) with the same per-extension TypeScript
    handling as `configureWebpack()` ahead of SWC, so decorated classes compile through the very
    same plugin under both configs. Cost and payoff are in the table above. `'swc'` mode stays
-   available behind a hoist-react >= 88 floor for the post-TC39 world.
+   selectable for measurement, warning at build time that SWC's legacy emit breaks `@persist` on
+   current hoist-react releases. It becomes the default, on the `2023-11` emit, in the release
+   that pairs with the TC39 migration (hoist-react #4333) - whichever hoist-react version carries
+   it.
 2. **Module concatenation trips hoist-react's import cycles.** Rsbuild's production preset enables
    scope hoisting (`optimization.concatenateModules`), which merges modules into one function scope -
    so a circular import that webpack tolerated became `ReferenceError: Cannot access 'span' before
@@ -285,7 +288,9 @@ Notes:
 4. Migrate customer apps opportunistically: swap `webpack.config.js` for `rsbuild.config.mjs`, add
    `@rsbuild/core` to `publicHoistPattern` (pnpm only), rewrite release `--env` flags as `XH_*`
    variables, and fold `startWith...` script variants into a gitignored `.env.local`.
-5. Update `docs/version-compatibility.md` in hoist-react (done for the 16.0 row; floor unchanged at 87.1).
+5. Update `docs/version-compatibility.md` in hoist-react with a 16.0 row (floor unchanged at 87.1 for
+   both configs). A row drafted on hoist-react branch `claude/github-issue-73-fvwaa6` still states
+   the superseded 88.0 floor for `configureRsbuild()` and must be rewritten before it merges.
 6. Validate on more client apps, not just Toolbox - the `sideEffects: false` episode showed Toolbox is
    not representative of the option surface client apps exercise (`extraModuleRules`,
    `resolveAliases`, `targetBrowsers`, release `--env` plumbing). JobSite is done (below) and

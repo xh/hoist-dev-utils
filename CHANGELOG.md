@@ -2,67 +2,82 @@
 
 ## 16.0.0-SNAPSHOT - unreleased
 
+Adds `configureRsbuild()`, an [Rsbuild](https://rsbuild.rs) (Rspack + SWC) build path alongside the
+established `configureWebpack()`. Both ship from this release and produce equivalent builds from the
+same options, so apps can try Rspack one app at a time and switch back by pointing at the other
+config. The webpack path's behavior and its hoist-react floor (87.1) are unchanged, so webpack apps
+can take v16 as a drop-in upgrade.
+
+See [`docs/rsbuild-spike.md`](docs/rsbuild-spike.md) for the parity table, the Toolbox and client-app
+measurements, and the known differences.
+
 ### 🎁 New Features
 
-* Added `configureRsbuild()` (`@xh/hoist-dev-utils/configureRsbuild`) - an [Rsbuild](https://rsbuild.rs)
-  (Rspack + SWC) build configuration for Hoist apps, alongside the existing webpack
-  `configureWebpack()`. It accepts the same `env` options (app metadata, `inlineHoist`,
-  `babelIncludePaths`, `resolveAliases`, `extraModuleRules`, favicon/manifest, dev-server proxy and
-  HTTPS options, `precompressAssets`, `sourceMaps`, ...) and reproduces the same build features:
-  per-app entry discovery, raw hoist-react TS transpilation, legacy decorators with `[[Define]]`
-  class-field semantics, `xh*` globals, `@xh/app-changelog.json`, Blueprint icon stubs, FontAwesome
-  deep-import rewriting, SCSS, markdown-as-text (+ `?url`), per-app `index.html` and
-  `manifest.json`, moment locale stripping, and pre-compressed assets. New options: `swcOptions`
-  (replaces `babelPresetEnvOptions`), `minifyOptions` (replaces `terserOptions`), `logLevel`,
-  `minify`, `buildCache`, `decoratorTransform`, `devLiveReload`. Build-time overrides arrive as `XH_*` environment
-  variables via the exported `readCliEnv()` helper, as the Rsbuild CLI has no `--env key=value`
-  flag - set in CI, or in the `.env` / `.env.local` / `.env.<mode>` files Rsbuild's CLI loads before
-  evaluating the config. Hoist's legacy decorators are transformed by Babel ahead of SWC by default
-  (`decoratorTransform: 'babel'`) - the same plugin and mode as `configureWebpack()`, so decorated
-  classes compile identically and the hoist-react floor is unchanged at 87.1. The `'swc'` mode
-  drops that Babel pass but requires hoist-react with transpiler-agnostic decorators (>= 88,
-  enforced). See `docs/rsbuild-spike.md` for measurements against Toolbox and the remaining risk
-  ledger (hoist-dev-utils #73).
-* Measured on Toolbox (10 entry points): production builds in roughly a quarter of the webpack
-  wall-clock time at a third of the peak memory; dev-server cold start ~6x faster and edit-to-reload
-  under half a second versus 2.6-4.2 s (React Fast Refresh hot-swaps modules exporting
-  `hoistCmp({...})` components; Hoist's element-factory modules still reload the page - just an
-  order of magnitude sooner). Output layout and runtime behavior verified equivalent on Toolbox and
-  on two client apps (one pnpm, one yarn v1) - see the spike doc.
-* Added `devLiveReload` option to both `configureWebpack()` and `configureRsbuild()` - `false`
-  stops the dev server from reloading the page when an edit cannot be hot-swapped, the config-level
-  equivalent of webpack-dev-server's `--no-live-reload` flag (which has no Rsbuild counterpart).
-  Read from `XH_DEV_LIVE_RELOAD` by `readCliEnv()`.
-* Both `configureWebpack()` and `configureRsbuild()` now warn about `env` options they do not
-  recognize (misspelled, or removed in an earlier release) instead of ignoring them silently. A
-  warning in the build banner, not an error; options belonging to the other config are accepted
-  without comment so one options object can serve both.
+* **Added `configureRsbuild()`** (`@xh/hoist-dev-utils/configureRsbuild`) - builds a Hoist app with
+  Rspack and SWC in place of webpack and Babel. It takes the same `env` object as
+  `configureWebpack()` and reproduces the same build: per-app entry discovery, raw hoist-react TS
+  transpilation, `xh*` globals, `@xh/app-changelog.json`, Blueprint icon stubs, FontAwesome
+  deep-import rewriting, SCSS, markdown-as-text (plus `?url`), per-app `index.html` and
+  `manifest.json`, moment locale stripping, pre-compressed assets, and the `inlineHoist`,
+  dev-server proxy and HTTPS options.
+    * **Faster, on much less memory.** Measured on Toolbox (10 entry points): production builds run
+      ~2.6x faster at ~2.3x lower peak memory, dev-server cold start is ~2x faster, and
+      edit-to-reload drops from 2.6-4.2 s to under half a second. Emitted JS falls 17% (5% brotli)
+      and CSS 20%.
+    * **No hoist-react change required.** Hoist's legacy decorators are transformed by Babel ahead
+      of SWC by default (`decoratorTransform: 'babel'`) - the same plugin and mode
+      `configureWebpack()` uses, so decorated classes compile identically. Setting
+      `decoratorTransform: 'swc'` drops that Babel pass for a further step up in speed, but SWC's
+      legacy decorator emit breaks `@persist` at runtime on current hoist-react releases, so that
+      mode is for measurement only and the build warns whenever it is set. It becomes the default
+      in the dev-utils release that pairs with hoist-react's TC39 decorators migration
+      ([hoist-react #4333](https://github.com/xh/hoist-react/issues/4333)), whichever hoist-react
+      version carries it.
+    * **New and renamed options**: `swcOptions` (replaces `babelPresetEnvOptions`), `minifyOptions`
+      (replaces `terserOptions`), `logLevel` (replaces `stats` / `infrastructureLoggingLevel`), plus
+      new `minify`, `buildCache` and `decoratorTransform`. Babel-era options with no SWC equivalent
+      are rejected with a pointer to their replacement, never silently dropped.
+    * **Build-time overrides arrive as `XH_*` environment variables**, mapped onto `env` by the
+      exported `readCliEnv()` helper - the Rsbuild CLI has no `--env key=value` flag. Set them in
+      CI, or in the `.env` / `.env.local` / `.env.<mode>` files Rsbuild loads before evaluating the
+      config. The README covers the full setup, including the `publicHoistPattern` entry pnpm apps
+      need for the `rsbuild` bin.
+    * React Fast Refresh hot-swaps modules exporting `hoistCmp({...})` components. Hoist's
+      element-factory modules still trigger a page reload, but now in well under a second.
+* **Added `devLiveReload`** to both configs. Set `false` to stop the dev server reloading the page
+  when an edit cannot be hot-swapped. This is the config-level equivalent of webpack-dev-server's
+  `--no-live-reload` flag, which has no Rsbuild counterpart. Also read from `XH_DEV_LIVE_RELOAD`.
+* **Unrecognized `env` options now warn** in both configs, rather than being ignored silently. This
+  catches typos and options dropped in an earlier release. It is a warning in the build banner, not
+  an error, and options belonging to the other config pass without comment - so one options object
+  can serve both.
 
 ### ⚙️ Technical
 
-* `sass-embedded` is now specified as `^1.103.1` rather than a tilde range. `@rsbuild/plugin-sass`
-  depends on the same package at `^1.100.0`; under hoisting package managers (yarn, npm) the two
-  ranges resolved to different versions and installed two copies of the ~10 MB native binary. A
-  caret lets both resolve to one version at install time.
-* Extracted the bundler-agnostic parts of `configureWebpack.js` (hoist-react version check,
-  entry discovery, CHANGELOG parsing, Blueprint icon stubs, manifest content, logging) into
-  `lib/common.js`, and the per-app `manifest.json` plugin into `lib/HoistManifestPlugin.js`, both
-  shared with `configureRsbuild()`. Webpack build output verified identical before and after.
+* Extracted the bundler-agnostic half of `configureWebpack.js` into `lib/common.js` (hoist-react
+  version check, entry discovery, CHANGELOG parsing, Blueprint icon stubs, manifest content,
+  logging), and the per-app `manifest.json` plugin into `lib/HoistManifestPlugin.js`. Both are now
+  shared with `configureRsbuild()`. Webpack build output was verified identical before and after.
 * Blueprint icon stubs now locate `@blueprintjs/icons` by walking the real dependency chain
   (hoist-react -> `@blueprintjs/core` -> `@blueprintjs/icons`) when it is not resolvable from the
-  app root. Previously the lookup silently succeeded only because pnpm's bin shims export a
-  `NODE_PATH` pointing at its hidden hoist directory - invoking a bundler CLI any other way disabled
-  the stubs without warning.
-* `static/index.html` template parameters flattened to bundler-neutral names (`publicPath`,
-  `title`, `includeAppleIcon`) - rendered output unchanged.
+  app root. The previous lookup succeeded only because pnpm's bin shims set a `NODE_PATH` pointing
+  at its hidden hoist directory. Invoking a bundler CLI any other way disabled the stubs with no
+  warning.
+* `sass-embedded` is now specified with a caret range rather than a tilde. `@rsbuild/plugin-sass`
+  depends on the same package at `^1.100.0`; under hoisting package managers (yarn, npm) the two
+  ranges resolved to different versions and installed two copies of a ~10 MB native binary. A caret
+  lets both resolve to one version at install time.
+* `static/index.html` template parameters renamed to bundler-neutral names (`publicPath`, `title`,
+  `includeAppleIcon`) so both configs can share the template. Rendered output is unchanged.
 
 ### 📚 Libraries
 
 * @rsbuild/core `added @ 2.2`
 * @rsbuild/plugin-babel `added @ 2.1`
+* @rsbuild/plugin-basic-ssl `added @ 1.2`
 * @rsbuild/plugin-react `added @ 2.1`
 * @rsbuild/plugin-sass `added @ 2.0`
-* @rsbuild/plugin-basic-ssl `added @ 1.2`
+* sass-embedded `1.103 → 1.103` - spec widened from `~` to `^`, so apps may now resolve 1.104+.
 
 ## 15.0.2 - 2026-09-16
 

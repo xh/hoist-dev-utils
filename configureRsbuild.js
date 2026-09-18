@@ -19,7 +19,6 @@ const _ = require('lodash'),
 
 const {
     DEFAULT_TARGET_BROWSERS,
-    MIN_HOIST_REACT_VERSION_RSBUILD,
     devUtilsPkg,
     resolveAppPackage,
     checkHoistReactVersion,
@@ -108,9 +107,11 @@ const hoistReactPkg = resolveAppPackage('@xh/hoist', basePath),
  *      legacy mode ahead of SWC, exactly as `configureWebpack()` does - so decorator semantics are identical to the
  *      webpack build by construction, at the cost of a Babel pass over app and hoist-react source. `'swc'` uses
  *      SWC's own legacy-decorator transform: faster, but its TypeScript-style emit passes field decorators no
- *      descriptor, which hoist-react's `@persist` cannot work with before the TC39 decorators migration - so this
- *      mode enforces a higher hoist-react floor. Once hoist-react ships transpiler-agnostic decorators the default
- *      flips to `'swc'` and the Babel pass goes away.
+ *      descriptor, which hoist-react's `@persist` cannot work with - so it breaks at runtime on current
+ *      hoist-react releases and is for measurement only. The build warns whenever `'swc'` is set. This mode
+ *      becomes the default in the dev-utils release that pairs with hoist-react's TC39 decorators migration
+ *      (xh/hoist-react#4333), whichever hoist-react version carries it. That release also switches SWC to the
+ *      matching `2023-11` emit and drops the Babel pass.
  * @param {Object|Function} [env.swcOptions] - overrides for Rspack's `builtin:swc-loader` options, applied on top
  *      of the defaults set here - either an object to deep-merge, or a function receiving the options to mutate.
  *      Replaces `babelPresetEnvOptions`, which has no equivalent and is rejected if passed.
@@ -200,11 +201,7 @@ async function configureRsbuild(env) {
     if (!['babel', 'swc'].includes(decoratorTransform)) {
         throw `Unknown "decoratorTransform" value "${decoratorTransform}" - expected 'babel' or 'swc'.`;
     }
-    checkHoistReactVersion(
-        hoistReactPkg,
-        inlineHoist,
-        decoratorTransform === 'swc' ? MIN_HOIST_REACT_VERSION_RSBUILD : undefined
-    );
+    checkHoistReactVersion(hoistReactPkg, inlineHoist);
 
     process.env.NODE_ENV = prodBuild ? 'production' : 'development';
     process.env.REACT_NODE_ENV = reactProdMode ? 'production' : 'development';
@@ -223,6 +220,13 @@ async function configureRsbuild(env) {
     logMsg(
         `Legacy decorators transformed by ${decoratorTransform === 'babel' ? 'Babel (ahead of SWC)' : 'SWC'}`
     );
+    if (decoratorTransform === 'swc') {
+        logMsg(
+            '⚠️  decoratorTransform "swc" is for measurement only: SWC\'s legacy decorator emit ' +
+                'breaks @persist at runtime on current hoist-react releases. It becomes the default ' +
+                'once hoist-react migrates to TC39 decorators (xh/hoist-react#4333).'
+        );
+    }
     if (prodBuild && precompressAssets) logMsg('🗜️   Asset pre-compression enabled');
     logSep();
     logMsg('📚  Key libraries:');

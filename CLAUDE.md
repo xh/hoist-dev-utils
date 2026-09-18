@@ -26,7 +26,10 @@ The library is two peer config modules over a small shared core:
   no `--env key=value`). Added in v16 as the Rspack migration spike - see `docs/rsbuild-spike.md`
   for the feature-parity checklist, measurements and open risks. By default it transforms Hoist's legacy
   decorators with Babel ahead of SWC (`decoratorTransform: 'babel'`), so it shares the webpack
-  path's hoist-react floor; `'swc'` mode is reserved for TC39-era hoist-react (>= 88).
+  path's hoist-react floor. `'swc'` mode is measurement-only for now: SWC's legacy emit breaks
+  `@persist` on current hoist-react releases, so the build warns whenever it is set. It becomes the
+  default in the release that pairs with hoist-react's TC39 decorators migration
+  (xh/hoist-react#4333), whichever hoist-react version carries it.
 - **`lib/common.js`** - bundler-agnostic helpers shared by both (version checks, entry discovery,
   CHANGELOG parsing, Blueprint icon stubs, manifest content, logging). Nothing in here may touch a
   bundler API. **`lib/HoistManifestPlugin.js`** emits the per-app `manifest.json` and runs on both
@@ -86,10 +89,9 @@ into the app's `node_modules`. Changes take effect immediately.
 - `develop` branch for feature work, `master` for releases
 - Version in `package.json` follows `MAJOR.MINOR.PATCH-SNAPSHOT` between releases
 - `MIN_HOIST_REACT_VERSION` in `lib/common.js` enforces the minimum supported hoist-react
-  version ('major[.minor]') with a fail-fast build error (`MIN_HOIST_REACT_VERSION_RSBUILD` is the
-  separate, higher floor for `configureRsbuild()` in `decoratorTransform: 'swc'` mode). Review on each new major and bump whenever a release
-  raises the floor, keeping it in sync with the CHANGELOG's "Requires hoist-react" entry and
-  the version-compatibility doc below.
+  version ('major[.minor]') with a fail-fast build error. Both configs share it. Review on each new
+  major and bump whenever a release raises the floor, keeping it in sync with the CHANGELOG's
+  "Requires hoist-react" entry and the version-compatibility doc below.
 
 ### Version compatibility doc (maintained in hoist-react)
 
