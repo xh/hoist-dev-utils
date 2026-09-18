@@ -8,8 +8,8 @@ apps. `configureRsbuild()` produces the same build from the same options that v1
 `@xh/app-changelog.json`, Blueprint icon stubs, FontAwesome deep-import rewriting, SCSS,
 markdown-as-text (plus `?url`), per-app `index.html` and `manifest.json`, moment locale stripping,
 pre-compressed assets, and the `inlineHoist`, dev-server proxy and HTTPS options - several times
-faster and on far less memory. The hoist-react floor is unchanged at 87.1, so no framework upgrade is
-needed to take it.
+faster and on far less memory. Pairs with hoist-react 88's move to TC39 decorators: SWC now handles
+decorators natively, so there is no Babel in the pipeline at all.
 
 See [`docs/rsbuild-migration.md`](docs/rsbuild-migration.md) for the measurements against the v15 webpack
 build, the findings behind the config, and the known differences in output.
@@ -38,7 +38,17 @@ build, the findings behind the config, and the known differences in output.
   `@rsbuild/core` so the `rsbuild` bin is on the script path. yarn and npm need no configuration.
 * **`analyzeBundles` / `XH_ANALYZE_BUNDLES` removed** - bundle analysis is now an app-level opt-in
   via Rsbuild's built-in [Rsdoctor](https://rsdoctor.rs) support. Rejected with a pointer to it.
-* Requires hoist-react >= 87.1 - unchanged from v15.
+* **Requires hoist-react >= 88**, up from 87.1 in v15. v16 emits the TC39 Stage 3 (`2023-11`)
+  decorator transform, which hoist-react 88 is the first release written against. The pairing is
+  strict in both directions and must be upgraded atomically:
+    * hoist-react <= 87 on dev-utils 16 loses every `@observable` and `@bindable` field - the legacy
+      decorators are never applied, and the failure is silent at build time. The version check
+      rejects this combination up front rather than letting it build.
+    * hoist-react 88 on dev-utils <= 15 fails to compile, as `accessor` fields are a syntax error
+      under the legacy transform.
+* **`babelIncludePaths` / `babelExcludePaths` are renamed** to `extraIncludePaths` /
+  `extraExcludePaths`, as nothing in the pipeline runs Babel any longer. The old names still work
+  and log a deprecation warning; they will be removed in v17.
 
 ### 🎁 New Features
 
@@ -47,17 +57,13 @@ build, the findings behind the config, and the known differences in output.
 * **Faster, on much less memory.** Measured on Toolbox (10 entry points): production builds run
   ~2.6x faster at ~2.3x lower peak memory, dev-server cold start is ~2x faster, and edit-to-reload
   drops from 2.6-4.2 s to under half a second. Emitted JS falls 17% (5% brotli) and CSS 20%.
-* **No hoist-react change required.** Hoist's legacy decorators are transformed by Babel ahead of
-  SWC by default (`decoratorTransform: 'babel'`) - the same plugin and mode the v15 webpack build
-  used, so decorated classes compile identically. Setting `decoratorTransform: 'swc'` drops that
-  Babel pass for a further step up in speed, but SWC's legacy decorator emit breaks `@persist` at
-  runtime on current hoist-react releases, so that mode is for measurement only and the build warns
-  whenever it is set. It becomes the default in the dev-utils release that pairs with hoist-react's
-  TC39 decorators migration ([hoist-react #4333](https://github.com/xh/hoist-react/issues/4333)),
-  whichever hoist-react version carries it.
+* **No Babel, anywhere.** SWC transforms hoist-react 88's TC39 decorators natively via
+  `source.decorators.version: '2023-11'`, so the Babel pass v16 previously ran ahead of SWC over all
+  app and hoist-react source is gone, along with `@rsbuild/plugin-babel` and the four `@babel/*`
+  dependencies (108 packages out of the install). SWC now owns the whole JS/TS pipeline.
 * **New options**: `minify` (`false` to skip minification in a production build, for diagnosing
-  built output against readable code), `buildCache` (Rspack's persistent cache, off by default
-  pending soak) and `decoratorTransform`.
+  built output against readable code) and `buildCache` (Rspack's persistent cache, off by default
+  pending soak).
 * **React Fast Refresh** hot-swaps modules exporting `hoistCmp({...})` components. Hoist's
   element-factory modules still trigger a page reload, but now in well under a second.
 * **Added `devLiveReload`**. Set `false` to stop the dev server reloading the page when an edit
@@ -93,14 +99,18 @@ build, the findings behind the config, and the known differences in output.
 ### 📚 Libraries
 
 Rsbuild replaces the webpack toolchain, `webpack-bundle-analyzer` included - Rsbuild's built-in
-Rsdoctor support takes its place. The `@babel/*` packages behind the legacy-decorators pass stay.
+Rsdoctor support takes its place. Babel goes with it: SWC transforms hoist-react 88's TC39
+decorators natively, so the `@babel/*` packages and `@rsbuild/plugin-babel` are gone too.
 
 * @rsbuild/core `added @ 2.2`
-* @rsbuild/plugin-babel `added @ 2.1`
 * @rsbuild/plugin-basic-ssl `added @ 1.2`
 * @rsbuild/plugin-react `added @ 2.1`
 * @rsbuild/plugin-sass `added @ 2.0`
 * sass-embedded `1.103 → 1.103` - spec widened from `~` to `^`, so apps may now resolve 1.104+.
+* @babel/core `7.29 → removed`
+* @babel/plugin-proposal-decorators `7.29 → removed`
+* @babel/plugin-transform-typescript `7.29 → removed`
+* @babel/preset-env `7.29 → removed`
 * @babel/preset-react `7.29 → removed`
 * autoprefixer `10.5 → removed`
 * babel-loader `10.1 → removed`

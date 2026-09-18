@@ -23,9 +23,16 @@ box - treat ratios as the signal, not the third digit.
 Port confirmed. `configureRsbuild()` builds all ten Toolbox apps with the same feature set from the
 same options, the three main apps boot to the same point as the webpack build, 34 of 34 runtime
 parity gates pass **against the published hoist-react 87.3.0 with no framework change**, and the
-payoff is large. Two Rsbuild columns: the shipping default transforms Hoist's legacy decorators with
-Babel ahead of SWC (`decoratorTransform: 'babel'`, see Finding 1); the SWC-only column is what the
-same config yields once hoist-react's decorators no longer depend on Babel's emit.
+payoff is large. Two Rsbuild columns: at the time of the spike the shipping default transformed
+Hoist's legacy decorators with Babel ahead of SWC (`decoratorTransform: 'babel'`, see Finding 1);
+the SWC-only column is what the same config yields once hoist-react's decorators no longer depend
+on Babel's emit.
+
+> **Status update - superseded in part.** hoist-react 88 shipped the TC39 decorators migration
+> (#4333), so v16 ships the right-hand column: `source.decorators.version: '2023-11'`, SWC only,
+> no Babel in the pipeline and no `decoratorTransform` option. The v16 hoist-react floor is
+> **88**, not 87.1. Everything below is the spike record that led there; the Babel-default
+> passages are history, not current config.
 
 | | webpack (`configureWebpack`) | Rsbuild, Babel decorators (default) | Rsbuild, SWC decorators (post-TC39) |
 |---|---|---|---|
@@ -57,10 +64,10 @@ Validation against a real client app (JobSite, see below) found two defects Tool
 missed - stale CSS under dev HMR and minification of copied `public/` files - both since fixed in
 `configureRsbuild.js` and re-verified here.
 
-The decorators migration (hoist-react #4333) is **not** a prerequisite: with Babel still transforming
-decorators, Rspack-first touches neither app source nor hoist-react. The TC39 flip later is two
-lines here (`source.decorators.version` and the `decoratorTransform` default), shipping in its own
-release window - and it is what unlocks the right-hand column above.
+The decorators migration (hoist-react #4333) was **not** a prerequisite: with Babel still
+transforming decorators, Rspack-first touched neither app source nor hoist-react. In the event the
+two landed together - #4333 shipped as hoist-react 88 before v16 was released, so the TC39 flip was
+folded into this same release rather than a later one, and v16 ships the right-hand column.
 
 ## What was built
 
@@ -85,7 +92,7 @@ release window - and it is what unlocks the right-hand column above.
 | Item | Status | Notes |
 |---|---|---|
 | All 10 entry points from `src/apps/*`, per-app HTML + manifest.json | ✅ | `source.entry` map + `html.outputStructure: 'nested'` + shared `static/index.html` template (parameters flattened to bundler-neutral names). Same `HoistManifestPlugin` on both compilers (`compiler.webpack` is aliased on Rspack). |
-| Raw-TS transpilation of `@xh/hoist` + `@xh/package-template` (pnpm parity) | ✅ | `source.include` of realpath'd `srcPath`, `hoistPath`, `babelIncludePaths`; SWC via `builtin:swc-loader`. Rsbuild also compiles every `.ts/.tsx` it meets by default, so this is belt-and-braces. |
+| Raw-TS transpilation of `@xh/hoist` + `@xh/package-template` (pnpm parity) | ✅ | `source.include` of realpath'd `srcPath`, `hoistPath`, `extraIncludePaths`; SWC via `builtin:swc-loader`. Rsbuild also compiles every `.ts/.tsx` it meets by default, so this is belt-and-braces. |
 | `inlineHoist` alias mechanics | ✅ | Same aliases (`@xh/hoist`, `react`, `react-dom`, `ag-grid-react`), `resolve.aliasStrategy: 'prefer-alias'` so they beat any tsconfig `paths`. Validated: dev-mode inline build boots; 34/34 gates. |
 | Decorator parity gates, legacy mode; class-field semantics set explicitly | ✅ | 34 runtime gates, both bundlers, published 87.3 production and inline dev/prod - see below. Default mode reuses Babel's decorator transform outright. For `'swc'` mode, `useDefineForClassFields: true` and `decoratorMetadata: false` are asserted in `tools.swc` (Rsbuild's legacy preset flips define-semantics *off*, which would diverge from tsconfig and Babel). |
 | `xh*` globals | ✅ | `source.define`; `process.env` fallback retained. |
@@ -159,9 +166,18 @@ is what makes the eventual `'swc'` flip low-risk once `@persist` is emit-agnosti
    handling as `configureWebpack()` ahead of SWC, so decorated classes compile through the very
    same plugin under both configs. Cost and payoff are in the table above. `'swc'` mode stays
    selectable for measurement, warning at build time that SWC's legacy emit breaks `@persist` on
-   current hoist-react releases. It becomes the default, on the `2023-11` emit, in the release
-   that pairs with the TC39 migration (hoist-react #4333) - whichever hoist-react version carries
-   it.
+   current hoist-react releases.
+
+   **Resolved.** hoist-react 88 rewrote `@persist` on the TC39 accessor-decorator `init` chain,
+   which gives field-init timing on every transpiler and removes the Babel coupling this finding
+   was about. v16 therefore ships `source.decorators.version: '2023-11'` with no Babel pass and no
+   `decoratorTransform` option, and raises the hoist-react floor to 88. The decorator shapes
+   hoist-react 88 depends on - `addInitializer` on accessor decorators (`@bindable`), an `{init}`
+   return composing under a MobX decorator (`@persist`), a field-decorator initializer return
+   (`@managed`, `@lookup`) and plain method decorators - were each verified against SWC's
+   `2023-11` emit before the flip. Note that hoist-react's `@managed` / `@lookup` carry a comment
+   attributing the initializer-return pattern to a *Babel* `addInitializer` bug; the pattern is
+   spec-standard and works under SWC too, so the comment is stale but the code is correct.
 2. **Module concatenation trips hoist-react's import cycles.** Rsbuild's production preset enables
    scope hoisting (`optimization.concatenateModules`), which merges modules into one function scope -
    so a circular import that webpack tolerated became `ReferenceError: Cannot access 'span' before
@@ -286,7 +302,7 @@ Notes:
 | Third-party webpack plugins on Rspack | `compression-webpack-plugin`, `webpack-bundle-analyzer`, html template all worked unchanged. `HoistManifestPlugin` runs on both. |
 | SWC preset-env compat data vs Babel's | Minor drift (`es.array.includes`); pinned core-js 3.0 keeps parity. |
 | Release tooling | `--env appVersion=…` must become `XH_APP_VERSION=…`; Toolbox `buildRelease.yml` / `buildSnapshot.yml` untouched in this spike (still webpack). |
-| Decorators migration (#4333) interaction | Independent. After it lands: flip `source.decorators.version` to `2023-11`, default `decoratorTransform` to `'swc'`, drop `@rsbuild/plugin-babel` - and re-run the gate matrix in `2023-11` mode under both transpilers first (the TC39 branch already carries one Babel-specific workaround in `@managed`). Separate release window, per the analysis. |
+| Decorators migration (#4333) interaction | **Done, in this release.** #4333 shipped as hoist-react 88, so v16 flipped `source.decorators.version` to `2023-11`, dropped `@rsbuild/plugin-babel` and the `@babel/*` deps, removed `decoratorTransform`, and raised the hoist-react floor to 88. Remaining gate: re-run the runtime parity matrix on Toolbox against `2023-11`. |
 
 ## Suggested next steps (Ship phase)
 

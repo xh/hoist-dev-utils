@@ -13,7 +13,6 @@ const _ = require('lodash'),
     {rspack, version: rsbuildVersion} = require('@rsbuild/core'),
     {pluginReact} = require('@rsbuild/plugin-react'),
     {pluginSass} = require('@rsbuild/plugin-sass'),
-    {pluginBabel} = require('@rsbuild/plugin-babel'),
     HoistManifestPlugin = require('./lib/HoistManifestPlugin'),
     HoistCompressionPlugin = require('./lib/HoistCompressionPlugin'),
     basePath = fs.realpathSync(process.cwd());
@@ -78,11 +77,11 @@ const hoistReactPkg = resolveAppPackage('@xh/hoist', basePath),
  *      When inlineHoist=true, a mapping between @xh/hoist and the local path will be added.
  * @param {string} [env.baseUrl] - root path prepended to all relative URLs called via FetchService. Defaults to
  *      `/api/`, a root path that will cause the request to be proxied to the Grails backend at `devHost:devGrailsPort`.
- * @param {string[]} [env.babelIncludePaths] - additional paths to transpile via settings shared with app-level and
- *      @xh/hoist code. Intended for custom packages. (Historic name retained for 1:1 config portability - the
- *      transpiler here is SWC, not Babel.)
- * @param {string[]} [env.babelExcludePaths] - paths to exclude from transpiling. An example use would be a local
- *      package with a nested node_modules folder.
+ * @param {string[]} [env.extraIncludePaths] - additional paths to transpile via settings shared with app-level and
+ *      @xh/hoist code. Intended for custom packages. Accepted as `babelIncludePaths` for back-compat with v15 and
+ *      earlier configs - that alias is deprecated and warns, as nothing here runs Babel any longer.
+ * @param {string[]} [env.extraExcludePaths] - paths to exclude from transpiling. An example use would be a local
+ *      package with a nested node_modules folder. Accepted as `babelExcludePaths` for back-compat, as above.
  * @param {Object[]} [env.extraModuleRules] - additional Rspack module rules, added ahead of the built-in rules so
  *      they can claim app-specific file types. Any loaders referenced should be declared as devDependencies of the
  *      app itself - under isolated node_modules layouts (e.g. pnpm), loaders not declared by the app will fail to
@@ -103,16 +102,6 @@ const hoistReactPkg = resolveAppPackage('@xh/hoist', basePath),
  * @param {string} [env.preloadSpinnerColor] - stroke color for the preloader spinner SVG. Defaults to a neutral gray (#888).
  * @param {string[]} [env.targetBrowsers] - array of browserslist queries specifying target browsers for JS
  *      transpiling, polyfill selection and CSS prefixing.
- * @param {string} [env.decoratorTransform='babel'] - which transpiler transforms Hoist's legacy (TypeScript
- *      `experimentalDecorators`) decorators. `'babel'` (default) runs Babel's `@babel/plugin-proposal-decorators` in
- *      legacy mode ahead of SWC, exactly as the v15 webpack build did - so decorator semantics are identical to
- *      that build by construction, at the cost of a Babel pass over app and hoist-react source. `'swc'` uses
- *      SWC's own legacy-decorator transform: faster, but its TypeScript-style emit passes field decorators no
- *      descriptor, which hoist-react's `@persist` cannot work with - so it breaks at runtime on current
- *      hoist-react releases and is for measurement only. The build warns whenever `'swc'` is set. This mode
- *      becomes the default in the dev-utils release that pairs with hoist-react's TC39 decorators migration
- *      (xh/hoist-react#4333), whichever hoist-react version carries it. That release also switches SWC to the
- *      matching `2023-11` emit and drops the Babel pass.
  * @param {Object|Function} [env.swcOptions] - overrides for Rspack's `builtin:swc-loader` options, applied on top
  *      of the defaults set here - either an object to deep-merge, or a function receiving the options to mutate.
  *      Replaces `babelPresetEnvOptions`, which has no equivalent and is rejected if passed.
@@ -178,8 +167,12 @@ async function configureRsbuild(env) {
         devWebpackPort = env.devWebpackPort || 3000,
         devServerOptions = env.devServerOptions || {},
         baseUrl = env.baseUrl || '/api/',
-        babelIncludePaths = (env.babelIncludePaths || []).map(safeRealpath),
-        babelExcludePaths = (env.babelExcludePaths || []).map(safeRealpath),
+        extraIncludePaths = (env.extraIncludePaths || env.babelIncludePaths || []).map(
+            safeRealpath
+        ),
+        extraExcludePaths = (env.extraExcludePaths || env.babelExcludePaths || []).map(
+            safeRealpath
+        ),
         extraModuleRules = env.extraModuleRules || [],
         contextRoot = env.contextRoot || '/',
         copyPublicAssets = parseFlag(env.copyPublicAssets, true),
@@ -189,7 +182,6 @@ async function configureRsbuild(env) {
         preloadBackgroundColor = env.preloadBackgroundColor || 'white',
         preloadSpinnerColor = env.preloadSpinnerColor || '#888',
         logLevel = env.logLevel || 'info',
-        decoratorTransform = env.decoratorTransform || 'babel',
         targetBrowsers = env.targetBrowsers || DEFAULT_TARGET_BROWSERS,
         swcOptions = env.swcOptions || {},
         minifyOptions = env.minifyOptions || {},
@@ -197,8 +189,13 @@ async function configureRsbuild(env) {
         sourceMaps = parseFlag(env.sourceMaps, true),
         buildDate = new Date();
 
-    if (!['babel', 'swc'].includes(decoratorTransform)) {
-        throw `Unknown "decoratorTransform" value "${decoratorTransform}" - expected 'babel' or 'swc'.`;
+    for (const [oldName, newName] of [
+        ['babelIncludePaths', 'extraIncludePaths'],
+        ['babelExcludePaths', 'extraExcludePaths']
+    ]) {
+        if (env[oldName] && !env[newName]) {
+            logMsg(`⚠️  "${oldName}" is deprecated - rename it to "${newName}".`);
+        }
     }
     checkHoistReactVersion(hoistReactPkg, inlineHoist);
 
@@ -215,16 +212,6 @@ async function configureRsbuild(env) {
     if (inlineHoist) logMsg('🏗️   Inline Hoist enabled');
     if (reactProdMode) logMsg('⚛️   React Production mode enabled');
     if (buildCache) logMsg('💾  Persistent build cache enabled');
-    logMsg(
-        `Legacy decorators transformed by ${decoratorTransform === 'babel' ? 'Babel (ahead of SWC)' : 'SWC'}`
-    );
-    if (decoratorTransform === 'swc') {
-        logMsg(
-            '⚠️  decoratorTransform "swc" is for measurement only: SWC\'s legacy decorator emit ' +
-                'breaks @persist at runtime on current hoist-react releases. It becomes the default ' +
-                'once hoist-react migrates to TC39 decorators (xh/hoist-react#4333).'
-        );
-    }
     if (prodBuild && precompressAssets) logMsg('🗜️   Asset pre-compression enabled');
     logSep();
     logMsg('📚  Key libraries:');
@@ -306,7 +293,7 @@ async function configureRsbuild(env) {
     resolveAliases['@xh/app-changelog.json'] = await writeChangelogJson(basePath, parseChangelog);
 
     // TS-only support - fail fast on any .jsx source.
-    checkNoJsxFiles([srcPath, ...babelIncludePaths]);
+    checkNoJsxFiles([srcPath, ...extraIncludePaths]);
 
     // Resolve app entry points - one for each file within src/apps/ - to create bundles below.
     const clientApps = discoverClientApps(srcPath),
@@ -355,7 +342,7 @@ async function configureRsbuild(env) {
                 splitChunks: false,
                 reactRefreshOptions: {
                     // Refresh app source, hoist-react (raw TS in node_modules) and custom packages.
-                    include: [srcPath, hoistPath, ...babelIncludePaths],
+                    include: [srcPath, hoistPath, ...extraIncludePaths],
                     exclude: hoistNodeModulesPath ? [hoistNodeModulesPath] : []
                 }
             }),
@@ -364,18 +351,6 @@ async function configureRsbuild(env) {
             // Lightning CSS loader, driven by the same browserslist targets as SWC - so no
             // postcss/autoprefixer stage is needed here.
             pluginSass(),
-
-            // Legacy decorators via Babel, ahead of SWC - the same plugin, mode and per-extension
-            // TypeScript handling as the v15 webpack build's babel-loader, so decorated classes
-            // compile identically to before. SWC then receives plain JS (+ JSX in .tsx) and does
-            // everything else. See `decoratorTransform` above.
-            ...(decoratorTransform === 'babel'
-                ? [
-                      pluginBabel({
-                          babelLoaderOptions: () => legacyDecoratorBabelOptions(targetBrowsers)
-                      })
-                  ]
-                : []),
 
             // Self-signed cert for `devHttps: true`, mirroring webpack-dev-server's built-in behavior.
             ...(devHttps === true ? [require('@rsbuild/plugin-basic-ssl').pluginBasicSsl()] : [])
@@ -390,15 +365,17 @@ async function configureRsbuild(env) {
             // currently transpiling anything in hoist-react on its own. (Rsbuild's default include
             // also compiles every .ts/.tsx it encounters, so this is largely belt-and-braces for
             // hoist's plain-JS `polyfills.js` and any custom packages.)
-            include: [srcPath, hoistPath, ...babelIncludePaths],
+            include: [srcPath, hoistPath, ...extraIncludePaths],
             // In inline mode also *avoid* transpiling inline hoist's own node_modules libraries.
-            exclude: inlineHoist ? [hoistNodeModulesPath, ...babelExcludePaths] : babelExcludePaths,
+            exclude: inlineHoist ? [hoistNodeModulesPath, ...extraExcludePaths] : extraExcludePaths,
 
-            // Legacy (TypeScript `experimentalDecorators`) decorators, as used by MobX 6 and Hoist.
-            // Note that Rsbuild's legacy mode also flips SWC to `useDefineForClassFields: false` -
-            // re-asserted to `true` in `tools.swc` below to match hoist-react's tsconfig and the
-            // define-semantics Babel has always emitted for us.
-            decorators: {version: 'legacy'},
+            // TC39 Stage 3 (2023-11) decorators, transformed by SWC alone - no Babel pass. This is
+            // the emit hoist-react >= 88 is written against: `@observable accessor` / `@bindable
+            // accessor` fields, `@persist` composing via the accessor `init` chain, and `@managed` /
+            // `@lookup` returning a field initializer. Also Rsbuild's own default, set explicitly
+            // here because it is load-bearing: pointed at `legacy`, every `@observable` and
+            // `@bindable` in a v88 app silently stops working.
+            decorators: {version: '2023-11'},
 
             // Avoid importing every FA icon ever made - rewrite named imports from the FontAwesome
             // icon packs to per-icon deep imports. See https://github.com/FortAwesome/react-fontawesome/issues/70
@@ -614,12 +591,10 @@ async function configureRsbuild(env) {
                     transform = (jsc.transform ??= {});
 
                 // Class fields use [[Define]] semantics, matching hoist-react's tsconfig
-                // (`useDefineForClassFields: true`) and Babel's default class-properties emit.
-                // Rsbuild's legacy-decorators preset sets this false; we deliberately do not.
+                // (`useDefineForClassFields: true`) and what TC39 decorators assume - `accessor`
+                // fields desugar to a getter/setter pair over private storage, and plain fields
+                // must still define rather than assign so they do not trip inherited setters.
                 transform.useDefineForClassFields = true;
-                // Rsbuild's legacy preset also enables TS `emitDecoratorMetadata` output - Hoist
-                // does not use reflection metadata, so skip that per-class overhead.
-                transform.decoratorMetadata = false;
 
                 // Rewrite the `core-js/stable` import in hoist-react's polyfills.js (prepended to
                 // every app entry above) into the polyfills needed for the target browsers.
@@ -744,45 +719,6 @@ async function configureRsbuild(env) {
 //------------------------
 // Implementation
 //------------------------
-// Babel options for `decoratorTransform: 'babel'` - a deliberate subset of the v15 webpack build's
-// babel-loader config: the per-extension TypeScript strip (JSX parsed only in .tsx, so angle-bracket
-// type assertions stay valid in plain .ts) always ahead of the legacy decorators plugin, plus the
-// class-field transforms that plugin requires. No preset-react, no core-js: SWC handles JSX,
-// syntax lowering and polyfills downstream.
-function legacyDecoratorBabelOptions(targetBrowsers) {
-    const decorators = [require.resolve('@babel/plugin-proposal-decorators'), {version: 'legacy'}],
-        typescript = opts => [
-            require.resolve('@babel/plugin-transform-typescript'),
-            {allowDeclareFields: true, ...opts}
-        ];
-    return {
-        babelrc: false,
-        configFile: false,
-        compact: false,
-        presets: [
-            [
-                require.resolve('@babel/preset-env'),
-                {
-                    targets: targetBrowsers.join(', '),
-                    bugfixes: true,
-                    useBuiltIns: false,
-                    // Interop transforms required while legacy decorators are in use - Babel must
-                    // compile the class elements it decorates.
-                    include: [
-                        'transform-class-properties',
-                        'transform-private-methods',
-                        'transform-private-property-in-object'
-                    ]
-                }
-            ]
-        ],
-        overrides: [
-            {test: /\.tsx$/, plugins: [typescript({isTSX: true}), decorators]},
-            {exclude: /\.tsx$/, plugins: [typescript(), decorators]}
-        ]
-    };
-}
-
 // Emit pre-compressed `.br` and `.gz` copies of bundled assets alongside the originals, for direct
 // serving by nginx via `brotli_static` / `gzip_static`. Doing this at build time is what makes
 // brotli quality 11 usable at all - it is far too slow to run per-request - and it drops the cost of
@@ -876,7 +812,6 @@ function readCliEnv(processEnv = process.env) {
         XH_REACT_PROD_MODE: 'reactProdMode',
         XH_BUILD_CACHE: 'buildCache',
         XH_MINIFY: 'minify',
-        XH_DECORATOR_TRANSFORM: 'decoratorTransform',
         XH_DEV_HOST: 'devHost',
         XH_DEV_HTTPS: 'devHttps',
         XH_DEV_GRAILS_PORT: 'devGrailsPort',

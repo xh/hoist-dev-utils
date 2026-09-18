@@ -22,12 +22,11 @@ One config module over a small shared core:
   [Rsbuild](https://rsbuild.rs) (Rspack + SWC) config, plus a `readCliEnv()` helper mapping `XH_*`
   environment variables onto env options (the Rsbuild CLI has no `--env key=value`). Rsbuild
   replaced webpack in v16; `docs/rsbuild-migration.md` records the migration (spike measurements,
-  findings, known differences from the v15 webpack build). By default it transforms Hoist's legacy
-  decorators with Babel ahead of SWC (`decoratorTransform: 'babel'`), which is why the hoist-react
-  floor did not move at v16. `'swc'` mode is measurement-only for now: SWC's legacy emit breaks
-  `@persist` on current hoist-react releases, so the build warns whenever it is set. It becomes the
-  default in the release that pairs with hoist-react's TC39 decorators migration
-  (xh/hoist-react#4333), whichever hoist-react version carries it.
+  findings, known differences from the v15 webpack build). SWC handles the whole JS/TS pipeline -
+  there is no Babel pass. Decorators are emitted via `source.decorators.version: '2023-11'` (TC39
+  Stage 3), which is what hoist-react >= 88 is written against and why the v16 floor is 88. That
+  setting is load-bearing and must not be changed casually: pointed back at `legacy`, every
+  `@observable` and `@bindable` in a v88 app silently stops working, with no build error.
 - **`lib/common.js`** - bundler-agnostic helpers (version checks, entry discovery, CHANGELOG
   parsing, Blueprint icon stubs, manifest content, logging). Nothing in here may touch a bundler
   API.
@@ -40,8 +39,7 @@ Key behaviors:
 - Accepts ~30 env parameters from the app's `rsbuild.config.mjs`, with build-time overrides as
   `XH_*` environment variables (set in CI, or in Rsbuild's `.env` files) read by `readCliEnv()`
 - Discovers app entry points from `src/apps/*.{js,ts}` in the consuming project
-- Transpiles both app code and raw hoist-react TypeScript source via SWC, with a Babel pass ahead
-  of it for legacy decorators
+- Transpiles both app code and raw hoist-react TypeScript source via SWC, decorators included
 - Injects `XH.appCode`, `XH.appName`, `XH.appVersion`, `XH.appBuild` via `rspack.DefinePlugin`
 - Parses the consuming app's `CHANGELOG.md` into JSON for runtime access
 - Supports `inlineHoist` mode for local hoist-react development (resolves from sibling directory)

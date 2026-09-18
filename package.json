@@ -19,12 +19,7 @@
         "node": ">=22.15.0"
     },
     "dependencies": {
-        "@babel/core": "^7.29.7",
-        "@babel/plugin-proposal-decorators": "^7.29.7",
-        "@babel/plugin-transform-typescript": "^7.29.7",
-        "@babel/preset-env": "^7.29.7",
         "@rsbuild/core": "~2.2.7",
-        "@rsbuild/plugin-babel": "~2.1.0",
         "@rsbuild/plugin-basic-ssl": "~1.2.3",
         "@rsbuild/plugin-react": "~2.1.0",
         "@rsbuild/plugin-sass": "~2.0.1",
