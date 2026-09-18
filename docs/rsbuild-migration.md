@@ -201,8 +201,9 @@ is what makes the eventual `'swc'` flip low-risk once `@persist` is emit-agnosti
 - **Dev overlay** has no `warnings` toggle. `stats` / `infrastructureLoggingLevel` collapse to
   `logLevel`. `webpackbar` replaced by Rsbuild's progress bar. `CaseSensitivePathsPlugin` replaced by
   Rspack's built-in `CaseSensitivePlugin` (dev only, as before).
-- **Bundle analysis** still uses `webpack-bundle-analyzer` (works on Rspack); Rsdoctor is the native
-  alternative worth trying later.
+- **Bundle analysis** moves to Rsdoctor as an app-level opt-in (`RSDOCTOR=true`). The spike verified
+  `webpack-bundle-analyzer` still works on Rspack stats, but Rsbuild ships a built-in Rsdoctor
+  integration, so the option and the dependency were dropped rather than kept.
 - **Decorator metadata**: Rsbuild's legacy preset turns on `emitDecoratorMetadata`-style output;
   explicitly disabled (Hoist uses none, and it bloats every decorated class).
 - **No `.LICENSE.txt` sidecar for copied `public/` JS.** webpack's Terser pass minifies hoist's

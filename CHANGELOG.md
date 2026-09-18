@@ -21,46 +21,45 @@ build, the findings behind the config, and the known differences in output.
   `rsbuild.config.mjs` calling `configureRsbuild()`; the `env` options carry over 1:1 except as
   noted below. The README walks through the migration. Apps that must stay on webpack stay on
   dev-utils 15.x.
-    * **Scripts** change from `webpack` / `webpack-dev-server` to `rsbuild build` / `rsbuild dev`,
-      with the build mode passed as `--env-mode prod` / `--env-mode inlineHoist` and mapped onto
-      `prodBuild` / `inlineHoist` in the app's config. The `NODE_OPTIONS=--max_old_space_size`
-      bump webpack needed is no longer required.
-    * **Build-time overrides become `XH_*` environment variables** - the Rsbuild CLI has no
-      `--env key=value` flag. `XH_APP_VERSION`, `XH_APP_BUILD` and friends are read by the exported
-      `readCliEnv()` helper, set in CI or in the `.env` / `.env.local` / `.env.<mode>` files Rsbuild
-      loads before evaluating the config. Release workflows must rewrite their `--env appVersion=…`
-      flags accordingly.
-    * **Options renamed**: `swcOptions` replaces `babelPresetEnvOptions`, `minifyOptions` replaces
-      `terserOptions`, and `logLevel` replaces `stats` / `infrastructureLoggingLevel`. The old names
-      are rejected with a pointer to their replacement, never silently dropped. Any
-      `devServerOptions.proxy` entries use http-proxy-middleware v3 names (`pathFilter`, not
-      `context`).
-    * Under **pnpm**, replace the `webpack*` entries in the app's `publicHoistPattern` with
-      `@rsbuild/core` so the `rsbuild` bin is on the script path. yarn and npm need no configuration.
+* **Scripts** change from `webpack` / `webpack-dev-server` to `rsbuild build` / `rsbuild dev`, with
+  the build mode passed as `--env-mode prod` / `--env-mode inlineHoist` and mapped onto
+  `prodBuild` / `inlineHoist` in the app's config. The `NODE_OPTIONS=--max_old_space_size` bump
+  webpack needed is no longer required.
+* **Build-time overrides become `XH_*` environment variables** - the Rsbuild CLI has no
+  `--env key=value` flag. `XH_APP_VERSION`, `XH_APP_BUILD` and friends are read by the exported
+  `readCliEnv()` helper, set in CI or in the `.env` / `.env.local` / `.env.<mode>` files Rsbuild
+  loads before evaluating the config. Release workflows must rewrite their `--env appVersion=…`
+  flags accordingly.
+* **Options renamed**: `swcOptions` replaces `babelPresetEnvOptions`, `minifyOptions` replaces
+  `terserOptions`, and `logLevel` replaces `stats` / `infrastructureLoggingLevel`. The old names are
+  rejected with a pointer to their replacement, never silently dropped. Any `devServerOptions.proxy`
+  entries use http-proxy-middleware v3 names (`pathFilter`, not `context`).
+* Under **pnpm**, replace the `webpack*` entries in the app's `publicHoistPattern` with
+  `@rsbuild/core` so the `rsbuild` bin is on the script path. yarn and npm need no configuration.
+* **`analyzeBundles` / `XH_ANALYZE_BUNDLES` removed** - bundle analysis is now an app-level opt-in
+  via Rsbuild's built-in [Rsdoctor](https://rsdoctor.rs) support. Rejected with a pointer to it.
 * Requires hoist-react >= 87.1 - unchanged from v15.
 
 ### 🎁 New Features
 
 * **Added `configureRsbuild()`** (`@xh/hoist-dev-utils/configureRsbuild`), plus the `readCliEnv()`
   helper mapping `XH_*` environment variables onto env options.
-    * **Faster, on much less memory.** Measured on Toolbox (10 entry points): production builds run
-      ~2.6x faster at ~2.3x lower peak memory, dev-server cold start is ~2x faster, and
-      edit-to-reload drops from 2.6-4.2 s to under half a second. Emitted JS falls 17% (5% brotli)
-      and CSS 20%.
-    * **No hoist-react change required.** Hoist's legacy decorators are transformed by Babel ahead
-      of SWC by default (`decoratorTransform: 'babel'`) - the same plugin and mode the v15 webpack
-      build used, so decorated classes compile identically. Setting `decoratorTransform: 'swc'`
-      drops that Babel pass for a further step up in speed, but SWC's legacy decorator emit breaks
-      `@persist` at runtime on current hoist-react releases, so that mode is for measurement only
-      and the build warns whenever it is set. It becomes the default in the dev-utils release that
-      pairs with hoist-react's TC39 decorators migration
-      ([hoist-react #4333](https://github.com/xh/hoist-react/issues/4333)), whichever hoist-react
-      version carries it.
-    * **New options**: `minify` (`false` to skip minification in a production build, for diagnosing
-      built output against readable code), `buildCache` (Rspack's persistent cache, off by default
-      pending soak) and `decoratorTransform`.
-    * **React Fast Refresh** hot-swaps modules exporting `hoistCmp({...})` components. Hoist's
-      element-factory modules still trigger a page reload, but now in well under a second.
+* **Faster, on much less memory.** Measured on Toolbox (10 entry points): production builds run
+  ~2.6x faster at ~2.3x lower peak memory, dev-server cold start is ~2x faster, and edit-to-reload
+  drops from 2.6-4.2 s to under half a second. Emitted JS falls 17% (5% brotli) and CSS 20%.
+* **No hoist-react change required.** Hoist's legacy decorators are transformed by Babel ahead of
+  SWC by default (`decoratorTransform: 'babel'`) - the same plugin and mode the v15 webpack build
+  used, so decorated classes compile identically. Setting `decoratorTransform: 'swc'` drops that
+  Babel pass for a further step up in speed, but SWC's legacy decorator emit breaks `@persist` at
+  runtime on current hoist-react releases, so that mode is for measurement only and the build warns
+  whenever it is set. It becomes the default in the dev-utils release that pairs with hoist-react's
+  TC39 decorators migration ([hoist-react #4333](https://github.com/xh/hoist-react/issues/4333)),
+  whichever hoist-react version carries it.
+* **New options**: `minify` (`false` to skip minification in a production build, for diagnosing
+  built output against readable code), `buildCache` (Rspack's persistent cache, off by default
+  pending soak) and `decoratorTransform`.
+* **React Fast Refresh** hot-swaps modules exporting `hoistCmp({...})` components. Hoist's
+  element-factory modules still trigger a page reload, but now in well under a second.
 * **Added `devLiveReload`**. Set `false` to stop the dev server reloading the page when an edit
   cannot be hot-swapped - the config-level equivalent of webpack-dev-server's `--no-live-reload`
   flag, which has no Rsbuild counterpart. Also read from `XH_DEV_LIVE_RELOAD`.
@@ -93,9 +92,8 @@ build, the findings behind the config, and the known differences in output.
 
 ### 📚 Libraries
 
-Rsbuild replaces the webpack toolchain. `webpack-bundle-analyzer` stays - it reads Rspack's stats
-and has no webpack peer dependency - as do the `@babel/*` packages behind the legacy-decorators
-pass.
+Rsbuild replaces the webpack toolchain, `webpack-bundle-analyzer` included - Rsbuild's built-in
+Rsdoctor support takes its place. The `@babel/*` packages behind the legacy-decorators pass stay.
 
 * @rsbuild/core `added @ 2.2`
 * @rsbuild/plugin-babel `added @ 2.1`
@@ -119,6 +117,7 @@ pass.
 * style-loader `4.0 → removed`
 * terser-webpack-plugin `5.6 → removed`
 * webpack `5.110 → removed`
+* webpack-bundle-analyzer `5.3 → removed`
 * webpack-cli `7.2 → removed`
 * webpack-dev-server `6.0 → removed`
 * webpackbar `7.0 → removed`

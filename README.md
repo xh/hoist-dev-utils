@@ -75,14 +75,18 @@ Typical `package.json` scripts:
 "start": "pnpm install && rsbuild dev",
 "startWithHoist": "(cd ../../hoist-react && pnpm install) && pnpm install && rsbuild dev --env-mode inlineHoist",
 "build": "rsbuild build --env-mode prod",
-"buildAndAnalyze": "cross-env XH_ANALYZE_BUNDLES=true rsbuild build --env-mode prod"
+"buildAndAnalyze": "cross-env RSDOCTOR=true rsbuild build --env-mode prod"
 ```
 
 Under pnpm, add `@rsbuild/core` to the app's `publicHoistPattern` so the `rsbuild` bin is on the
 script path; yarn and npm hoist it with no configuration. Unrecognized options are reported in the
 build banner. Options with no equivalent here (`babelPresetEnvOptions`, `terserOptions`, `stats`,
-`infrastructureLoggingLevel`) are rejected with a pointer to their replacements (`swcOptions`,
-`minifyOptions`, `logLevel`).
+`infrastructureLoggingLevel`, `analyzeBundles`) are rejected with a pointer to their replacements
+(`swcOptions`, `minifyOptions`, `logLevel`, `RSDOCTOR=true`).
+
+Bundle analysis ships with Rsbuild, not with this package: add `@rsdoctor/rspack-plugin` to the app
+and build with `RSDOCTOR=true`, and Rsbuild registers and launches
+[Rsdoctor](https://rsdoctor.rs) for you.
 
 See the [Hoist React docs](https://github.com/xh/hoist-react/blob/develop/docs/build-and-deploy-app.md)
 for step-by-step details on the build process, and [`docs/rsbuild-migration.md`](docs/rsbuild-migration.md)

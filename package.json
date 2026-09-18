@@ -35,8 +35,7 @@
         "changelog-parser": "~4.1.0",
         "lodash": "^4.18.1",
         "sass-embedded": "^1.104.1",
-        "type-fest": "^5.10.0",
-        "webpack-bundle-analyzer": "~5.3.3"
+        "type-fest": "^5.10.0"
     },
     "devDependencies": {
         "prettier": "^3.9.7"

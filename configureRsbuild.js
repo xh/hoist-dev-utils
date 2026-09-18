@@ -130,7 +130,6 @@ const hoistReactPkg = resolveAppPackage('@xh/hoist', basePath),
  *      default for dev and disable in prod, or any other valid Rspack `devtool` string to specify a mode directly.
  * @param {boolean} [env.loadAllBlueprintJsIcons=false] - false to only load the BlueprintJs icons required by Hoist
  *      React, resulting in a much smaller bundle size. Set to true if your app wishes to access all the BP icons.
- * @param {boolean} [env.analyzeBundles] - true to launch an interactive bundle analyzer to review output bundle sizes.
  * @param {boolean} [env.minify=true] - false to skip JS/CSS minification in production builds - for diagnosing
  *      built-output issues against readable code. Build output is otherwise identical to a minified build.
  * @param {boolean} [env.buildCache=false] - true to enable Rspack's persistent build cache for faster warm dev-server
@@ -169,7 +168,6 @@ async function configureRsbuild(env) {
         inlineHoist = !prodBuild && parseFlag(env.inlineHoist, false) === true,
         reactProdMode = prodBuild || parseFlag(env.reactProdMode, false) === true,
         resolveAliases = Object.assign({}, env.resolveAliases),
-        analyzeBundles = parseFlag(env.analyzeBundles, false) === true,
         buildCache = parseFlag(env.buildCache, false) === true,
         minify = parseFlag(env.minify, true) === true,
         devClientOverlay = env.devClientOverlay ?? {errors: true, runtimeErrors: false},
@@ -216,7 +214,6 @@ async function configureRsbuild(env) {
     if (!prodBuild) logMsg('💻  Development mode enabled');
     if (inlineHoist) logMsg('🏗️   Inline Hoist enabled');
     if (reactProdMode) logMsg('⚛️   React Production mode enabled');
-    if (analyzeBundles) logMsg('🎁  Bundle analysis enabled');
     if (buildCache) logMsg('💾  Persistent build cache enabled');
     logMsg(
         `Legacy decorators transformed by ${decoratorTransform === 'babel' ? 'Babel (ahead of SWC)' : 'SWC'}`
@@ -736,13 +733,6 @@ async function configureRsbuild(env) {
                         // with strict case sensitivity).
                         isDev ? new rspack.CaseSensitivePlugin() : null,
 
-                        // Support an optional post-build/run interactive treemap of output bundles.
-                        analyzeBundles
-                            ? new (require('webpack-bundle-analyzer').BundleAnalyzerPlugin)({
-                                  analyzerMode: 'server'
-                              })
-                            : null,
-
                         ...(isProd ? compressionPlugins(precompressAssets) : [])
                     ])
                 );
@@ -846,7 +836,10 @@ function rejectUnsupported(env) {
         terserOptions:
             'use `minifyOptions` (same `compress` / `mangle` / `format` shape) for the SWC minimizer',
         stats: 'use `logLevel`',
-        infrastructureLoggingLevel: 'use `logLevel`'
+        infrastructureLoggingLevel: 'use `logLevel`',
+        analyzeBundles:
+            'install `@rsdoctor/rspack-plugin` in the app and build with `RSDOCTOR=true` ' +
+            '(Rsbuild registers and launches Rsdoctor natively)'
     };
     Object.entries(rejected).forEach(([key, remedy]) => {
         if (env[key] !== undefined) {
@@ -881,7 +874,6 @@ function readCliEnv(processEnv = process.env) {
         XH_PROD_BUILD: 'prodBuild',
         XH_INLINE_HOIST: 'inlineHoist',
         XH_REACT_PROD_MODE: 'reactProdMode',
-        XH_ANALYZE_BUNDLES: 'analyzeBundles',
         XH_BUILD_CACHE: 'buildCache',
         XH_MINIFY: 'minify',
         XH_DECORATOR_TRANSFORM: 'decoratorTransform',
