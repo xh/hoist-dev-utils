@@ -85,7 +85,7 @@ build banner. Options with no equivalent here (`babelPresetEnvOptions`, `terserO
 `minifyOptions`, `logLevel`).
 
 See the [Hoist React docs](https://github.com/xh/hoist-react/blob/develop/docs/build-and-deploy-app.md)
-for step-by-step details on the build process, and [`docs/rsbuild-spike.md`](docs/rsbuild-spike.md)
+for step-by-step details on the build process, and [`docs/rsbuild-migration.md`](docs/rsbuild-migration.md)
 for the measurements against the v15 webpack build and the known differences in output.
 
 ### Migrating from v15 (webpack)

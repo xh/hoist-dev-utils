@@ -21,7 +21,7 @@ One config module over a small shared core:
 - **`configureRsbuild.js`** - exports `configureRsbuild(env)` returning an
   [Rsbuild](https://rsbuild.rs) (Rspack + SWC) config, plus a `readCliEnv()` helper mapping `XH_*`
   environment variables onto env options (the Rsbuild CLI has no `--env key=value`). Rsbuild
-  replaced webpack in v16; `docs/rsbuild-spike.md` records the migration spike (measurements,
+  replaced webpack in v16; `docs/rsbuild-migration.md` records the migration (spike measurements,
   findings, known differences from the v15 webpack build). By default it transforms Hoist's legacy
   decorators with Babel ahead of SWC (`decoratorTransform: 'babel'`), which is why the hoist-react
   floor did not move at v16. `'swc'` mode is measurement-only for now: SWC's legacy emit breaks
@@ -60,7 +60,7 @@ via `rspack.NormalModuleReplacementPlugin` - apps opt out with `env.loadAllBluep
 
 There is no build step — the package ships `configureRsbuild.js`, `lib/**/*` and `static/**/*`
 directly. There are no tests in this repo - validation is done by building and running Toolbox
-(see `docs/rsbuild-spike.md` for the runtime parity gate approach).
+(see `docs/rsbuild-migration.md` for the runtime parity gate approach).
 
 **Package manager: pnpm.** `pnpm-lock.yaml` is the source of truth — do not invoke `npm install`
 or `yarn install`, and do not create a `package-lock.json` or `yarn.lock`. The required pnpm

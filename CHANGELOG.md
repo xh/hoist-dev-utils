@@ -11,7 +11,7 @@ pre-compressed assets, and the `inlineHoist`, dev-server proxy and HTTPS options
 faster and on far less memory. The hoist-react floor is unchanged at 87.1, so no framework upgrade is
 needed to take it.
 
-See [`docs/rsbuild-spike.md`](docs/rsbuild-spike.md) for the measurements against the v15 webpack
+See [`docs/rsbuild-migration.md`](docs/rsbuild-migration.md) for the measurements against the v15 webpack
 build, the findings behind the config, and the known differences in output.
 
 ### 💥 Breaking Changes

@@ -1,4 +1,4 @@
-# Rsbuild / Rspack Migration Spike (September 2026)
+# Rsbuild / Rspack Migration (September 2026)
 
 > **Outcome:** v16 ships Rsbuild only. `configureWebpack()` was removed in that release rather than
 > shipped alongside `configureRsbuild()` as proposed below - no app should carry both toolchains as
@@ -6,9 +6,12 @@
 > speaks of "both configs" or a webpack column, it describes the v15 baseline the port was measured
 > against and the hybrid packaging the spike assumed, not what shipped.
 
-Results of the Phase 2 spike tracked in [#73](https://github.com/xh/hoist-dev-utils/issues/73):
-a `configureRsbuild()` counterpart to `configureWebpack()`, validated against Toolbox. Background
-and the option analysis that led here: [bundler-migration-analysis.md](./bundler-migration-analysis.md).
+Record of the move from webpack to Rsbuild, shipped in dev-utils 16. It began as the Phase 2 spike
+tracked in [#73](https://github.com/xh/hoist-dev-utils/issues/73): a `configureRsbuild()`
+counterpart to `configureWebpack()`, validated against Toolbox and two client apps. Background and
+the option analysis that led here:
+[bundler-migration-analysis.md](https://github.com/xh/hoist-dev-utils/blob/claude/webpack-vite-migration-2mcey2/docs/bundler-migration-analysis.md)
+(on its own branch).
 
 Everything below was measured on one 4-core / 15 GB Linux container, Node 22.22, against Toolbox
 `11.0-SNAPSHOT` (10 entry points), hoist-dev-utils `16.0.0-SNAPSHOT` (webpack 5.110 / Babel 7.29;
