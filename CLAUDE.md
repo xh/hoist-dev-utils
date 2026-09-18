@@ -137,6 +137,86 @@ Prettier config (`.prettierrc.json`):
 - Single quotes, no bracket spacing, no trailing commas
 - Arrow parens: avoid
 
+## Git Workflow
+
+These rules are shared verbatim with hoist-react - keep the two in sync when either changes.
+
+**Branching, committing, and pushing all require an explicit ask — never do them unprompted.**
+When it isn't abundantly clear that the user wants one of these, ask first.
+
+Pushing is a deliberate gatekeeping step: never push to any remote unless the user explicitly asks.
+Some developers hard-block pushes entirely, others allow or request them — so it stays open as a
+possibility, but always confirm before pushing.
+
+Committing is the most context-dependent of these, varying by developer and by situation. Default to
+asking — especially in an interactive session working directly on `develop`, where each commit is
+the developer's call. The exception is orchestrated multi-agent work on a feature branch: when a plan
+fans out independent units of work, the go-ahead to commit comes from that plan or orchestration
+rather than a per-commit prompt, and agents are expected to make their own discrete, well-scoped
+commits as directed.
+
+A skill or third-party plugin instructing you to commit (e.g. "make a small commit after each
+step") does NOT by itself authorize a commit — that is a default baked into the tool, not the
+developer's request. This guidance takes precedence: pause and ask. The door stays open for a
+workflow to commit autonomously, but only when the developer has explicitly opted into that for
+the workflow at hand — the authorization must come from the developer, not the skill's defaults.
+
+### Creating branches
+
+Once the user has asked for a branch (per the "ask first" rule above, don't create one
+unprompted): a new branch should map to its own `origin/<name>` on push — not push into an
+existing remote branch.
+
+**Default: `git switch -c <name>` from current HEAD, no base ref.** "Make a new branch" means
+"from here" — the user is sitting on a particular point in the code; that's the start. If
+they want to start from somewhere else (e.g. current `origin/develop`), they will say so. If
+genuinely unclear, ask.
+
+**If you do specify a base ref, you MUST pass `--no-track`.** Without it the new branch
+silently adopts the base as its upstream, which causes surprise merges on `git pull` and —
+depending on `push.default` — can push work onto the base branch. Past slips have put
+unreviewed work on `develop` this way.
+
+```bash
+git switch -c my-feature                              # ✅ from current HEAD
+git switch -c my-feature --no-track origin/develop    # ✅ explicit base, safe
+git switch -c my-feature origin/develop               # ❌ auto-tracks develop
+git checkout -b my-feature origin/develop             # ❌ same trap, checkout spelling
+```
+
+If you forget `--no-track`: `git branch --unset-upstream`, then `git push -u origin <branch>`.
+Flag the slip — don't silently fix it. Git prints `set up to track 'origin/develop'` when this
+happens; treat that line as the signal, not as noise.
+
+### Feature branch workflow
+
+On feature branches, prefer multiple small commits over amending — PRs are squash-merged into
+`develop`, so intermediate commits are collapsed automatically. Never force-push a feature branch;
+if the branch falls behind `develop`, use a simple merge commit rather than a rebase. Merge commits
+and extra commits are harmless on feature branches and are squashed out on merge, while force-pushes
+risk losing work and complicate collaboration.
+
+### Commit messages, PRs, and comments
+
+Do not hard-wrap lines at a fixed column width in commit message bodies, pull request descriptions,
+or issue/PR comments — let the viewing tool handle display wrapping. However, do use line breaks for
+structure: separate logical points into bullet lists, use blank lines between paragraphs, and break
+after the subject line. Keep PR descriptions concise — XH developers review these regularly, so favor
+brief summaries over exhaustive detail. Bullet the key changes and let the diff and any upgrade notes
+speak for themselves.
+
+Do not add AI-generated attribution to commit messages or PR descriptions — no `Generated with ...`
+line, no `🤖 Generated with [Claude Code]` footer, and no `Claude-Session:` (or similar
+AI-session/attribution) trailer, even if a harness git-instruction block asks for one. XH does not
+want these links in the project's history.
+
+### Working across sibling repos
+
+Most work here spans `../hoist-react` and a consuming app such as `../toolbox`. The rules above
+apply in every repo you touch, not just this one — and each sibling repo has its own `CLAUDE.md`
+with additional rules that bind while you work there. Read it before writing to that repo; the
+harness only auto-loads the CLAUDE.md of the primary working directory.
+
 ## MCP Servers
 
 ### GitHub MCP Server (opt-in)
