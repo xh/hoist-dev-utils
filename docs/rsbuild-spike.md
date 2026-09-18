@@ -1,5 +1,11 @@
 # Rsbuild / Rspack Migration Spike (September 2026)
 
+> **Outcome:** v16 ships Rsbuild only. `configureWebpack()` was removed in that release rather than
+> shipped alongside `configureRsbuild()` as proposed below - no app should carry both toolchains as
+> dev dependencies, and apps that must stay on webpack stay on dev-utils 15.x. Where this document
+> speaks of "both configs" or a webpack column, it describes the v15 baseline the port was measured
+> against and the hybrid packaging the spike assumed, not what shipped.
+
 Results of the Phase 2 spike tracked in [#73](https://github.com/xh/hoist-dev-utils/issues/73):
 a `configureRsbuild()` counterpart to `configureWebpack()`, validated against Toolbox. Background
 and the option analysis that led here: [bundler-migration-analysis.md](./bundler-migration-analysis.md).
@@ -280,17 +286,19 @@ Notes:
 
 ## Suggested next steps (Ship phase)
 
-1. Publish dev-utils 16 SNAPSHOT with both configs; no hoist-react release is required.
-2. Switch Toolbox's default `start` / `build` scripts and CI to Rsbuild once a week or two of
-   `startWithHoist:rsbuild` soak is clean; keep `webpack.config.js` through the transition.
+1. Publish dev-utils 16 SNAPSHOT - Rsbuild only, per the outcome note at the top; no hoist-react
+   release is required.
+2. Migrate Toolbox: replace `webpack.config.js` with `rsbuild.config.mjs`, switch the `start` /
+   `build` scripts and CI (the README lists the steps). The fallback during soak is pinning
+   dev-utils 15.x, not a second config.
 3. Tune `splitChunks` (or accept the current grouping), then revisit `concatenateModules` /
    `sideEffects` together with #4640.
 4. Migrate customer apps opportunistically: swap `webpack.config.js` for `rsbuild.config.mjs`, add
    `@rsbuild/core` to `publicHoistPattern` (pnpm only), rewrite release `--env` flags as `XH_*`
    variables, and fold `startWith...` script variants into a gitignored `.env.local`.
-5. Update `docs/version-compatibility.md` in hoist-react with a 16.0 row (floor unchanged at 87.1 for
-   both configs). A row drafted on hoist-react branch `claude/github-issue-73-fvwaa6` still states
-   the superseded 88.0 floor for `configureRsbuild()` and must be rewritten before it merges.
+5. Update `docs/version-compatibility.md` in hoist-react. Done on hoist-react branch `rsbuild-spike`:
+   a 16.0 row recording the webpack removal, the floor unchanged at 87.1, and `'swc'` mode as
+   measurement-only until the TC39 migration. Merge with hoist-react's next release.
 6. Validate on more client apps, not just Toolbox - the `sideEffects: false` episode showed Toolbox is
    not representative of the option surface client apps exercise (`extraModuleRules`,
    `resolveAliases`, `targetBrowsers`, release `--env` plumbing). JobSite is done (below) and

@@ -105,8 +105,8 @@ style of each entry** (see conventions below). After editing, run `pnpm install`
   Research each major against **our actual usage**, not just its changelog in the abstract — a
   "breaking" change is irrelevant if we don't touch the affected API. Gather:
   - its breaking-change notes (release notes / CHANGELOG — use Context7 or WebFetch);
-  - whether anything in `configureWebpack.js` actually relies on what changed (grep the loader/plugin
-    config — e.g. sass-loader 17 dropped the legacy Sass API, but we pass no options, so it's moot);
+  - whether anything in `configureRsbuild.js` or `lib/` actually relies on what changed (grep the
+    plugin / rule config — a plugin dropping an option we never pass is moot);
   - any new **Node** floor it introduces (`npm view <pkg>@<version> engines.node`, read-only) and
     whether that exceeds our current floor;
   - any **hoist-react** implication (e.g. `@types/react` is runtime-coupled to React's major and must
@@ -206,7 +206,7 @@ When editing `package.json`, match the existing style of each dependency — don
 
 | Style | Example | Used for | `pnpm update` pulls (NOT changelogged) |
 |-------|---------|----------|------------------------------------------|
-| `~X.Y.Z` (tilde) | `webpack: ~5.106.2` | most build deps / webpack plugins | patches only |
+| `~X.Y.Z` (tilde) | `@rsbuild/core: ~2.2.5` | most build deps / Rsbuild plugins | patches only |
 | `^X.Y.Z` (caret) | `@babel/core: ^7.28.5`, `@xh/eslint-config: ^7.0` | Babel packages, eslint-config | minors + patches |
 | `X.x` | `lodash: 4.x`, `type-fest: 5.x`, `@types/react: 18.x`, `prettier: 3.x` | libs we track loosely within a major | minors + patches |
 

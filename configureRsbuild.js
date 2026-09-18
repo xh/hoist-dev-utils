@@ -15,6 +15,7 @@ const _ = require('lodash'),
     {pluginSass} = require('@rsbuild/plugin-sass'),
     {pluginBabel} = require('@rsbuild/plugin-babel'),
     HoistManifestPlugin = require('./lib/HoistManifestPlugin'),
+    HoistCompressionPlugin = require('./lib/HoistCompressionPlugin'),
     basePath = fs.realpathSync(process.cwd());
 
 const {
@@ -44,9 +45,9 @@ const hoistReactPkg = resolveAppPackage('@xh/hoist', basePath),
 
 /**
  * Consolidated Rsbuild (Rspack + SWC) configuration for both dev-time and production builds of
- * Hoist React web applications. The Rspack-based successor to `configureWebpack()`, accepting the
- * same `env` options wherever the concept carries over - see the per-option notes below for the
- * handful that do not. Apps consume it from an `rsbuild.config.mjs`:
+ * Hoist React web applications. Replaces the webpack-based `configureWebpack()` of v15 and
+ * earlier, accepting the same `env` options wherever the concept carries over - see the per-option
+ * notes below for the handful that do not. Apps consume it from an `rsbuild.config.mjs`:
  *
  *      import {defineConfig} from '@rsbuild/core';
  *      import configureRsbuild from '@xh/hoist-dev-utils/configureRsbuild';
@@ -104,8 +105,8 @@ const hoistReactPkg = resolveAppPackage('@xh/hoist', basePath),
  *      transpiling, polyfill selection and CSS prefixing.
  * @param {string} [env.decoratorTransform='babel'] - which transpiler transforms Hoist's legacy (TypeScript
  *      `experimentalDecorators`) decorators. `'babel'` (default) runs Babel's `@babel/plugin-proposal-decorators` in
- *      legacy mode ahead of SWC, exactly as `configureWebpack()` does - so decorator semantics are identical to the
- *      webpack build by construction, at the cost of a Babel pass over app and hoist-react source. `'swc'` uses
+ *      legacy mode ahead of SWC, exactly as the v15 webpack build did - so decorator semantics are identical to
+ *      that build by construction, at the cost of a Babel pass over app and hoist-react source. `'swc'` uses
  *      SWC's own legacy-decorator transform: faster, but its TypeScript-style emit passes field decorators no
  *      descriptor, which hoist-react's `@persist` cannot work with - so it breaks at runtime on current
  *      hoist-react releases and is for measurement only. The build warns whenever `'swc'` is set. This mode
@@ -120,10 +121,10 @@ const hoistReactPkg = resolveAppPackage('@xh/hoist', basePath),
  *      `terserOptions`, which is rejected if passed to avoid silently dropping Terser-specific settings.
  * @param {(boolean|Object)} [env.precompressAssets=true] - control build-time generation of pre-compressed `.br`
  *      and `.gz` copies of bundled assets, for direct serving by nginx via `brotli_static` / `gzip_static`. Set
- *      to `false` to disable, or provide an object to spread onto / override the defaults passed to the
- *      compression plugin (e.g. `test`, `threshold`, `minRatio`). Note that `filename`, `algorithm`,
- *      `compressionOptions` and `deleteOriginalAssets` are managed here and cannot be overridden - the original
- *      uncompressed assets are always retained. Production builds only.
+ *      to `false` to disable, or provide an object to override the defaults passed to the compression plugin:
+ *      `test`, `include`, `exclude` (asset-name matchers), `threshold` (bytes) and `minRatio`. The algorithms,
+ *      output names and compression levels are managed here, and the original uncompressed assets are always
+ *      retained. Production builds only.
  * @param {(boolean|string)} [env.sourceMaps=true] - control sourceMap generation. Set to `true` to enable defaults
  *      specific to dev vs. prod builds, `false` to disable source maps entirely, special string `'devOnly'` to enable
  *      default for dev and disable in prod, or any other valid Rspack `devtool` string to specify a mode directly.
@@ -135,7 +136,7 @@ const hoistReactPkg = resolveAppPackage('@xh/hoist', basePath),
  * @param {boolean} [env.buildCache=false] - true to enable Rspack's persistent build cache for faster warm dev-server
  *      starts. Experimental within Rspack - off by default pending soak.
  * @param {string} [env.logLevel=info] - Rsbuild log level - 'info' | 'warn' | 'error' | 'silent'. Replaces
- *      webpack's `stats` and `infrastructureLoggingLevel` options, which are ignored if passed.
+ *      the v15 `stats` and `infrastructureLoggingLevel` options, which are rejected if passed.
  * @param {boolean|Object} [env.devClientOverlay] - customize dev-server overlay behavior. Set to show only compilation
  *      errors by default. Accepts webpack-dev-server's `{errors, runtimeErrors}` shape, mapped onto Rsbuild's
  *      `{errors, runtime}` (there is no Rsbuild equivalent of `warnings`). Dev-mode only.
@@ -320,8 +321,8 @@ async function configureRsbuild(env) {
     // rewritten into the specific polyfills needed for the configured target browsers.
     const polyfillsPath = path.resolve(hoistPath, 'static/polyfills.js'),
         // core-js version for SWC's entry-mode rewrite. Pinned to the 3.0 feature set, exactly as
-        // configureWebpack's Babel preset-env has always been (`corejs: {version: 3}`) - so both
-        // configs emit the same polyfills. Raising this to the installed minor
+        // the v15 webpack build's Babel preset-env always was (`corejs: {version: 3}`) - so the
+        // emitted polyfills are unchanged. Raising this to the installed minor
         // (`coreJsPkg.version`) would add a dozen-plus shims for post-3.0 additions (explicit
         // resource management, iterator helpers, `Promise.try`, ...) that core-js-compat reports
         // current Safari as lacking - a deliberate policy change to make separately, not here.
@@ -368,8 +369,8 @@ async function configureRsbuild(env) {
             pluginSass(),
 
             // Legacy decorators via Babel, ahead of SWC - the same plugin, mode and per-extension
-            // TypeScript handling as configureWebpack's babel-loader, so decorated classes compile
-            // identically under both configs. SWC then receives plain JS (+ JSX in .tsx) and does
+            // TypeScript handling as the v15 webpack build's babel-loader, so decorated classes
+            // compile identically to before. SWC then receives plain JS (+ JSX in .tsx) and does
             // everything else. See `decoratorTransform` above.
             ...(decoratorTransform === 'babel'
                 ? [
@@ -653,8 +654,8 @@ async function configureRsbuild(env) {
                     // Also skip scope hoisting (module concatenation), for the same reason. It
                     // merges modules into one function scope, so a circular import can reach a
                     // `const` binding before its defining statement has run - a TDZ ReferenceError
-                    // at startup. configureWebpack never concatenated (webpack `mode: 'none'`),
-                    // and hoist-react's module graph has only been proven against that.
+                    // at startup. The v15 webpack build never concatenated (`mode: 'none'`), and
+                    // hoist-react's module graph has only been proven against that.
                     concatenateModules: false,
                     // Improved debugging with readable module/chunk names.
                     chunkIds: 'named',
@@ -753,7 +754,7 @@ async function configureRsbuild(env) {
 //------------------------
 // Implementation
 //------------------------
-// Babel options for `decoratorTransform: 'babel'` - a deliberate subset of configureWebpack's
+// Babel options for `decoratorTransform: 'babel'` - a deliberate subset of the v15 webpack build's
 // babel-loader config: the per-extension TypeScript strip (JSX parsed only in .tsx, so angle-bracket
 // type assertions stay valid in plain .ts) always ahead of the legacy decorators plugin, plus the
 // class-field transforms that plugin requires. No preset-react, no core-js: SWC handles JSX,
@@ -776,7 +777,7 @@ function legacyDecoratorBabelOptions(targetBrowsers) {
                     bugfixes: true,
                     useBuiltIns: false,
                     // Interop transforms required while legacy decorators are in use - Babel must
-                    // compile the class elements it decorates (as in configureWebpack).
+                    // compile the class elements it decorates.
                     include: [
                         'transform-class-properties',
                         'transform-private-methods',
@@ -799,45 +800,53 @@ function legacyDecoratorBabelOptions(targetBrowsers) {
 const compressionPlugins = precompressAssets => {
     if (!precompressAssets) return [];
 
-    const CompressionPlugin = require('compression-webpack-plugin'),
-        shared = {
-            // Source maps are deliberately excluded - they are large, fetched only with devtools
-            // open, and already compressed on the fly by xh-nginx (which serves them as
-            // `application/json`).
-            test: /\.(js|css|html|svg)$/,
-            threshold: 1024,
-            minRatio: 0.8,
-            ...(_.isPlainObject(precompressAssets) ? precompressAssets : {}),
-            // Never delete the originals. If only the `.br` and `.gz` remain, nginx still serves
-            // them to any client that advertises the matching encoding - but a client that
-            // advertises neither (a plain curl, a health check, an old proxy) has no file left to
-            // read and gets a 404. Applied last, deliberately after any app-level overrides.
-            deleteOriginalAssets: false
-        };
+    // Originals are never deleted (the plugin has no option to). If only the `.br` and `.gz`
+    // remained, nginx would still serve them to any client that advertises the matching encoding -
+    // but a client that advertises neither (a plain curl, a health check, an old proxy) would have
+    // no file left to read and get a 404.
+    const shared = {
+        // Source maps are deliberately excluded - they are large, fetched only with devtools
+        // open, and already compressed on the fly by xh-nginx (which serves them as
+        // `application/json`).
+        test: /\.(js|css|html|svg)$/,
+        threshold: 1024,
+        minRatio: 0.8,
+        ..._.pick(
+            _.isPlainObject(precompressAssets) ? precompressAssets : {},
+            'test',
+            'include',
+            'exclude',
+            'threshold',
+            'minRatio'
+        )
+    };
 
     return [
-        new CompressionPlugin({
+        new HoistCompressionPlugin({
             ...shared,
-            filename: '[path][base].br',
+            extension: '.br',
             algorithm: 'brotliCompress',
             compressionOptions: {params: {[zlib.constants.BROTLI_PARAM_QUALITY]: 11}}
         }),
-        new CompressionPlugin({
+        new HoistCompressionPlugin({
             ...shared,
-            filename: '[path][base].gz',
+            extension: '.gz',
             algorithm: 'gzip',
             compressionOptions: {level: 9}
         })
     ];
 };
 
-// Babel-era options with no SWC equivalent. Rejected loudly rather than ignored, so a config
-// ported from `configureWebpack()` does not silently lose settings it relied upon.
+// v15 (webpack / Babel / Terser) options with no direct equivalent here. Rejected loudly rather
+// than ignored, so a config ported from a `webpack.config.js` does not silently lose settings it
+// relied upon.
 function rejectUnsupported(env) {
     const rejected = {
         babelPresetEnvOptions: 'use `swcOptions` to adjust SWC / preset-env behavior',
         terserOptions:
-            'use `minifyOptions` (same `compress` / `mangle` / `format` shape) for the SWC minimizer'
+            'use `minifyOptions` (same `compress` / `mangle` / `format` shape) for the SWC minimizer',
+        stats: 'use `logLevel`',
+        infrastructureLoggingLevel: 'use `logLevel`'
     };
     Object.entries(rejected).forEach(([key, remedy]) => {
         if (env[key] !== undefined) {

@@ -1,7 +1,7 @@
 {
     "name": "@xh/hoist-dev-utils",
     "version": "16.0.0-SNAPSHOT",
-    "description": "Utilities for configuring builds of Hoist-React client applications.",
+    "description": "Rsbuild (Rspack + SWC) build configuration and shared dev dependencies for Hoist React applications.",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/xh/hoist-dev-utils.git"
@@ -11,7 +11,6 @@
     "author": "Extremely Heavy Industries, Inc.",
     "license": "Apache-2.0",
     "files": [
-        "configureWebpack.js",
         "configureRsbuild.js",
         "lib/**/*",
         "static/**/*"
@@ -24,7 +23,6 @@
         "@babel/plugin-proposal-decorators": "^7.29.7",
         "@babel/plugin-transform-typescript": "^7.29.7",
         "@babel/preset-env": "^7.29.7",
-        "@babel/preset-react": "^7.29.7",
         "@rsbuild/core": "~2.2.5",
         "@rsbuild/plugin-babel": "~2.1.0",
         "@rsbuild/plugin-basic-ssl": "~1.2.3",
@@ -34,29 +32,11 @@
         "@types/react": "^19.2.18",
         "@types/react-dom": "^19.2.5",
         "@xh/eslint-config": "^8.0.1",
-        "autoprefixer": "~10.5.4",
-        "babel-loader": "~10.1.1",
-        "babel-plugin-transform-imports": "~2.0.0",
-        "case-sensitive-paths-webpack-plugin": "~2.4.0",
         "changelog-parser": "~4.1.0",
-        "compression-webpack-plugin": "~12.0.0",
-        "copy-webpack-plugin": "~14.0.0",
-        "css-loader": "~7.1.5",
-        "html-webpack-plugin": "~5.6.8",
         "lodash": "^4.18.1",
-        "mini-css-extract-plugin": "~2.10.2",
-        "postcss": "^8.5.26",
-        "postcss-loader": "~8.2.1",
         "sass-embedded": "^1.103.1",
-        "sass-loader": "~17.0.1",
-        "style-loader": "~4.0.0",
-        "terser-webpack-plugin": "~5.6.1",
         "type-fest": "^5.9.0",
-        "webpack": "~5.110.2",
-        "webpack-bundle-analyzer": "~5.3.2",
-        "webpack-cli": "~7.2.3",
-        "webpack-dev-server": "~6.0.0",
-        "webpackbar": "~7.0.0"
+        "webpack-bundle-analyzer": "~5.3.2"
     },
     "devDependencies": {
         "prettier": "^3.9.6"

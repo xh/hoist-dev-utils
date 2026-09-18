@@ -9,8 +9,9 @@ applications.
 
 The package.json file in this repository specifies a set of development dependencies required for
 building Hoist React applications. Those applications can specify `@xh/hoist-dev-utils` as a dev
-dependency and transitively bring in libs for Webpack and all associated plugins used in app builds,
-including Webpack Dev Server, Babel, and other essential loaders.
+dependency and transitively bring in [Rsbuild](https://rsbuild.rs) (Rspack + SWC) and the plugins
+used in app builds, including the Rsbuild dev server, Sass, and Babel (for Hoist's legacy
+decorators).
 
 While Hoist Dev Utils provides most essential dev dependencies for Hoist React, apps typically also include:
 
@@ -22,55 +23,20 @@ While Hoist Dev Utils provides most essential dev dependencies for Hoist React, 
 See the [Toolbox package.json](https://github.com/xh/toolbox/blob/develop/client-app/package.json) for examples of these
 libraries in action.
 
-## Webpack configuration
+## Rsbuild configuration
 
-The `configureWebpack.js` module exports a single `configureWebpack()` method that can be used to
-output a complete Webpack configuration. (See below for `configureRsbuild()`, its Rspack-based
-successor-in-evaluation.) This includes support for transpiling and bundling multiple
-client application entry points with preconfigured loaders for JS code (Babel), styles
-(CSS/SASS/PostCSS) and HTML index file generation. See the docs within `configureWebpack.js` for supported
-arguments and additional details.
+The `configureRsbuild.js` module exports a single `configureRsbuild()` function that returns a
+complete [Rsbuild](https://rsbuild.rs) (Rspack + SWC) configuration. This includes transpiling and
+bundling multiple client application entry points, styles (CSS/SASS), HTML index file generation,
+and pre-compressed assets for production builds. See the docs within `configureRsbuild.js` for
+supported arguments and additional details.
 
-The generated Webpack configuration also sets the value of several XH globals within the built JS
-code, via the Webpack DefinePlugin. These include `XH.appCode` and `XH.appName` (both required),
-`XH.appVersion` (typically set as part of the build) and similar.
+The generated configuration also sets the value of several XH globals within the built JS code, via
+Rspack's DefinePlugin. These include `XH.appCode` and `XH.appName` (both required), `XH.appVersion`
+(typically set as part of the build) and similar.
 
-The intention is to reduce application webpack config files to a minimal and manageable subset of
-options. An example of such a file would be:
-
-```typescript
-const configureWebpack = require('@xh/hoist-dev-utils/configureWebpack');
-
-module.exports = (env = {}) => {
-    return configureWebpack({
-        appCode: 'myApp',
-        appName: 'My Application',
-        appVersion: '1.0-SNAPSHOT',
-        favicon: './public/favicon.svg',
-        devServerOpenPage: 'app/',
-        ...env
-    });
-};
-```
-
-Note that additional env variables can be provided at build time, so the application file can
-specify initial defaults (such as appVersion above, checked in as a SNAPSHOT) that are then
-overridden for particular builds (e.g. via `webpack --env prodBuild --env appVersion=1.2.3` to cut a
-versioned 1.2.3 release).
-
-See the [Hoist React docs](https://github.com/xh/hoist-react/blob/develop/docs/build-and-deploy.md)
-for step-by-step details on the build process.
-
-## Rsbuild configuration (Rspack + SWC)
-
-As of v16 the package also exports `configureRsbuild()`, an [Rsbuild](https://rsbuild.rs)-based
-equivalent of `configureWebpack()` producing the same build features from the same options, with
-Rspack replacing webpack and SWC replacing Babel. Builds are several times faster, need far less
-memory, and the dev server hot-swaps stylesheet edits and modules exporting React components
-(`hoistCmp({...})`) in place, with element-factory modules falling back to a sub-second reload. It
-shares `configureWebpack()`'s hoist-react floor - by default Hoist's legacy decorators
-are still transformed by Babel (ahead of SWC), so no framework change is needed to adopt it. An app
-opts in with an `rsbuild.config.mjs`:
+The intention is to reduce application build config files to a minimal and manageable subset of
+options. An app's `rsbuild.config.mjs`:
 
 ```javascript
 import configureRsbuild, {readCliEnv} from '@xh/hoist-dev-utils/configureRsbuild';
@@ -89,8 +55,8 @@ export default ({envMode}) =>
 ```
 
 Run with `rsbuild dev` / `rsbuild build --env-mode prod`. Build-time options reach
-`configureRsbuild()` in three layers, none of them webpack's `--env key=value` (Rsbuild's CLI has
-no such flag, and its own `--env` means something else):
+`configureRsbuild()` in three layers (Rsbuild's CLI has no `--env key=value` flag, and its own
+`--env` means something else):
 
 1. **Mode** - `--env-mode prod` / `--env-mode inlineHoist`, mapped in the app's config onto
    `prodBuild` / `inlineHoist` as above.
@@ -99,23 +65,57 @@ no such flag, and its own `--env` means something else):
 3. **Per-mode and per-developer defaults** - the same `XH_*` variables in dotenv files, which
    Rsbuild loads into `process.env` before evaluating the config: `.env`, `.env.local`,
    `.env.<mode>` and `.env.<mode>.local` in the app directory. A gitignored `.env.local` is where a
-   developer's `XH_DEV_HOST` or `XH_DEV_LIVE_RELOAD=false` belongs, replacing the one-off
-   `startWith...` script variants of the webpack era. Only `PUBLIC_`-prefixed variables are exposed
-   to client code; `XH_*` values stay build-time.
+   developer's `XH_DEV_HOST` or `XH_DEV_LIVE_RELOAD=false` belongs, in place of one-off
+   `startWith...` script variants. Only `PUBLIC_`-prefixed variables are exposed to client code;
+   `XH_*` values stay build-time.
+
+Typical `package.json` scripts:
+
+```json
+"start": "pnpm install && rsbuild dev",
+"startWithHoist": "(cd ../../hoist-react && pnpm install) && pnpm install && rsbuild dev --env-mode inlineHoist",
+"build": "rsbuild build --env-mode prod",
+"buildAndAnalyze": "cross-env XH_ANALYZE_BUNDLES=true rsbuild build --env-mode prod"
+```
 
 Under pnpm, add `@rsbuild/core` to the app's `publicHoistPattern` so the `rsbuild` bin is on the
-script path (as Toolbox does for `webpack`); yarn and npm hoist it with no configuration. Options that have no SWC equivalent (`babelPresetEnvOptions`,
-`terserOptions`) are rejected with a pointer to their replacements (`swcOptions`, `minifyOptions`).
-See [`docs/rsbuild-spike.md`](docs/rsbuild-spike.md) for the parity table, Toolbox measurements
-and known differences.
+script path; yarn and npm hoist it with no configuration. Unrecognized options are reported in the
+build banner. Options with no equivalent here (`babelPresetEnvOptions`, `terserOptions`, `stats`,
+`infrastructureLoggingLevel`) are rejected with a pointer to their replacements (`swcOptions`,
+`minifyOptions`, `logLevel`).
+
+See the [Hoist React docs](https://github.com/xh/hoist-react/blob/develop/docs/build-and-deploy-app.md)
+for step-by-step details on the build process, and [`docs/rsbuild-spike.md`](docs/rsbuild-spike.md)
+for the measurements against the v15 webpack build and the known differences in output.
+
+### Migrating from v15 (webpack)
+
+Dev-utils 16 is Rsbuild only - `configureWebpack()` is gone. To move an app:
+
+1. Take `@xh/hoist-dev-utils` 16. It requires hoist-react >= 87.1, unchanged from v15. Under pnpm,
+   replace the `webpack`, `webpack-cli` and `webpack-dev-server` entries in `publicHoistPattern`
+   with `@rsbuild/core`.
+2. Replace `webpack.config.js` with an `rsbuild.config.mjs` as above. Options carry over 1:1,
+   except: `babelPresetEnvOptions` becomes `swcOptions`, `terserOptions` becomes `minifyOptions`,
+   `stats` / `infrastructureLoggingLevel` become `logLevel`, and `devServerOptions.proxy` entries
+   use http-proxy-middleware v3 names (`pathFilter`, not `context`).
+3. Update scripts: `webpack-dev-server` becomes `rsbuild dev`, `webpack --env prodBuild` becomes
+   `rsbuild build --env-mode prod`, `--env inlineHoist` becomes `--env-mode inlineHoist`, and
+   `--no-live-reload` becomes `XH_DEV_LIVE_RELOAD=false` (a gitignored `.env.local` is the place
+   for it). Drop the `NODE_OPTIONS=--max_old_space_size=3072` bump - it is no longer needed.
+4. Update CI: `pnpm build --env appVersion="$VERSION" --env appBuild="$TAG"` becomes
+   `XH_APP_VERSION="$VERSION" XH_APP_BUILD="$TAG" pnpm build`.
+5. Build and compare. Output lands in `build/` with the same layout (JS and CSS at the root, media
+   under `static/media`, per-app `index.html` and `public/<app>/manifest.json`), plus `.br` / `.gz`
+   twins of compressible assets. Chunk boundaries differ from webpack's; total payload is smaller.
 
 ## Favicons
 
-To include a favicon with your app, provide the `favicon` option to `configureWebpack()`. This can be either
+To include a favicon with your app, provide the `favicon` option to `configureRsbuild()`. This can be either
 a `png` or an `svg` file:
 
-```typescript
-return configureWebpack({
+```javascript
+return configureRsbuild({
     ...,
     favicon: './public/favicon.svg',
     ...

@@ -2,62 +2,83 @@
 
 ## 16.0.0-SNAPSHOT - unreleased
 
-Adds `configureRsbuild()`, an [Rsbuild](https://rsbuild.rs) (Rspack + SWC) build path alongside the
-established `configureWebpack()`. Both ship from this release and produce equivalent builds from the
-same options, so apps can try Rspack one app at a time and switch back by pointing at the other
-config. The webpack path's behavior and its hoist-react floor (87.1) are unchanged, so webpack apps
-can take v16 as a drop-in upgrade.
+Replaces webpack with [Rsbuild](https://rsbuild.rs) (Rspack + SWC) as the build toolchain for Hoist
+apps. `configureRsbuild()` produces the same build from the same options that v15's
+`configureWebpack()` did - per-app entry discovery, raw hoist-react TS transpilation, `xh*` globals,
+`@xh/app-changelog.json`, Blueprint icon stubs, FontAwesome deep-import rewriting, SCSS,
+markdown-as-text (plus `?url`), per-app `index.html` and `manifest.json`, moment locale stripping,
+pre-compressed assets, and the `inlineHoist`, dev-server proxy and HTTPS options - several times
+faster and on far less memory. The hoist-react floor is unchanged at 87.1, so no framework upgrade is
+needed to take it.
 
-See [`docs/rsbuild-spike.md`](docs/rsbuild-spike.md) for the parity table, the Toolbox and client-app
-measurements, and the known differences.
+See [`docs/rsbuild-spike.md`](docs/rsbuild-spike.md) for the measurements against the v15 webpack
+build, the findings behind the config, and the known differences in output.
+
+### 💥 Breaking Changes
+
+* **Rsbuild only - `configureWebpack()` is removed**, along with webpack, webpack-dev-server and
+  their loaders and plugins. An app taking v16 replaces its `webpack.config.js` with an
+  `rsbuild.config.mjs` calling `configureRsbuild()`; the `env` options carry over 1:1 except as
+  noted below. The README walks through the migration. Apps that must stay on webpack stay on
+  dev-utils 15.x.
+    * **Scripts** change from `webpack` / `webpack-dev-server` to `rsbuild build` / `rsbuild dev`,
+      with the build mode passed as `--env-mode prod` / `--env-mode inlineHoist` and mapped onto
+      `prodBuild` / `inlineHoist` in the app's config. The `NODE_OPTIONS=--max_old_space_size`
+      bump webpack needed is no longer required.
+    * **Build-time overrides become `XH_*` environment variables** - the Rsbuild CLI has no
+      `--env key=value` flag. `XH_APP_VERSION`, `XH_APP_BUILD` and friends are read by the exported
+      `readCliEnv()` helper, set in CI or in the `.env` / `.env.local` / `.env.<mode>` files Rsbuild
+      loads before evaluating the config. Release workflows must rewrite their `--env appVersion=…`
+      flags accordingly.
+    * **Options renamed**: `swcOptions` replaces `babelPresetEnvOptions`, `minifyOptions` replaces
+      `terserOptions`, and `logLevel` replaces `stats` / `infrastructureLoggingLevel`. The old names
+      are rejected with a pointer to their replacement, never silently dropped. Any
+      `devServerOptions.proxy` entries use http-proxy-middleware v3 names (`pathFilter`, not
+      `context`).
+    * Under **pnpm**, replace the `webpack*` entries in the app's `publicHoistPattern` with
+      `@rsbuild/core` so the `rsbuild` bin is on the script path. yarn and npm need no configuration.
+* Requires hoist-react >= 87.1 - unchanged from v15.
 
 ### 🎁 New Features
 
-* **Added `configureRsbuild()`** (`@xh/hoist-dev-utils/configureRsbuild`) - builds a Hoist app with
-  Rspack and SWC in place of webpack and Babel. It takes the same `env` object as
-  `configureWebpack()` and reproduces the same build: per-app entry discovery, raw hoist-react TS
-  transpilation, `xh*` globals, `@xh/app-changelog.json`, Blueprint icon stubs, FontAwesome
-  deep-import rewriting, SCSS, markdown-as-text (plus `?url`), per-app `index.html` and
-  `manifest.json`, moment locale stripping, pre-compressed assets, and the `inlineHoist`,
-  dev-server proxy and HTTPS options.
+* **Added `configureRsbuild()`** (`@xh/hoist-dev-utils/configureRsbuild`), plus the `readCliEnv()`
+  helper mapping `XH_*` environment variables onto env options.
     * **Faster, on much less memory.** Measured on Toolbox (10 entry points): production builds run
       ~2.6x faster at ~2.3x lower peak memory, dev-server cold start is ~2x faster, and
       edit-to-reload drops from 2.6-4.2 s to under half a second. Emitted JS falls 17% (5% brotli)
       and CSS 20%.
     * **No hoist-react change required.** Hoist's legacy decorators are transformed by Babel ahead
-      of SWC by default (`decoratorTransform: 'babel'`) - the same plugin and mode
-      `configureWebpack()` uses, so decorated classes compile identically. Setting
-      `decoratorTransform: 'swc'` drops that Babel pass for a further step up in speed, but SWC's
-      legacy decorator emit breaks `@persist` at runtime on current hoist-react releases, so that
-      mode is for measurement only and the build warns whenever it is set. It becomes the default
-      in the dev-utils release that pairs with hoist-react's TC39 decorators migration
+      of SWC by default (`decoratorTransform: 'babel'`) - the same plugin and mode the v15 webpack
+      build used, so decorated classes compile identically. Setting `decoratorTransform: 'swc'`
+      drops that Babel pass for a further step up in speed, but SWC's legacy decorator emit breaks
+      `@persist` at runtime on current hoist-react releases, so that mode is for measurement only
+      and the build warns whenever it is set. It becomes the default in the dev-utils release that
+      pairs with hoist-react's TC39 decorators migration
       ([hoist-react #4333](https://github.com/xh/hoist-react/issues/4333)), whichever hoist-react
       version carries it.
-    * **New and renamed options**: `swcOptions` (replaces `babelPresetEnvOptions`), `minifyOptions`
-      (replaces `terserOptions`), `logLevel` (replaces `stats` / `infrastructureLoggingLevel`), plus
-      new `minify`, `buildCache` and `decoratorTransform`. Babel-era options with no SWC equivalent
-      are rejected with a pointer to their replacement, never silently dropped.
-    * **Build-time overrides arrive as `XH_*` environment variables**, mapped onto `env` by the
-      exported `readCliEnv()` helper - the Rsbuild CLI has no `--env key=value` flag. Set them in
-      CI, or in the `.env` / `.env.local` / `.env.<mode>` files Rsbuild loads before evaluating the
-      config. The README covers the full setup, including the `publicHoistPattern` entry pnpm apps
-      need for the `rsbuild` bin.
-    * React Fast Refresh hot-swaps modules exporting `hoistCmp({...})` components. Hoist's
+    * **New options**: `minify` (`false` to skip minification in a production build, for diagnosing
+      built output against readable code), `buildCache` (Rspack's persistent cache, off by default
+      pending soak) and `decoratorTransform`.
+    * **React Fast Refresh** hot-swaps modules exporting `hoistCmp({...})` components. Hoist's
       element-factory modules still trigger a page reload, but now in well under a second.
-* **Added `devLiveReload`** to both configs. Set `false` to stop the dev server reloading the page
-  when an edit cannot be hot-swapped. This is the config-level equivalent of webpack-dev-server's
-  `--no-live-reload` flag, which has no Rsbuild counterpart. Also read from `XH_DEV_LIVE_RELOAD`.
-* **Unrecognized `env` options now warn** in both configs, rather than being ignored silently. This
-  catches typos and options dropped in an earlier release. It is a warning in the build banner, not
-  an error, and options belonging to the other config pass without comment - so one options object
-  can serve both.
+* **Added `devLiveReload`**. Set `false` to stop the dev server reloading the page when an edit
+  cannot be hot-swapped - the config-level equivalent of webpack-dev-server's `--no-live-reload`
+  flag, which has no Rsbuild counterpart. Also read from `XH_DEV_LIVE_RELOAD`.
+* **Unrecognized `env` options now warn** rather than being ignored silently. This catches typos and
+  options dropped in an earlier release. It is a warning in the build banner, not an error.
 
 ### ⚙️ Technical
 
-* Extracted the bundler-agnostic half of `configureWebpack.js` into `lib/common.js` (hoist-react
-  version check, entry discovery, CHANGELOG parsing, Blueprint icon stubs, manifest content,
-  logging), and the per-app `manifest.json` plugin into `lib/HoistManifestPlugin.js`. Both are now
-  shared with `configureRsbuild()`. Webpack build output was verified identical before and after.
+* Bundler-agnostic helpers (hoist-react version check, entry discovery, CHANGELOG parsing, Blueprint
+  icon stubs, manifest content, logging) live in `lib/common.js`, and the per-app `manifest.json`
+  plugin in `lib/HoistManifestPlugin.js`.
+* Pre-compressed `.br` / `.gz` assets are emitted by an in-house `lib/HoistCompressionPlugin.js`
+  rather than `compression-webpack-plugin`, which declares webpack as a required peer dependency -
+  an install-time warning under pnpm and yarn, and an unwanted webpack install under npm, once
+  webpack itself is gone. Same defaults (`.js` / `.css` / `.html` / `.svg`, 1 KB threshold, 0.8
+  ratio, brotli quality 11 / gzip level 9), same `precompressAssets` overrides (`test`, `include`,
+  `exclude`, `threshold`, `minRatio`) and the same asset tagging. Rsbuild has no built-in
+  equivalent, and the Rsbuild-native community plugins are 0.x single-maintainer packages.
 * Blueprint icon stubs now locate `@blueprintjs/icons` by walking the real dependency chain
   (hoist-react -> `@blueprintjs/core` -> `@blueprintjs/icons`) when it is not resolvable from the
   app root. The previous lookup succeeded only because pnpm's bin shims set a `NODE_PATH` pointing
@@ -68,9 +89,13 @@ measurements, and the known differences.
   ranges resolved to different versions and installed two copies of a ~10 MB native binary. A caret
   lets both resolve to one version at install time.
 * `static/index.html` template parameters renamed to bundler-neutral names (`publicPath`, `title`,
-  `includeAppleIcon`) so both configs can share the template. Rendered output is unchanged.
+  `includeAppleIcon`) for Rsbuild's html-rspack-plugin. Rendered output is unchanged.
 
 ### 📚 Libraries
+
+Rsbuild replaces the webpack toolchain. `webpack-bundle-analyzer` stays - it reads Rspack's stats
+and has no webpack peer dependency - as do the `@babel/*` packages behind the legacy-decorators
+pass.
 
 * @rsbuild/core `added @ 2.2`
 * @rsbuild/plugin-babel `added @ 2.1`
@@ -78,6 +103,25 @@ measurements, and the known differences.
 * @rsbuild/plugin-react `added @ 2.1`
 * @rsbuild/plugin-sass `added @ 2.0`
 * sass-embedded `1.103 → 1.103` - spec widened from `~` to `^`, so apps may now resolve 1.104+.
+* @babel/preset-react `7.29 → removed`
+* autoprefixer `10.5 → removed`
+* babel-loader `10.1 → removed`
+* babel-plugin-transform-imports `2.0 → removed`
+* case-sensitive-paths-webpack-plugin `2.4 → removed`
+* compression-webpack-plugin `12.0 → removed`
+* copy-webpack-plugin `14.0 → removed`
+* css-loader `7.1 → removed`
+* html-webpack-plugin `5.6 → removed`
+* mini-css-extract-plugin `2.10 → removed`
+* postcss `8.5 → removed`
+* postcss-loader `8.2 → removed`
+* sass-loader `17.0 → removed`
+* style-loader `4.0 → removed`
+* terser-webpack-plugin `5.6 → removed`
+* webpack `5.110 → removed`
+* webpack-cli `7.2 → removed`
+* webpack-dev-server `6.0 → removed`
+* webpackbar `7.0 → removed`
 
 ## 15.0.2 - 2026-09-16
 
