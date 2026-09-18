@@ -23,23 +23,23 @@
         "@babel/plugin-proposal-decorators": "^7.29.7",
         "@babel/plugin-transform-typescript": "^7.29.7",
         "@babel/preset-env": "^7.29.7",
-        "@rsbuild/core": "~2.2.5",
+        "@rsbuild/core": "~2.2.7",
         "@rsbuild/plugin-babel": "~2.1.0",
         "@rsbuild/plugin-basic-ssl": "~1.2.3",
         "@rsbuild/plugin-react": "~2.1.0",
         "@rsbuild/plugin-sass": "~2.0.1",
         "@types/lodash": "^4.17.25",
-        "@types/react": "^19.2.18",
-        "@types/react-dom": "^19.2.5",
+        "@types/react": "^19.3.0",
+        "@types/react-dom": "^19.3.0",
         "@xh/eslint-config": "^8.0.1",
         "changelog-parser": "~4.1.0",
         "lodash": "^4.18.1",
-        "sass-embedded": "^1.103.1",
-        "type-fest": "^5.9.0",
-        "webpack-bundle-analyzer": "~5.3.2"
+        "sass-embedded": "^1.104.1",
+        "type-fest": "^5.10.0",
+        "webpack-bundle-analyzer": "~5.3.3"
     },
     "devDependencies": {
-        "prettier": "^3.9.6"
+        "prettier": "^3.9.7"
     },
     "packageManager": "pnpm@12.2.1+sha512.f55ca68aacb9eb5ab69c66f828a98af89a32286703aef1f8da131ca7eab4d677f34bfa85e186467a919c0799df8b6f4aa240f7dc2919b33b3273190104162616"
 }
