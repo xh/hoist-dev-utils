@@ -105,7 +105,9 @@ Dev-utils 16 is Rsbuild only - `configureWebpack()` is gone. To move an app:
    `stats` / `infrastructureLoggingLevel` become `logLevel`, `babelIncludePaths` /
    `babelExcludePaths` become `extraIncludePaths` / `extraExcludePaths` (old names still accepted,
    with a deprecation warning), and `devServerOptions.proxy` entries use http-proxy-middleware v3
-   names (`pathFilter`, not `context`).
+   names (`pathFilter`, not `context`). `analyzeBundles` has no replacement option and is rejected -
+   drop it and use Rsdoctor as above. The renamed options are rejected too, each with a pointer to
+   its replacement, so nothing carries over silently.
 3. Update scripts: `webpack-dev-server` becomes `rsbuild dev`, `webpack --env prodBuild` becomes
    `rsbuild build --env-mode prod`, `--env inlineHoist` becomes `--env-mode inlineHoist`, and
    `--no-live-reload` becomes `XH_DEV_LIVE_RELOAD=false` (a gitignored `.env.local` is the place
@@ -114,7 +116,8 @@ Dev-utils 16 is Rsbuild only - `configureWebpack()` is gone. To move an app:
    `XH_APP_VERSION="$VERSION" XH_APP_BUILD="$TAG" pnpm build`.
 5. Build and compare. Output lands in `build/` with the same layout (JS and CSS at the root, media
    under `static/media`, per-app `index.html` and `public/<app>/manifest.json`), plus `.br` / `.gz`
-   twins of compressible assets. Chunk boundaries differ from webpack's; total payload is smaller.
+   twins of compressible assets. Chunk boundaries differ from webpack's, so per-file names and sizes
+   will not line up.
 
 ## Favicons
 
