@@ -11,8 +11,8 @@ allowBuilds:
 # Caret vs. tilde policy for `dependencies`. These ranges are the contract consuming apps resolve
 # against - this repo's lockfile is never published.
 #
-# Tilde by default: this is a toolchain aggregator, so apps take a dev-utils release rather than a
-# webpack release, and a caret would let minors change build output with no release behind them.
+# Tilde by default: this is a toolchain aggregator, so apps take a dev-utils release rather than an
+# Rsbuild release, and a caret would let minors change build output with no release behind them.
 # Caret only where a dep must co-resolve with a copy the app or hoist-react also pulls in - tildes
 # at different minors stop overlapping, and a duplicate copy is worse than an untested minor.
 #

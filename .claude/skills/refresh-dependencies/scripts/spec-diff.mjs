@@ -29,7 +29,7 @@ function findRepoRoot(start) {
     for (let i = 0; i < 10; i++) {
         if (
             existsSync(resolve(dir, 'package.json')) &&
-            existsSync(resolve(dir, 'configureWebpack.js'))
+            existsSync(resolve(dir, 'configureRsbuild.js'))
         ) {
             return dir;
         }

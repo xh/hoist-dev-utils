@@ -1,24 +1,97 @@
 # Changelog
 
-## 16.0.0-SNAPSHOT
+## 16.0.0-SNAPSHOT - unreleased
 
-Decorator release - moves the build from legacy decorators to the TC39 Stage 3 standard.
+Replaces webpack with [Rsbuild](https://rsbuild.rs) (Rspack + SWC) as the build toolchain for Hoist
+apps. `configureRsbuild()` produces the same build from the same options that v15's
+`configureWebpack()` did - several times faster and on far less memory. SWC handles hoist-react 88's
+TC39 decorators natively, so there is no Babel in the pipeline at all.
+
+**Requires hoist-react >= 88**, up from 87.1 in v15. Upgrade both together.
 
 ### 💥 Breaking Changes
 
-* **Requires hoist-react >= 88.**
-* **TC39 decorators.** `@babel/plugin-proposal-decorators` flips from `{version: 'legacy'}` to
-  `{version: '2023-11'}` (the current spec revision), matching hoist-react v88's move to TC39
-  Stage 3 decorators. The two releases must be taken together - the transform is a build-wide
-  setting, so it applies to hoist-react source and app source alike, and neither version pairs
-  with the other's decorator syntax. App code requires corresponding changes: see the
-  hoist-react v88 release notes.
+* **Rsbuild only - `configureWebpack()` is removed**, along with webpack, webpack-dev-server and
+  their loaders and plugins. Apps replace `webpack.config.js` with an `rsbuild.config.mjs` calling
+  `configureRsbuild()`; `env` options carry over 1:1 except as noted below, and the README walks
+  through the migration. Apps that must stay on webpack stay on dev-utils 15.x.
+* **Requires hoist-react >= 88.** v16 emits the TC39 Stage 3 (`2023-11`) decorator transform, which
+  hoist-react 88 is the first release written against. The build fails fast on an older version.
+* **Scripts** change from `webpack` / `webpack-dev-server` to `rsbuild build` / `rsbuild dev`, with
+  the build mode passed as `--env-mode prod` / `--env-mode inlineHoist`.
+* **Build-time overrides become `XH_*` environment variables** - the Rsbuild CLI has no
+  `--env key=value` flag. The exported `readCliEnv()` helper maps them onto env options, read from
+  the environment or Rsbuild's `.env` files. Release workflows must rewrite their
+  `--env appVersion=...` flags accordingly.
+* **Options renamed**: `swcOptions` replaces `babelPresetEnvOptions`, `minifyOptions` replaces
+  `terserOptions`, `logLevel` replaces `stats` / `infrastructureLoggingLevel`, and
+  `extraIncludePaths` / `extraExcludePaths` replace `babelIncludePaths` / `babelExcludePaths`. The
+  first three are rejected with a pointer to their replacement; the path options still work with a
+  deprecation warning until v17. Any `devServerOptions.proxy` entries use http-proxy-middleware v3
+  names (`pathFilter`, not `context`).
+* Under **pnpm**, replace the `webpack*` entries in the app's `publicHoistPattern` with
+  `@rsbuild/core` so the `rsbuild` bin is on the script path. yarn and npm need no configuration.
+* **`analyzeBundles` / `XH_ANALYZE_BUNDLES` removed** - bundle analysis is now an app-level opt-in
+  via Rsbuild's built-in [Rsdoctor](https://rsdoctor.rs) support.
+
+### 🎁 New Features
+
+* **Added `configureRsbuild()`** (`@xh/hoist-dev-utils/configureRsbuild`), plus the `readCliEnv()`
+  helper mapping `XH_*` environment variables onto env options.
+* **Faster, on much less memory**, across production builds, dev-server cold start and
+  edit-to-reload, with smaller emitted JS and CSS.
+* **React Fast Refresh** hot-swaps modules exporting `hoistCmp({...})` components. Hoist's
+  element-factory modules still trigger a page reload.
+* **New options**: `minify` (`false` to skip minification in a production build, for diagnosing
+  built output against readable code), `buildCache` (opt in to Rspack's persistent build cache) and
+  `devLiveReload` (`false` to stop the dev server reloading on an edit that cannot be hot-swapped).
+* **Unrecognized `env` options now warn** rather than being ignored silently.
 
 ### ⚙️ Technical
 
-* Added `transform-class-static-block` to the `@babel/preset-env` `include` list. The 2023-11
-  decorator transform desugars decorated classes into static blocks, and the build fails without
-  it.
+* Bundler-agnostic helpers live in `lib/common.js`, with the per-app `manifest.json` and
+  pre-compressed asset plugins in `lib/HoistManifestPlugin.js` and `lib/HoistCompressionPlugin.js`.
+  The latter stands in for `compression-webpack-plugin`, which requires webpack as a peer
+  dependency; its defaults and `precompressAssets` overrides are unchanged from v15.
+* Blueprint icon stubs now locate `@blueprintjs/icons` by walking the real dependency chain when it
+  is not resolvable from the app root, rather than depending on pnpm's bin shims to place it.
+* `static/index.html` template parameters renamed to bundler-neutral names for Rsbuild's
+  html-rspack-plugin. Rendered output is unchanged.
+
+### 📚 Libraries
+
+Rsbuild replaces the webpack toolchain, `webpack-bundle-analyzer` included. Babel goes with it, as
+SWC now transforms decorators natively.
+
+* @rsbuild/core `added @ 2.2`
+* @rsbuild/plugin-basic-ssl `added @ 1.2`
+* @rsbuild/plugin-react `added @ 2.1`
+* @rsbuild/plugin-sass `added @ 2.0`
+* sass-embedded `1.103 → 1.104`
+* @babel/core `7.29 → removed`
+* @babel/plugin-proposal-decorators `7.29 → removed`
+* @babel/plugin-transform-typescript `7.29 → removed`
+* @babel/preset-env `7.29 → removed`
+* @babel/preset-react `7.29 → removed`
+* autoprefixer `10.5 → removed`
+* babel-loader `10.1 → removed`
+* babel-plugin-transform-imports `2.0 → removed`
+* case-sensitive-paths-webpack-plugin `2.4 → removed`
+* compression-webpack-plugin `12.0 → removed`
+* copy-webpack-plugin `14.0 → removed`
+* css-loader `7.1 → removed`
+* html-webpack-plugin `5.6 → removed`
+* mini-css-extract-plugin `2.10 → removed`
+* postcss `8.5 → removed`
+* postcss-loader `8.2 → removed`
+* sass-loader `17.0 → removed`
+* style-loader `4.0 → removed`
+* terser-webpack-plugin `5.6 → removed`
+* webpack `5.110 → removed`
+* webpack-bundle-analyzer `5.3 → removed`
+* webpack-cli `7.2 → removed`
+* webpack-dev-server `6.0 → removed`
+* webpackbar `7.0 → removed`
 
 ## 15.0.2 - 2026-09-16
 

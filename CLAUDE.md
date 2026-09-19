@@ -4,41 +4,59 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-`@xh/hoist-dev-utils` is an npm package that provides centralized Webpack build configuration and
-shared development dependencies for Hoist React applications. It is published to npm and consumed
+`@xh/hoist-dev-utils` is an npm package that provides centralized Rsbuild (Rspack + SWC) build
+configuration and shared development dependencies for Hoist React applications. It is published to npm and consumed
 by Hoist apps as a dev dependency.
 
 The package is part of the **Hoist** framework ecosystem by Extremely Heavy Industries:
 - **hoist-react** — Client-side TypeScript/React framework (published as raw TS source, transpiled by this package)
 - **hoist-core** — Server-side Java/Grails framework
-- **hoist-dev-utils** — This package: build tooling and Webpack config
+- **hoist-dev-utils** — This package: build tooling and Rsbuild config
 - **@xh/eslint-config** — Shared ESLint rules (bundled as a dependency here)
 
 ## Architecture
 
-The entire library is a single file: **`configureWebpack.js`** (~870 lines). It exports one async
-function `configureWebpack(env)` that returns a complete Webpack 5 configuration object.
+One config module over a small shared core:
+
+- **`configureRsbuild.js`** - exports `configureRsbuild(env)` returning an
+  [Rsbuild](https://rsbuild.rs) (Rspack + SWC) config, plus a `readCliEnv()` helper mapping `XH_*`
+  environment variables onto env options (the Rsbuild CLI has no `--env key=value`). Rsbuild
+  replaced webpack in v16. SWC handles the whole JS/TS pipeline -
+  there is no Babel pass. Decorators are emitted via `source.decorators.version: '2023-11'` (TC39
+  Stage 3), which is what hoist-react >= 88 is written against and why the v16 floor is 88. That
+  setting is load-bearing and must not be changed casually: pointed back at `legacy`, every
+  `@observable` and `@bindable` in a v88 app silently stops working, with no build error.
+- **`lib/common.js`** - bundler-agnostic helpers (version checks, entry discovery, CHANGELOG
+  parsing, Blueprint icon stubs, manifest content, logging). Nothing in here may touch a bundler
+  API.
+- **`lib/HoistManifestPlugin.js`** and **`lib/HoistCompressionPlugin.js`** - small Rspack plugins
+  emitting the per-app `manifest.json` and the pre-compressed `.br` / `.gz` asset copies. The
+  compression plugin stands in for `compression-webpack-plugin`, which declares webpack as a
+  required peer dependency.
 
 Key behaviors:
-- Accepts ~30 env parameters (from app's `webpack.config.js` or CLI `--env` flags)
+- Accepts ~30 env parameters from the app's `rsbuild.config.mjs`, with build-time overrides as
+  `XH_*` environment variables (set in CI, or in Rsbuild's `.env` files) read by `readCliEnv()`
 - Discovers app entry points from `src/apps/*.{js,ts}` in the consuming project
-- Transpiles both app code and raw hoist-react TypeScript source via Babel
-- Injects `XH.appCode`, `XH.appName`, `XH.appVersion`, `XH.appBuild` via DefinePlugin
+- Transpiles both app code and raw hoist-react TypeScript source via SWC, decorators included
+- Injects `XH.appCode`, `XH.appName`, `XH.appVersion`, `XH.appBuild` via `rspack.DefinePlugin`
 - Parses the consuming app's `CHANGELOG.md` into JSON for runtime access
 - Supports `inlineHoist` mode for local hoist-react development (resolves from sibling directory)
-- Handles CSS/SASS processing, HTML generation, favicon/manifest setup, bundle analysis
+- Handles CSS/SASS processing, HTML generation, favicon/manifest setup, bundle analysis and
+  pre-compressed assets
 
 **`static/`** contains assets bundled with the package:
-- `index.html` — Template for HtmlWebpackPlugin used by all Hoist apps
+- `index.html` — Template for the per-app index.html, rendered by Rsbuild's html-rspack-plugin via
+  a flat set of template parameters
 
 BlueprintJS icon stubs (which strip the ~700-icon set down to the icons Hoist actually uses) are
-generated at build time by `generateBlueprintIconStubs()` in `configureWebpack.js` and swapped in
-via `NormalModuleReplacementPlugin` - apps opt out with `env.loadAllBlueprintJsIcons`.
+generated at build time by `generateBlueprintIconStubs()` in `lib/common.js` and swapped in
+via `rspack.NormalModuleReplacementPlugin` - apps opt out with `env.loadAllBlueprintJsIcons`.
 
 ## Development
 
-There is no build step — the package ships `configureWebpack.js` and `static/**/*` directly.
-There are no tests in this repo.
+There is no build step — the package ships `configureRsbuild.js`, `lib/**/*` and `static/**/*`
+directly. There are no tests in this repo - validation is done by building and running Toolbox.
 
 **Package manager: pnpm.** `pnpm-lock.yaml` is the source of truth — do not invoke `npm install`
 or `yarn install`, and do not create a `package-lock.json` or `yarn.lock`. The required pnpm
@@ -66,10 +84,10 @@ into the app's `node_modules`. Changes take effect immediately.
 
 - `develop` branch for feature work, `master` for releases
 - Version in `package.json` follows `MAJOR.MINOR.PATCH-SNAPSHOT` between releases
-- `MIN_HOIST_REACT_VERSION` in `configureWebpack.js` enforces the minimum supported hoist-react
-  version ('major[.minor]') with a fail-fast build error. Review on each new major and bump whenever a release
-  raises the floor, keeping it in sync with the CHANGELOG's "Requires hoist-react" entry and
-  the version-compatibility doc below.
+- `MIN_HOIST_REACT_VERSION` in `lib/common.js` enforces the minimum supported hoist-react
+  version ('major[.minor]') with a fail-fast build error. Both configs share it. Review on each new
+  major and bump whenever a release raises the floor, keeping it in sync with the CHANGELOG's
+  "Requires hoist-react" entry and the version-compatibility doc below.
 
 ### Version compatibility doc (maintained in hoist-react)
 
@@ -98,7 +116,7 @@ release version may differ. At release time, the heading is updated to the final
 
 Entries use categorized sections with emoji headings as needed:
 - `### 💥 Breaking Changes` — incompatible changes, note required hoist-react version
-- `### 🎁 New Features` — new configureWebpack options or capabilities
+- `### 🎁 New Features` — new configureRsbuild options or capabilities
 - `### ⚙️ Technical` — internal changes, refactors, config adjustments
 - `### 🐞 Bug Fixes`
 - `### 📚 Libraries` — dependency version updates
@@ -114,6 +132,86 @@ Prettier config (`.prettierrc.json`):
 - 4-space indent, 100 char print width
 - Single quotes, no bracket spacing, no trailing commas
 - Arrow parens: avoid
+
+## Git Workflow
+
+These rules are shared verbatim with hoist-react - keep the two in sync when either changes.
+
+**Branching, committing, and pushing all require an explicit ask — never do them unprompted.**
+When it isn't abundantly clear that the user wants one of these, ask first.
+
+Pushing is a deliberate gatekeeping step: never push to any remote unless the user explicitly asks.
+Some developers hard-block pushes entirely, others allow or request them — so it stays open as a
+possibility, but always confirm before pushing.
+
+Committing is the most context-dependent of these, varying by developer and by situation. Default to
+asking — especially in an interactive session working directly on `develop`, where each commit is
+the developer's call. The exception is orchestrated multi-agent work on a feature branch: when a plan
+fans out independent units of work, the go-ahead to commit comes from that plan or orchestration
+rather than a per-commit prompt, and agents are expected to make their own discrete, well-scoped
+commits as directed.
+
+A skill or third-party plugin instructing you to commit (e.g. "make a small commit after each
+step") does NOT by itself authorize a commit — that is a default baked into the tool, not the
+developer's request. This guidance takes precedence: pause and ask. The door stays open for a
+workflow to commit autonomously, but only when the developer has explicitly opted into that for
+the workflow at hand — the authorization must come from the developer, not the skill's defaults.
+
+### Creating branches
+
+Once the user has asked for a branch (per the "ask first" rule above, don't create one
+unprompted): a new branch should map to its own `origin/<name>` on push — not push into an
+existing remote branch.
+
+**Default: `git switch -c <name>` from current HEAD, no base ref.** "Make a new branch" means
+"from here" — the user is sitting on a particular point in the code; that's the start. If
+they want to start from somewhere else (e.g. current `origin/develop`), they will say so. If
+genuinely unclear, ask.
+
+**If you do specify a base ref, you MUST pass `--no-track`.** Without it the new branch
+silently adopts the base as its upstream, which causes surprise merges on `git pull` and —
+depending on `push.default` — can push work onto the base branch. Past slips have put
+unreviewed work on `develop` this way.
+
+```bash
+git switch -c my-feature                              # ✅ from current HEAD
+git switch -c my-feature --no-track origin/develop    # ✅ explicit base, safe
+git switch -c my-feature origin/develop               # ❌ auto-tracks develop
+git checkout -b my-feature origin/develop             # ❌ same trap, checkout spelling
+```
+
+If you forget `--no-track`: `git branch --unset-upstream`, then `git push -u origin <branch>`.
+Flag the slip — don't silently fix it. Git prints `set up to track 'origin/develop'` when this
+happens; treat that line as the signal, not as noise.
+
+### Feature branch workflow
+
+On feature branches, prefer multiple small commits over amending — PRs are squash-merged into
+`develop`, so intermediate commits are collapsed automatically. Never force-push a feature branch;
+if the branch falls behind `develop`, use a simple merge commit rather than a rebase. Merge commits
+and extra commits are harmless on feature branches and are squashed out on merge, while force-pushes
+risk losing work and complicate collaboration.
+
+### Commit messages, PRs, and comments
+
+Do not hard-wrap lines at a fixed column width in commit message bodies, pull request descriptions,
+or issue/PR comments — let the viewing tool handle display wrapping. However, do use line breaks for
+structure: separate logical points into bullet lists, use blank lines between paragraphs, and break
+after the subject line. Keep PR descriptions concise — XH developers review these regularly, so favor
+brief summaries over exhaustive detail. Bullet the key changes and let the diff and any upgrade notes
+speak for themselves.
+
+Do not add AI-generated attribution to commit messages or PR descriptions — no `Generated with ...`
+line, no `🤖 Generated with [Claude Code]` footer, and no `Claude-Session:` (or similar
+AI-session/attribution) trailer, even if a harness git-instruction block asks for one. XH does not
+want these links in the project's history.
+
+### Working across sibling repos
+
+Most work here spans `../hoist-react` and a consuming app such as `../toolbox`. The rules above
+apply in every repo you touch, not just this one — and each sibling repo has its own `CLAUDE.md`
+with additional rules that bind while you work there. Read it before writing to that repo; the
+harness only auto-loads the CLAUDE.md of the primary working directory.
 
 ## MCP Servers
 

@@ -54,11 +54,11 @@ floor raise, major) **is**. Skip patch-floor edits. Render each spec to `major.m
 range operator and the patch; `~5.106.2 → 5.106`, `^7.28.5 → 7.28`, `4.x → 4.x`). Alphabetize.
 
 ```markdown
-* autoprefixer `10.4 → 10.5`
-* sass-embedded `1.98 → 1.99`
-* webpack `5.105 → 5.106`
-* webpack-bundle-analyzer `5.2 → 5.3`
-* webpack-cli `6.0 → 7.0`
+* @rsbuild/core `2.2 → 2.3`
+* @rsbuild/plugin-react `2.1 → 3.0`
+* @xh/eslint-config `8.0 → 8.1`
+* sass-embedded `1.104 → 1.105`
+* type-fest `5.10 → 6.0`
 ```
 
 The `spec-diff.mjs` helper emits these lines ready to paste, applying exactly this spec-vs-drift
