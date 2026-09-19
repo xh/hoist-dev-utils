@@ -86,10 +86,6 @@ build, the findings behind the config, and the known differences in output.
   app root. The previous lookup succeeded only because pnpm's bin shims set a `NODE_PATH` pointing
   at its hidden hoist directory. Invoking a bundler CLI any other way disabled the stubs with no
   warning.
-* `sass-embedded` is now specified with a caret range rather than a tilde. `@rsbuild/plugin-sass`
-  depends on the same package at `^1.100.0`; under hoisting package managers (yarn, npm) the two
-  ranges resolved to different versions and installed two copies of a ~10 MB native binary. A caret
-  lets both resolve to one version at install time.
 * `static/index.html` template parameters renamed to bundler-neutral names (`publicPath`, `title`,
   `includeAppleIcon`) for Rsbuild's html-rspack-plugin. Rendered output is unchanged.
 
@@ -103,7 +99,7 @@ decorators natively, so the `@babel/*` packages and `@rsbuild/plugin-babel` are 
 * @rsbuild/plugin-basic-ssl `added @ 1.2`
 * @rsbuild/plugin-react `added @ 2.1`
 * @rsbuild/plugin-sass `added @ 2.0`
-* sass-embedded `1.103 → 1.103` - spec widened from `~` to `^`, so apps may now resolve 1.104+.
+* sass-embedded `1.103 → 1.104`
 * @babel/core `7.29 → removed`
 * @babel/plugin-proposal-decorators `7.29 → removed`
 * @babel/plugin-transform-typescript `7.29 → removed`
