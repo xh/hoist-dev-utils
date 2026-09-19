@@ -1,10 +1,28 @@
 # Rsbuild / Rspack Migration (September 2026)
 
-> **Outcome:** v16 ships Rsbuild only. `configureWebpack()` was removed in that release rather than
-> shipped alongside `configureRsbuild()` as proposed below - no app should carry both toolchains as
-> dev dependencies, and apps that must stay on webpack stay on dev-utils 15.x. Where this document
-> speaks of "both configs" or a webpack column, it describes the v15 baseline the port was measured
-> against and the hybrid packaging the spike assumed, not what shipped.
+> ## 📋 Historical record - not a migration guide
+>
+> **This document is the engineering record of how dev-utils moved from webpack to Rsbuild: the
+> spike, the measurements, the findings and the dead ends. It is not instructions, and following it
+> will not migrate an app.**
+>
+> **To migrate an app, use the [README](../README.md) and the v16
+> [CHANGELOG](../CHANGELOG.md) entry.** Those are maintained; this is not.
+>
+> It is kept because the reasoning behind non-obvious config choices is hard to reconstruct, and
+> because the measurements justify the change. Read it for *why*, never for *how*.
+>
+> **What shipped differs from what is proposed below**, in three ways that matter if you read on:
+>
+> | Below | What shipped in v16 |
+> |---|---|
+> | `configureRsbuild()` alongside `configureWebpack()` | Rsbuild only - `configureWebpack()` removed. Apps staying on webpack stay on dev-utils 15.x. |
+> | Babel transforms decorators ahead of SWC, via a `decoratorTransform` option | SWC alone, `source.decorators.version: '2023-11'`. No Babel, and no such option. |
+> | hoist-react floor unchanged at 87.1 | Requires hoist-react >= 88. |
+>
+> So wherever the text speaks of "both configs", a webpack column, or a Babel default, it is
+> describing the v15 baseline the port was measured against and the hybrid the spike assumed - not
+> the shipped release.
 
 Record of the move from webpack to Rsbuild, shipped in dev-utils 16. It began as the Phase 2 spike
 tracked in [#73](https://github.com/xh/hoist-dev-utils/issues/73): a `configureRsbuild()`
@@ -28,11 +46,8 @@ Hoist's legacy decorators with Babel ahead of SWC (`decoratorTransform: 'babel'`
 the SWC-only column is what the same config yields once hoist-react's decorators no longer depend
 on Babel's emit.
 
-> **Status update - superseded in part.** hoist-react 88 shipped the TC39 decorators migration
-> (#4333), so v16 ships the right-hand column: `source.decorators.version: '2023-11'`, SWC only,
-> no Babel in the pipeline and no `decoratorTransform` option. The v16 hoist-react floor is
-> **88**, not 87.1. Everything below is the spike record that led there; the Babel-default
-> passages are history, not current config.
+> **What shipped is the right-hand column.** hoist-react 88 landed the TC39 decorators migration
+> (#4333), so v16 is SWC-only with no Babel pass - see the header box.
 
 | | webpack (`configureWebpack`) | Rsbuild, Babel decorators (default) | Rsbuild, SWC decorators (post-TC39) |
 |---|---|---|---|
