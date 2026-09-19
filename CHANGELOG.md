@@ -8,8 +8,10 @@ apps. `configureRsbuild()` produces the same build from the same options that v1
 `@xh/app-changelog.json`, Blueprint icon stubs, FontAwesome deep-import rewriting, SCSS,
 markdown-as-text (plus `?url`), per-app `index.html` and `manifest.json`, moment locale stripping,
 pre-compressed assets, and the `inlineHoist`, dev-server proxy and HTTPS options - several times
-faster and on far less memory. Pairs with hoist-react 88's move to TC39 decorators: SWC now handles
-decorators natively, so there is no Babel in the pipeline at all.
+faster and on far less memory. SWC handles hoist-react 88's TC39 decorators natively, so there is no
+Babel in the pipeline at all.
+
+**Requires hoist-react >= 88**, up from 87.1 in v15. Upgrade both together.
 
 See [`docs/rsbuild-migration.md`](docs/rsbuild-migration.md) for the measurements against the v15 webpack
 build, the findings behind the config, and the known differences in output.
@@ -21,6 +23,9 @@ build, the findings behind the config, and the known differences in output.
   `rsbuild.config.mjs` calling `configureRsbuild()`; the `env` options carry over 1:1 except as
   noted below. The README walks through the migration. Apps that must stay on webpack stay on
   dev-utils 15.x.
+* **Requires hoist-react >= 88**, up from 87.1 in v15. v16 emits the TC39 Stage 3 (`2023-11`)
+  decorator transform, which hoist-react 88 is the first release written against. The two must be
+  upgraded together; the build fails fast on an older hoist-react.
 * **Scripts** change from `webpack` / `webpack-dev-server` to `rsbuild build` / `rsbuild dev`, with
   the build mode passed as `--env-mode prod` / `--env-mode inlineHoist` and mapped onto
   `prodBuild` / `inlineHoist` in the app's config. The `NODE_OPTIONS=--max_old_space_size` bump
@@ -38,14 +43,6 @@ build, the findings behind the config, and the known differences in output.
   `@rsbuild/core` so the `rsbuild` bin is on the script path. yarn and npm need no configuration.
 * **`analyzeBundles` / `XH_ANALYZE_BUNDLES` removed** - bundle analysis is now an app-level opt-in
   via Rsbuild's built-in [Rsdoctor](https://rsdoctor.rs) support. Rejected with a pointer to it.
-* **Requires hoist-react >= 88**, up from 87.1 in v15. v16 emits the TC39 Stage 3 (`2023-11`)
-  decorator transform, which hoist-react 88 is the first release written against. The pairing is
-  strict in both directions and must be upgraded atomically:
-    * hoist-react <= 87 on dev-utils 16 loses every `@observable` and `@bindable` field - the legacy
-      decorators are never applied, and the failure is silent at build time. The version check
-      rejects this combination up front rather than letting it build.
-    * hoist-react 88 on dev-utils <= 15 fails to compile, as `accessor` fields are a syntax error
-      under the legacy transform.
 * **`babelIncludePaths` / `babelExcludePaths` are renamed** to `extraIncludePaths` /
   `extraExcludePaths`, as nothing in the pipeline runs Babel any longer. The old names still work
   and log a deprecation warning; they will be removed in v17.
@@ -54,9 +51,9 @@ build, the findings behind the config, and the known differences in output.
 
 * **Added `configureRsbuild()`** (`@xh/hoist-dev-utils/configureRsbuild`), plus the `readCliEnv()`
   helper mapping `XH_*` environment variables onto env options.
-* **Faster, on much less memory.** Measured on Toolbox (10 entry points): production builds run
-  ~2.6x faster at ~2.3x lower peak memory, dev-server cold start is ~2x faster, and edit-to-reload
-  drops from 2.6-4.2 s to under half a second. Emitted JS falls 17% (5% brotli) and CSS 20%.
+* **Faster, on much less memory**, across production builds, dev-server cold start and
+  edit-to-reload, with smaller emitted JS and CSS. See
+  [`docs/rsbuild-migration.md`](docs/rsbuild-migration.md) for measurements against the v15 build.
 * **No Babel, anywhere.** SWC transforms hoist-react 88's TC39 decorators natively via
   `source.decorators.version: '2023-11'`, so the Babel pass v16 previously ran ahead of SWC over all
   app and hoist-react source is gone, along with `@rsbuild/plugin-babel` and the four `@babel/*`

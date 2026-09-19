@@ -96,14 +96,11 @@ for the measurements against the v15 webpack build and the known differences in 
 
 Dev-utils 16 is Rsbuild only - `configureWebpack()` is gone. To move an app:
 
-1. Take `@xh/hoist-dev-utils` 16 **and `@xh/hoist` 88 together, in one commit.** v16 emits TC39
-   (`2023-11`) decorators and v88 is the first hoist-react written against them; either half alone
-   is broken, and the dev-utils-16-with-older-hoist direction fails *silently* at build time
-   (every `@observable` / `@bindable` field quietly stops working). The build's version check
-   rejects that pairing rather than letting it through. See hoist-react's v88 upgrade notes for
-   the app-side codemods (`accessor` keywords, `makeObservable(this)` removal, `@persist` ordering).
-   Under pnpm, replace the `webpack`, `webpack-cli` and `webpack-dev-server` entries in
-   `publicHoistPattern` with `@rsbuild/core`.
+1. Take `@xh/hoist-dev-utils` 16 **and `@xh/hoist` 88 together, in one commit** - v16 emits TC39
+   (`2023-11`) decorators and v88 is the first hoist-react written against them. See hoist-react's
+   v88 upgrade notes for the app-side codemods (`accessor` keywords, `makeObservable(this)`
+   removal, `@persist` ordering). Under pnpm, replace the `webpack`, `webpack-cli` and
+   `webpack-dev-server` entries in `publicHoistPattern` with `@rsbuild/core`.
 2. Replace `webpack.config.js` with an `rsbuild.config.mjs` as above. Options carry over 1:1,
    except: `babelPresetEnvOptions` becomes `swcOptions`, `terserOptions` becomes `minifyOptions`,
    `stats` / `infrastructureLoggingLevel` become `logLevel`, `babelIncludePaths` /
