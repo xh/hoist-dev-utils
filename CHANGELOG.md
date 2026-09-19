@@ -59,8 +59,8 @@ build, the findings behind the config, and the known differences in output.
   app and hoist-react source is gone, along with `@rsbuild/plugin-babel` and the four `@babel/*`
   dependencies (108 packages out of the install). SWC now owns the whole JS/TS pipeline.
 * **New options**: `minify` (`false` to skip minification in a production build, for diagnosing
-  built output against readable code) and `buildCache` (Rspack's persistent cache, off by default
-  pending soak).
+  built output against readable code) and `buildCache` (opt in to Rspack's persistent build cache
+  for faster warm dev-server starts - off by default, as it is in Rsbuild).
 * **React Fast Refresh** hot-swaps modules exporting `hoistCmp({...})` components. Hoist's
   element-factory modules still trigger a page reload, but now in well under a second.
 * **Added `devLiveReload`**. Set `false` to stop the dev server reloading the page when an edit

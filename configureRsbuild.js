@@ -121,8 +121,9 @@ const hoistReactPkg = resolveAppPackage('@xh/hoist', basePath),
  *      React, resulting in a much smaller bundle size. Set to true if your app wishes to access all the BP icons.
  * @param {boolean} [env.minify=true] - false to skip JS/CSS minification in production builds - for diagnosing
  *      built-output issues against readable code. Build output is otherwise identical to a minified build.
- * @param {boolean} [env.buildCache=false] - true to enable Rspack's persistent build cache for faster warm dev-server
- *      starts. Experimental within Rspack - off by default pending soak.
+ * @param {boolean|Object} [env.buildCache=false] - true to enable Rspack's persistent build cache, which reuses
+ *      build snapshots across runs for faster warm dev-server starts. Also accepts Rsbuild's options object
+ *      (`cacheDirectory`, `cacheDigest`, `buildDependencies`). Defaults to false, matching Rsbuild's own default.
  * @param {string} [env.logLevel=info] - Rsbuild log level - 'info' | 'warn' | 'error' | 'silent'. Replaces
  *      the v15 `stats` and `infrastructureLoggingLevel` options, which are rejected if passed.
  * @param {boolean|Object} [env.devClientOverlay] - customize dev-server overlay behavior. Set to show only compilation
@@ -157,7 +158,9 @@ async function configureRsbuild(env) {
         inlineHoist = !prodBuild && parseFlag(env.inlineHoist, false) === true,
         reactProdMode = prodBuild || parseFlag(env.reactProdMode, false) === true,
         resolveAliases = Object.assign({}, env.resolveAliases),
-        buildCache = parseFlag(env.buildCache, false) === true,
+        buildCache = _.isPlainObject(env.buildCache)
+            ? env.buildCache
+            : parseFlag(env.buildCache, false) === true,
         minify = parseFlag(env.minify, true) === true,
         devClientOverlay = env.devClientOverlay ?? {errors: true, runtimeErrors: false},
         devLiveReload = parseFlag(env.devLiveReload, true) === true,
