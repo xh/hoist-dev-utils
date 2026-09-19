@@ -89,8 +89,7 @@ and build with `RSDOCTOR=true`, and Rsbuild registers and launches
 [Rsdoctor](https://rsdoctor.rs) for you.
 
 See the [Hoist React docs](https://github.com/xh/hoist-react/blob/develop/docs/build-and-deploy-app.md)
-for step-by-step details on the build process, and [`docs/rsbuild-migration.md`](docs/rsbuild-migration.md)
-for the measurements against the v15 webpack build and the known differences in output.
+for step-by-step details on the build process.
 
 ### Migrating from v15 (webpack)
 

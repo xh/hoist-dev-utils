@@ -9,9 +9,6 @@ TC39 decorators natively, so there is no Babel in the pipeline at all.
 
 **Requires hoist-react >= 88**, up from 87.1 in v15. Upgrade both together.
 
-See [`docs/rsbuild-migration.md`](docs/rsbuild-migration.md) for measurements, the findings behind
-the config, and known differences in output.
-
 ### 💥 Breaking Changes
 
 * **Rsbuild only - `configureWebpack()` is removed**, along with webpack, webpack-dev-server and
