@@ -48,7 +48,7 @@ runs:
               fi
 
               # Write resolved version to package.json.
-              npm version --no-git-tag-version --new-version "$VERSION"
+              npm version --no-git-tag-version "$VERSION"
 
               echo "Prepared snapshot version: $VERSION"
               echo "snapshot-version=$VERSION" >> "$GITHUB_OUTPUT"

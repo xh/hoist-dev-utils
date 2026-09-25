@@ -68,7 +68,7 @@ jobs:
         - name: Set release version in package.json
           env:
               VERSION: ${{ inputs.version }}
-          run: npm version --no-git-tag-version --new-version "$VERSION"
+          run: npm version --no-git-tag-version "$VERSION"
 
         - name: Publish release to npm
           env:

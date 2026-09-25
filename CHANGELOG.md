@@ -57,6 +57,8 @@ TC39 decorators natively, so there is no Babel in the pipeline at all.
   is not resolvable from the app root, rather than depending on pnpm's bin shims to place it.
 * `static/index.html` template parameters renamed to bundler-neutral names for Rsbuild's
   html-rspack-plugin. Rendered output is unchanged.
+* The shared `prepare-npm-snapshot-version` action and the release workflow pass the version to
+  `npm version` positionally, replacing the deprecated `--new-version` flag that npm now warns on.
 
 ### 📚 Libraries
 
