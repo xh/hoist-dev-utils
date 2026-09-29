@@ -1,5 +1,7 @@
 # Changelog
 
+## 17.0.0-SNAPSHOT - unreleased
+
 ## 16.0.0 - 2026-09-29
 
 Replaces webpack with [Rsbuild](https://rsbuild.rs) (Rspack + SWC) as the build toolchain for Hoist
