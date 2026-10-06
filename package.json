@@ -19,21 +19,21 @@
         "node": ">=22.15.0"
     },
     "dependencies": {
-        "@rsbuild/core": "~2.2.7",
-        "@rsbuild/plugin-basic-ssl": "~1.2.3",
-        "@rsbuild/plugin-react": "~2.1.0",
+        "@rsbuild/core": "~2.2.11",
+        "@rsbuild/plugin-basic-ssl": "~2.0.0",
+        "@rsbuild/plugin-react": "~2.1.1",
         "@rsbuild/plugin-sass": "~2.0.1",
         "@types/lodash": "^4.17.25",
         "@types/react": "^19.3.0",
         "@types/react-dom": "^19.3.0",
-        "@xh/eslint-config": "^8.0.1",
+        "@xh/eslint-config": "^8.1.0",
         "changelog-parser": "~4.1.0",
         "lodash": "^4.18.1",
-        "sass-embedded": "^1.104.1",
+        "sass-embedded": "^1.105.1",
         "type-fest": "^5.10.0"
     },
     "devDependencies": {
-        "prettier": "^3.9.7"
+        "prettier": "^3.9.9"
     },
-    "packageManager": "pnpm@12.2.1+sha512.f55ca68aacb9eb5ab69c66f828a98af89a32286703aef1f8da131ca7eab4d677f34bfa85e186467a919c0799df8b6f4aa240f7dc2919b33b3273190104162616"
+    "packageManager": "pnpm@12.10.1+sha512.ba40a37eb1a370d60fea8c4cf1d364c13bcccef518e98ad2bcee954f539d38da37458e58261a3fa55e06523450ea0ffff9f497b135be41f2c15c1642bacace6c"
 }

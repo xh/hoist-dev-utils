@@ -2,6 +2,14 @@
 
 ## 17.0.0-SNAPSHOT - unreleased
 
+### 📚 Libraries
+
+* @rsbuild/plugin-basic-ssl `1.2 → 2.0` - for `devHttps: true`, the self-signed dev cert is now
+  SHA-256 and cached under the app's `node_modules/.cache/basic-ssl`. The first dev-server start
+  after upgrading generates a new cert, which browsers will flag again.
+* @xh/eslint-config `8.0 → 8.1`
+* sass-embedded `1.104 → 1.105`
+
 ## 16.0.0 - 2026-09-29
 
 Replaces webpack with [Rsbuild](https://rsbuild.rs) (Rspack + SWC) as the build toolchain for Hoist
