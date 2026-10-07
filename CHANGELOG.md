@@ -2,6 +2,11 @@
 
 ## 17.0.0-SNAPSHOT - unreleased
 
+### 🐞 Bug Fixes
+
+* The dev server now fails at startup when its port is in use, as it did under webpack. Rsbuild
+  otherwise binds the next free port, which breaks OAuth redirect URIs and fixed-port scripts.
+
 ### 📚 Libraries
 
 * @rsbuild/plugin-basic-ssl `1.2 → 2.0` - for `devHttps: true`, the self-signed dev cert is now

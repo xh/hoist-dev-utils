@@ -556,6 +556,9 @@ async function configureRsbuild(env) {
                 : {
                       host: devHost,
                       port: devWebpackPort,
+                      // Fail on a busy port, as webpack-dev-server did. Rsbuild otherwise moves to
+                      // the next free port, breaking OAuth redirect URIs and fixed-port scripts.
+                      strictPort: true,
                       https: _.isPlainObject(devHttps) ? devHttps : undefined,
                       open: env.devServerOpenPage ? [env.devServerOpenPage] : false,
                       // Support HTML5 history routes for apps, with /appName/ as the base route for each
