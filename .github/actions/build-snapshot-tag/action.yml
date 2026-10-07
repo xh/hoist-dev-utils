@@ -10,7 +10,7 @@
 #               only — they never touch the displayed app-build value.
 #
 # Snap the timestamp once and read both outputs in the calling `prepare` job, then pass
-# app-build to the build (xhAppBuild / --env appBuild) and image-tag to the image push +
+# app-build to the build (xhAppBuild / XH_APP_BUILD) and image-tag to the image push +
 # promote. Also writes a job-summary table of the locked-in identifiers for quick reference.
 # Delegates to .github/scripts/build-tag.sh (unit-tested by build-tag.test.sh).
 

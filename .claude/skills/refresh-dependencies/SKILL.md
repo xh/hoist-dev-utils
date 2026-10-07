@@ -207,7 +207,7 @@ When editing `package.json`, match the existing style of each dependency — don
 | Style | Example | Used for | `pnpm update` pulls (NOT changelogged) |
 |-------|---------|----------|------------------------------------------|
 | `~X.Y.Z` (tilde) | `@rsbuild/core: ~2.2.5` | most build deps / Rsbuild plugins | patches only |
-| `^X.Y.Z` (caret) | `@babel/core: ^7.28.5`, `@xh/eslint-config: ^7.0` | Babel packages, eslint-config | minors + patches |
+| `^X.Y.Z` (caret) | `@xh/eslint-config: ^8.0.1`, `sass-embedded: ^1.104.1` | eslint-config, Sass | minors + patches |
 | `X.x` | `lodash: 4.x`, `type-fest: 5.x`, `@types/react: 18.x`, `prettier: 3.x` | libs we track loosely within a major | minors + patches |
 
 Implications for what reaches the CHANGELOG:

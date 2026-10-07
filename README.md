@@ -10,8 +10,8 @@ applications.
 The package.json file in this repository specifies a set of development dependencies required for
 building Hoist React applications. Those applications can specify `@xh/hoist-dev-utils` as a dev
 dependency and transitively bring in [Rsbuild](https://rsbuild.rs) (Rspack + SWC) and the plugins
-used in app builds, including the Rsbuild dev server, Sass, and Babel (for Hoist's legacy
-decorators).
+used in app builds, including the Rsbuild dev server and Sass. SWC transpiles Hoist's TC39
+(`2023-11`) decorators, so no Babel install is needed.
 
 While Hoist Dev Utils provides most essential dev dependencies for Hoist React, apps typically also include:
 
