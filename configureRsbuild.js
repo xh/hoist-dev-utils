@@ -37,6 +37,14 @@ const {
     logMsg
 } = require('./lib/common');
 
+const {
+    HOIST_SWC,
+    INLINE_HOIST_SINGLETONS,
+    resolveAppIdentity,
+    resolveHoistPath,
+    xhDefines
+} = require('./lib/hoistCompile');
+
 // These are not deps of hoist-dev-utils but of the consuming app, so resolve them from the
 // app's own directory (basePath).
 const hoistReactPkg = resolveAppPackage('@xh/hoist', basePath),
@@ -147,14 +155,11 @@ const hoistReactPkg = resolveAppPackage('@xh/hoist', basePath),
  * @returns {Promise<Object>} a complete Rsbuild config object.
  */
 async function configureRsbuild(env) {
-    if (!env.appCode) throw 'Missing required "appCode" config - cannot proceed';
+    // Identity defaults are shared with configureVitest(). Throws when `appCode` is missing.
+    const {appCode, appName, appVersion, appBuild, baseUrl} = resolveAppIdentity(env);
     rejectUnsupported(env);
 
-    const appCode = env.appCode,
-        appName = env.appName || _.startCase(appCode),
-        appVersion = env.appVersion || '1.0-SNAPSHOT',
-        appBuild = env.appBuild || 'UNKNOWN',
-        prodBuild = parseFlag(env.prodBuild, false) === true,
+    const prodBuild = parseFlag(env.prodBuild, false) === true,
         inlineHoist = !prodBuild && parseFlag(env.inlineHoist, false) === true,
         reactProdMode = prodBuild || parseFlag(env.reactProdMode, false) === true,
         resolveAliases = Object.assign({}, env.resolveAliases),
@@ -169,7 +174,6 @@ async function configureRsbuild(env) {
         devGrailsPort = env.devGrailsPort || 8080,
         devWebpackPort = env.devWebpackPort || 3000,
         devServerOptions = env.devServerOptions || {},
-        baseUrl = env.baseUrl || '/api/',
         extraIncludePaths = (env.extraIncludePaths || env.babelIncludePaths || []).map(
             safeRealpath
         ),
@@ -239,11 +243,7 @@ async function configureRsbuild(env) {
     // Resolve symlinks (a no-op for flat layouts) so the path matches the real module paths
     // Rspack produces via its default resolve.symlinks behavior - required for the transpile
     // include below to match under symlinking package managers (e.g. pnpm).
-    const hoistPath = safeRealpath(
-        inlineHoist
-            ? path.resolve(basePath, '../../hoist-react')
-            : path.resolve(basePath, 'node_modules/@xh/hoist')
-    );
+    const hoistPath = resolveHoistPath(basePath, inlineHoist);
 
     // Check for and resolve standard/expected favicons.
     const {manifestIcons, appleTouchIconExists} = resolveIcons(
@@ -263,17 +263,11 @@ async function configureRsbuild(env) {
     if (inlineHoist) {
         resolveAliases['@xh/hoist'] = hoistPath;
 
-        // This ensures that we use the same instance of libs in hoist-react as in the app - needed
-        // to get hooks working since they will throw an error if the lib instance that the hook
-        // was imported from is different than the instance that was used to render the component
-        // (which will always be the instance hoist-react has when using element factories)
-        resolveAliases['react'] = path.resolve('./node_modules/react');
-        resolveAliases['react-dom'] = path.resolve('./node_modules/react-dom');
-
-        // Also ensure a single instance of ag-Grid when Hoist is inline, needed to support use of
-        // `useGridMenuItem` hook.
-        resolveAliases['ag-grid-react'] = path.resolve('./node_modules/ag-grid-react');
-        resolveAliases['ag-grid-community'] = path.resolve('./node_modules/ag-grid-community');
+        // Use the app's instance of each library hoist-react must share with it - React for hooks,
+        // ag-Grid for `useGridMenuItem`. See INLINE_HOIST_SINGLETONS.
+        INLINE_HOIST_SINGLETONS.forEach(name => {
+            resolveAliases[name] = path.resolve('./node_modules', name);
+        });
     }
 
     // When running inline, resolve inline Hoist's own node_modules so we can exclude them.
@@ -298,7 +292,8 @@ async function configureRsbuild(env) {
     // TS-only support - fail fast on any .jsx source.
     checkNoJsxFiles([srcPath, ...extraIncludePaths]);
 
-    // Resolve app entry points - one for each file within src/apps/ - to create bundles below.
+    // Resolve app entry points - one for each script within src/apps/, minus unit tests - to create
+    // bundles below.
     const clientApps = discoverClientApps(srcPath),
         clientAppNames = clientApps.map(it => it.name),
         appEntryPoints = Object.fromEntries(clientApps.map(it => [it.name, it.path]));
@@ -340,7 +335,7 @@ async function configureRsbuild(env) {
             // `export const AppComponent = hoistCmp({...})`) - Hoist's camelCase element-factory
             // exports and model classes fall back to a (sub-second) full reload of the page.
             pluginReact({
-                swcReactOptions: {runtime: 'automatic'},
+                swcReactOptions: {runtime: HOIST_SWC.reactRuntime},
                 // Rsbuild's React-specific vendor chunking is tied to its own split presets.
                 splitChunks: false,
                 reactRefreshOptions: {
@@ -378,7 +373,7 @@ async function configureRsbuild(env) {
             // `@lookup` returning a field initializer. Also Rsbuild's own default, set explicitly
             // here because it is load-bearing: pointed at `legacy`, every `@observable` and
             // `@bindable` in a v88 app silently stops working.
-            decorators: {version: '2023-11'},
+            decorators: {version: HOIST_SWC.decoratorVersion},
 
             // Avoid importing every FA icon ever made - rewrite named imports from the FontAwesome
             // icon packs to per-icon deep imports. See https://github.com/FortAwesome/react-fontawesome/issues/70
@@ -403,14 +398,16 @@ async function configureRsbuild(env) {
                 // have no `process` global). Most-specific keys win, so NODE_ENV above still
                 // resolves to its real value.
                 'process.env': '{}',
-                xhAppCode: JSON.stringify(appCode),
-                xhAppName: JSON.stringify(appName),
-                xhAppVersion: JSON.stringify(appVersion),
-                xhAppBuild: JSON.stringify(appBuild),
-                xhBaseUrl: JSON.stringify(baseUrl),
-                xhBuildTimestamp: buildDate.getTime(),
-                xhClientApps: JSON.stringify(clientAppNames),
-                xhIsDevelopmentMode: !prodBuild
+                ...xhDefines({
+                    appCode,
+                    appName,
+                    appVersion,
+                    appBuild,
+                    baseUrl,
+                    buildTimestamp: buildDate.getTime(),
+                    clientApps: clientAppNames,
+                    isDevelopmentMode: !prodBuild
+                })
             }
         },
 
@@ -600,7 +597,7 @@ async function configureRsbuild(env) {
                 // (`useDefineForClassFields: true`) and what TC39 decorators assume - `accessor`
                 // fields desugar to a getter/setter pair over private storage, and plain fields
                 // must still define rather than assign so they do not trip inherited setters.
-                transform.useDefineForClassFields = true;
+                transform.useDefineForClassFields = HOIST_SWC.useDefineForClassFields;
 
                 // Rewrite the `core-js/stable` import in hoist-react's polyfills.js (prepended to
                 // every app entry above) into the polyfills needed for the target browsers.

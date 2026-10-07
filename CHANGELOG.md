@@ -2,6 +2,25 @@
 
 ## 17.0.0-SNAPSHOT - unreleased
 
+### 🎁 New Features
+
+* Added `configureVitest()` (`@xh/hoist-dev-utils/configureVitest`), a Vitest preset for app unit
+  tests. It compiles with the same SWC and settings as `configureRsbuild()`, sets the same `XH`
+  constants and loads hoist-react's test setup. Requires hoist-react >= 89. See the README.
+* `configureVitest()` takes the same `env` object as `configureRsbuild()` and ignores build-only
+  options.
+* `XH_INLINE_HOIST=true` runs app tests against a local hoist-react checkout, as it does for the dev
+  server.
+* App entry discovery skips `*.spec.*` and `*.test.*` files in `src/apps/`, so a unit test there
+  does not become an app.
+
+### ⚙️ Technical
+
+* `configureRsbuild()` reads its SWC settings, `XH` constants and inline-hoist aliases from a module
+  it shares with `configureVitest()`. The resolved Rsbuild config is unchanged, except that the
+  `xhBuildTimestamp` and `xhIsDevelopmentMode` constants are now defined as JSON strings.
+* Added `node --test` specs for the shared module and `configureVitest()`, run by `pnpm test`.
+
 ### 🐞 Bug Fixes
 
 * The dev server now fails at startup when its port is in use, as it did under webpack. Rsbuild

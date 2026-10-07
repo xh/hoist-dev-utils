@@ -16,7 +16,7 @@ The package is part of the **Hoist** framework ecosystem by Extremely Heavy Indu
 
 ## Architecture
 
-One config module over a small shared core:
+Two config modules over a small shared core:
 
 - **`configureRsbuild.js`** - exports `configureRsbuild(env)` returning an
   [Rsbuild](https://rsbuild.rs) (Rspack + SWC) config, plus a `readCliEnv()` helper mapping `XH_*`
@@ -26,6 +26,18 @@ One config module over a small shared core:
   Stage 3), which is what hoist-react >= 88 is written against and why the v16 floor is 88. That
   setting is load-bearing and must not be changed casually: pointed back at `legacy`, every
   `@observable` and `@bindable` in a v88 app silently stops working, with no build error.
+- **`configureVitest.js`** - exports `configureVitest(env)` returning a plain Vite + Vitest config
+  for app unit tests, and for hoist-react's own suite with `selfHost: true`. It takes the same
+  `env` as `configureRsbuild()` and compiles with the SWC inside Rspack
+  (`rspack.experiments.swc.transform`), so tests compile as the build does. It imports nothing
+  from vite or vitest. It loads hoist-react's test kit from `<hoist>/test/setup.ts`, which ships
+  from hoist-react 89 (`MIN_HOIST_REACT_TEST_VERSION`).
+- **`lib/hoistCompile.js`** - the one source for what both configs must agree on: Hoist's SWC
+  settings, app identity defaults, the `xh*` defines, the hoist-react path rule and the
+  inline-hoist singletons. No bundler API, as for `lib/common.js`.
+- **`lib/vitestInlineHoist.mjs`** - a Node resolve hook that `configureVitest()` runs first in
+  inline-hoist mode. It sends React and the other singletons from the checkout's dependencies to
+  the app's copies.
 - **`lib/common.js`** - bundler-agnostic helpers (version checks, entry discovery, CHANGELOG
   parsing, Blueprint icon stubs, manifest content, logging). Nothing in here may touch a bundler
   API.
@@ -37,7 +49,8 @@ One config module over a small shared core:
 Key behaviors:
 - Accepts ~30 env parameters from the app's `rsbuild.config.mjs`, with build-time overrides as
   `XH_*` environment variables (set in CI, or in Rsbuild's `.env` files) read by `readCliEnv()`
-- Discovers app entry points from `src/apps/*.{js,ts}` in the consuming project
+- Discovers app entry points from `src/apps/*.{js,ts}` in the consuming project, skipping
+  `*.spec.*` and `*.test.*` files
 - Transpiles both app code and raw hoist-react TypeScript source via SWC, decorators included
 - Injects `XH.appCode`, `XH.appName`, `XH.appVersion`, `XH.appBuild` via `rspack.DefinePlugin`
 - Parses the consuming app's `CHANGELOG.md` into JSON for runtime access
@@ -55,8 +68,10 @@ via `rspack.NormalModuleReplacementPlugin` - apps opt out with `env.loadAllBluep
 
 ## Development
 
-There is no build step — the package ships `configureRsbuild.js`, `lib/**/*` and `static/**/*`
-directly. There are no tests in this repo - validation is done by building and running Toolbox.
+There is no build step. The package ships `configureRsbuild.js`, `configureVitest.js`, `lib/**/*`
+and `static/**/*` directly. `pnpm test` runs the `node --test` specs under `test/`, which do not
+ship. They cover the shared compile settings and `configureVitest()`. Validate a build change by
+building and running Toolbox.
 
 **Package manager: pnpm.** `pnpm-lock.yaml` is the source of truth — do not invoke `npm install`
 or `yarn install`, and do not create a `package-lock.json` or `yarn.lock`. The required pnpm
@@ -68,6 +83,7 @@ tree in read-only fashion without reinstalling.
 
 ```bash
 pnpm install          # Install dependencies
+pnpm test                 # Run the node --test specs under test/
 pnpm prettier --check .   # Check formatting
 pnpm prettier --write .   # Fix formatting
 pnpm outdated             # List deps with newer versions than the lockfile / specs allow
@@ -83,11 +99,14 @@ into the app's `node_modules`. Changes take effect immediately.
 ### Versioning
 
 - `develop` branch for feature work, `master` for releases
-- Version in `package.json` follows `MAJOR.MINOR.PATCH-SNAPSHOT` between releases
+- Between releases, the version in `package.json` is the next major as `<major>.0.0-SNAPSHOT`.
+  SNAPSHOT versions are major only. The release number is chosen at release time, so do not
+  change the SNAPSHOT version for a minor or patch change.
 - `MIN_HOIST_REACT_VERSION` in `lib/common.js` enforces the minimum supported hoist-react
-  version ('major[.minor]') with a fail-fast build error. Both configs share it. Review on each new
-  major and bump whenever a release raises the floor, keeping it in sync with the CHANGELOG's
-  "Requires hoist-react" entry and the version-compatibility doc below.
+  version ('major[.minor]') with a fail-fast build error. Review on each new major and bump
+  whenever a release raises the floor, keeping it in sync with the CHANGELOG's "Requires
+  hoist-react" entry and the version-compatibility doc below. `MIN_HOIST_REACT_TEST_VERSION` is the
+  higher floor for `configureVitest()` alone.
 
 ### Version compatibility doc (maintained in hoist-react)
 
@@ -99,7 +118,7 @@ docs MCP server and the Toolbox docs viewer.
 Whenever work here changes a compatibility fact, update that doc in a paired hoist-react PR:
 
 - a new minimum or recommended `hoist-react` version (check `💥 Breaking Changes` for
-  "Requires hoist-react >= X" entries)
+  "Requires hoist-react >= X" entries), including the `configureVitest()` floor
 - a new Node floor (`engines.node` in `package.json`)
 - any new pairing constraint apps must know when upgrading (e.g. React/`@types/react` major,
   package-manager support)
