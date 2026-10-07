@@ -30,8 +30,8 @@ Two config modules over a small shared core:
   for app unit tests, and for hoist-react's own suite with `selfHost: true`. It takes the same
   `env` as `configureRsbuild()` and compiles with the SWC inside Rspack
   (`rspack.experiments.swc.transform`), so tests compile as the build does. It imports nothing
-  from vite or vitest. It loads hoist-react's test kit from `<hoist>/test/setup.ts`, which ships
-  from hoist-react 89 (`MIN_HOIST_REACT_TEST_VERSION`).
+  from vite or vitest. It loads hoist-react's test kit from `<hoist>/test-support/setup.ts`, which
+  ships from hoist-react 89 (`MIN_HOIST_REACT_TEST_VERSION`).
 - **`lib/hoistCompile.js`** - the one source for what both configs must agree on: Hoist's SWC
   settings, app identity defaults, the `xh*` defines, the hoist-react path rule and the
   inline-hoist singletons. No bundler API, as for `lib/common.js`.

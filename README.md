@@ -126,9 +126,10 @@ for app unit tests. It compiles specs with the SWC inside Rspack and the same se
 `configureRsbuild()`, so tests run the code the app ships. It also sets the same `XH` constants and
 loads hoist-react's test setup, which starts a fake hoist-core server for each test file.
 
-**Requires hoist-react >= 89.** The preset loads `test/setup.ts` from the installed `@xh/hoist`, and
-hoist-react ships its `test/` folder from v89. With an older hoist-react, the preset fails with a
-message that names the version it found. Builds still work with that version.
+**Requires hoist-react >= 89.** The preset loads `test-support/setup.ts` from the installed
+`@xh/hoist`, and hoist-react ships its `test-support/` folder from v89. With an older hoist-react,
+the preset fails with a message that names the version it found. Builds still work with that
+version.
 
 This package does not bring the test runners. Add them to the app as devDependencies:
 
@@ -180,7 +181,7 @@ keys it does not know.
 | Other build options | Ignored |
 | `root` | Project root. Default: the current directory. |
 | `include` | Spec globs. Default: `['src/**/*.spec.{ts,tsx}']`. |
-| `setupFiles` | App setup files, run after hoist-react's `test/setup.ts`. Default: `[]`. |
+| `setupFiles` | App setup files, run after hoist-react's `test-support/setup.ts`. Default: `[]`. |
 | `timeZone` | Sets `TZ` for the run. Default: `'America/New_York'`. `null` keeps the machine zone. |
 | `selfHost` | For hoist-react's own config only. Aliases `@xh/hoist` to the project root. |
 

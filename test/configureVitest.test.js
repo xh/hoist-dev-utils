@@ -50,7 +50,7 @@ function makeApp({
     if (hoist) {
         const hoistDir = path.join(root, 'node_modules', '@xh', 'hoist');
         writePkg(hoistDir, {name: '@xh/hoist', ...hoist});
-        if (kit) write(path.join(hoistDir, 'test', 'setup.ts'));
+        if (kit) write(path.join(hoistDir, 'test-support', 'setup.ts'));
     }
     deps.forEach(([name, version = '1.0.0']) =>
         writePkg(path.join(root, 'node_modules', name), {name, version})
@@ -58,7 +58,7 @@ function makeApp({
     if (checkout) {
         const checkoutDir = path.join(project, '..', 'hoist-react');
         writePkg(checkoutDir, {name: '@xh/hoist', ...checkout});
-        if (kit) write(path.join(checkoutDir, 'test', 'setup.ts'));
+        if (kit) write(path.join(checkoutDir, 'test-support', 'setup.ts'));
     }
     return root;
 }
@@ -124,7 +124,7 @@ describe('configureVitest', () => {
                 });
             assert.equal(configRoot, root);
             assert.deepEqual(test.setupFiles, [
-                path.join(root, 'node_modules/@xh/hoist/test/setup.ts'),
+                path.join(root, 'node_modules/@xh/hoist/test-support/setup.ts'),
                 'src/test/setup.ts'
             ]);
             assert.deepEqual(test.include, ['src/**/*.spec.{ts,tsx}']);
@@ -198,22 +198,22 @@ describe('configureVitest', () => {
     });
 
     describe('selfHost', () => {
-        it('aliases @xh/hoist to the root and loads its test/setup.ts', () => {
+        it('aliases @xh/hoist to the root and loads its test-support/setup.ts', () => {
             const root = makeApp({hoist: null, apps: null});
-            write(path.join(root, 'test', 'setup.ts'));
+            write(path.join(root, 'test-support', 'setup.ts'));
             const {resolve, test, server} = configureVitest({appCode: 'x', root, selfHost: true});
             const [{find, replacement}] = resolve.alias;
             assert.equal(replacement, root);
             assert.ok(find.test('@xh/hoist') && find.test('@xh/hoist/core'));
             assert.ok(!find.test('@xh/hoist-dev-utils'));
-            assert.deepEqual(test.setupFiles, [path.join(root, 'test/setup.ts')]);
+            assert.deepEqual(test.setupFiles, [path.join(root, 'test-support/setup.ts')]);
             assert.deepEqual(resolve.dedupe, []);
             assert.deepEqual(server, {});
         });
 
         it("compiles hoist-react's source but not its dependencies' JS", async () => {
             const root = makeApp({hoist: null, apps: null});
-            write(path.join(root, 'test', 'setup.ts'));
+            write(path.join(root, 'test-support', 'setup.ts'));
             const swc = plugin(configureVitest({appCode: 'x', root, selfHost: true}), 'xh-swc'),
                 js = 'export const x = 1;',
                 compiled = async file => (await swc.transform(js, file)) !== null;
@@ -224,7 +224,7 @@ describe('configureVitest', () => {
 
         it('skips the vitest major check', () => {
             const root = makeApp({hoist: null, apps: null, deps: [['vitest', '5.0.3']]});
-            write(path.join(root, 'test', 'setup.ts'));
+            write(path.join(root, 'test-support', 'setup.ts'));
             writePkg(root, {
                 name: '@xh/hoist',
                 version: '89.0.0',
@@ -249,7 +249,7 @@ describe('configureVitest', () => {
             assert.deepEqual(server.fs.allow, [root, checkout, devUtilsDir]);
             assert.deepEqual(test.setupFiles, [
                 path.join(devUtilsDir, 'lib/vitestInlineHoist.mjs'),
-                path.join(checkout, 'test/setup.ts')
+                path.join(checkout, 'test-support/setup.ts')
             ]);
             assert.deepEqual(JSON.parse(process.env.XH_VITEST_INLINE_HOIST_CFG), {
                 appRoot: root,
@@ -297,7 +297,7 @@ describe('configureVitest', () => {
             const root = makeApp({hoist: {version: '89.0.0-SNAPSHOT.1790701102970'}, kit: false});
             assert.throws(
                 () => configureVitest({appCode: 'x', root}),
-                /v89\.0\.0-SNAPSHOT\.1790701102970 has no test\/setup\.ts - it predates the unit test kit\. Update to a newer snapshot\./
+                /v89\.0\.0-SNAPSHOT\.1790701102970 has no test-support\/setup\.ts - it predates the unit test kit\. Update to a newer snapshot\./
             );
         });
 
@@ -305,7 +305,7 @@ describe('configureVitest', () => {
             const root = makeApp({checkout: {version: '88.0.0'}, kit: false});
             assert.throws(
                 () => configureVitest({appCode: 'x', root, inlineHoist: true}),
-                /^Error: Inline hoist-react at .*hoist-react has no test\/setup\.ts/
+                /^Error: Inline hoist-react at .*hoist-react has no test-support\/setup\.ts/
             );
         });
 

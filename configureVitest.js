@@ -50,7 +50,7 @@ const HOIST_IMPORT = /^@xh\/hoist(?=\/|$)/;
 /**
  * Vitest preset for Hoist unit tests. Compiles app and hoist-react code with the SWC inside Rspack
  * and the same settings `configureRsbuild()` builds with, sets the same `XH` constants, and loads
- * hoist-react's test setup (`@xh/hoist/test`). Apps consume it from a `vitest.config.mts`:
+ * hoist-react's test setup (`@xh/hoist/test-support`). Apps consume it from a `vitest.config.mts`:
  *
  *      import configureVitest from '@xh/hoist-dev-utils/configureVitest';
  *      import {defineConfig} from 'vitest/config';
@@ -71,7 +71,7 @@ const HOIST_IMPORT = /^@xh\/hoist(?=\/|$)/;
  * @param {string} [env.appVersion] - as for configureRsbuild(). Defaults to '1.0-SNAPSHOT'.
  * @param {string} [env.appBuild] - as for configureRsbuild(). Defaults to 'UNKNOWN'.
  * @param {string} [env.baseUrl] - as for configureRsbuild(). Defaults to '/api/', where the fake
- *      hoist-core in `@xh/hoist/test` serves.
+ *      hoist-core in `@xh/hoist/test-support` serves.
  * @param {boolean} [env.inlineHoist=false] - true to test against a sibling hoist-react checkout at
  *      `../../hoist-react`. Also on when the `XH_INLINE_HOIST` environment variable is 'true'.
  * @param {string[]} [env.extraIncludePaths] - custom packages to compile, as in the build.
@@ -83,11 +83,12 @@ const HOIST_IMPORT = /^@xh\/hoist(?=\/|$)/;
  *      SWC rejects it alongside `jsc.target`.
  * @param {string} [env.root] - project root. Defaults to the current directory.
  * @param {string[]} [env.include] - spec globs. Defaults to `['src/**\/*.spec.{ts,tsx}']`.
- * @param {string[]} [env.setupFiles] - app setup files, run after hoist-react's `test/setup.ts`.
+ * @param {string[]} [env.setupFiles] - app setup files, run after hoist-react's
+ *      `test-support/setup.ts`.
  * @param {?string} [env.timeZone='America/New_York'] - time zone for the run, set as `TZ`. Pass
  *      null to keep the machine's zone.
  * @param {boolean} [env.selfHost=false] - true only for hoist-react's own config. Aliases
- *      `@xh/hoist` to the root and loads its `test/setup.ts`.
+ *      `@xh/hoist` to the root and loads its `test-support/setup.ts`.
  * @returns {Object} a Vite + Vitest config object.
  */
 function configureVitest(env = {}) {
@@ -114,7 +115,7 @@ function createConfig(env) {
         include = env.include ?? ['src/**/*.spec.{ts,tsx}'],
         setupFiles = _.castArray(env.setupFiles ?? []),
         timeZone = env.timeZone === undefined ? 'America/New_York' : env.timeZone,
-        hoistSetup = path.join(hoistPath, 'test/setup.ts');
+        hoistSetup = path.join(hoistPath, 'test-support/setup.ts');
 
     checkSwcApi();
     if (!fs.existsSync(hoistSetup)) {
@@ -124,8 +125,8 @@ function createConfig(env) {
     if (!selfHost && !inlineHoist) checkVitestMajor(root, hoistPath);
     warnIgnoredOptions(env);
 
-    // Set in the main process, so test workers inherit them. `@xh/hoist/test` checks the preset
-    // version against its own minimum.
+    // Set in the main process, so test workers inherit them. `@xh/hoist/test-support` checks the
+    // preset version against its own minimum.
     if (timeZone != null) process.env.TZ = timeZone;
     process.env.XH_VITEST_PRESET_VERSION = devUtilsPkg.version;
 
@@ -382,14 +383,14 @@ function missingTestKitMessage({root, hoistPath, selfHost, inlineHoist}) {
     const MIN = MIN_HOIST_REACT_TEST_VERSION;
     if (selfHost) {
         return (
-            `configureVitest() found no test/setup.ts in ${hoistPath} - selfHost is for ` +
+            `configureVitest() found no test-support/setup.ts in ${hoistPath} - selfHost is for ` +
             `hoist-react's own config.`
         );
     }
     if (inlineHoist) {
         return (
-            `Inline hoist-react at ${hoistPath} has no test/setup.ts - pull a hoist-react that ` +
-            `has the unit test kit.`
+            `Inline hoist-react at ${hoistPath} has no test-support/setup.ts - pull a ` +
+            `hoist-react that has the unit test kit.`
         );
     }
 
@@ -404,10 +405,10 @@ function missingTestKitMessage({root, hoistPath, selfHost, inlineHoist}) {
         );
     }
     return version.includes('SNAPSHOT')
-        ? `@xh/hoist v${version} has no test/setup.ts - it predates the unit test kit. Update ` +
-              `to a newer snapshot.`
-        : `@xh/hoist v${version} has no test/setup.ts - the installed package is missing its ` +
-              `unit test kit.`;
+        ? `@xh/hoist v${version} has no test-support/setup.ts - it predates the unit test kit. ` +
+              `Update to a newer snapshot.`
+        : `@xh/hoist v${version} has no test-support/setup.ts - the installed package is ` +
+              `missing its unit test kit.`;
 }
 
 // Compare majors with the vitest peer range hoist-react declares, when it declares one. A
