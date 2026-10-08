@@ -16,6 +16,7 @@ const _ = require('lodash'),
 const {
     MIN_HOIST_REACT_TEST_VERSION,
     KNOWN_OPTIONS,
+    TEST_OPTIONS,
     devUtilsPkg,
     resolveAppPackage,
     isVersionBelow,
@@ -31,9 +32,6 @@ const {
     resolveHoistPath,
     xhDefines
 } = require('./lib/hoistCompile');
-
-// Options read by configureVitest() alone.
-const TEST_OPTIONS = ['root', 'include', 'setupFiles', 'timeZone', 'selfHost'];
 
 // Build options a test run cannot honor - warned, then ignored. Every other build option is
 // accepted silently, so an app can pass one `env` object to both configs.

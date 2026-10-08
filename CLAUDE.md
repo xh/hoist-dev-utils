@@ -32,6 +32,12 @@ Two config modules over a small shared core:
   (`rspack.experiments.swc.transform`), so tests compile as the build does. It imports nothing
   from vite or vitest. It loads hoist-react's test kit from `<hoist>/test-support/setup.ts`, which
   ships from hoist-react 89 (`MIN_HOIST_REACT_TEST_VERSION`).
+- **`configureRsbuild.d.ts`** and **`configureVitest.d.ts`** - hand-written type declarations for
+  the two entry points, so a `vitest.config.mts` (or a JS config with `// @ts-check`) gets typed
+  options. `SharedEnv` holds the options both configs honor. They import no Vite or Vitest types,
+  which do not resolve from this package under pnpm. Add each new option to the declarations as
+  well as the JSDoc - `test/declarations.test.js` compares them with `KNOWN_OPTIONS` and
+  `TEST_OPTIONS` in `lib/common.js`.
 - **`lib/hoistCompile.js`** - the one source for what both configs must agree on: Hoist's SWC
   settings, app identity defaults, the `xh*` defines, the hoist-react path rule and the
   inline-hoist singletons. No bundler API, as for `lib/common.js`.
@@ -68,9 +74,10 @@ via `rspack.NormalModuleReplacementPlugin` - apps opt out with `env.loadAllBluep
 
 ## Development
 
-There is no build step. The package ships `configureRsbuild.js`, `configureVitest.js`, `lib/**/*`
-and `static/**/*` directly. `pnpm test` runs the `node --test` specs under `test/`, which do not
-ship. They cover the shared compile settings and `configureVitest()`. Validate a build change by
+There is no build step. The package ships `configureRsbuild.js`, `configureVitest.js`, their
+`.d.ts` files, `lib/**/*` and `static/**/*` directly. `pnpm test` runs the `node --test` specs
+under `test/`, which do not ship. They cover the shared compile settings, `configureVitest()` and
+the option keys in the declarations. Validate a build change by
 building and running Toolbox.
 
 **Package manager: pnpm.** `pnpm-lock.yaml` is the source of truth — do not invoke `npm install`

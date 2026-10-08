@@ -13,13 +13,17 @@
   server.
 * App entry discovery skips `*.spec.*` and `*.test.*` files in `src/apps/`, so a unit test there
   does not become an app.
+* Ships type declarations for `configureVitest()` and `configureRsbuild()`. A `vitest.config.mts`
+  no longer warns that the module has no types (TS7016), and the IDE checks and documents its
+  options. A JS config gets the same help with `// @ts-check`.
 
 ### ⚙️ Technical
 
 * `configureRsbuild()` reads its SWC settings, `XH` constants and inline-hoist aliases from a module
   it shares with `configureVitest()`. The resolved Rsbuild config is unchanged, except that the
   `xhBuildTimestamp` and `xhIsDevelopmentMode` constants are now defined as JSON strings.
-* Added `node --test` specs for the shared module and `configureVitest()`, run by `pnpm test`.
+* Added `node --test` specs for the shared module and `configureVitest()`, run by `pnpm test`. They
+  also check that the type declarations cover every option.
 
 ### 🐞 Bug Fixes
 

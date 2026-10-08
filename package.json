@@ -12,7 +12,9 @@
     "license": "Apache-2.0",
     "files": [
         "configureRsbuild.js",
+        "configureRsbuild.d.ts",
         "configureVitest.js",
+        "configureVitest.d.ts",
         "lib/**/*",
         "static/**/*"
     ],

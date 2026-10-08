@@ -29,7 +29,8 @@ The `configureRsbuild.js` module exports a single `configureRsbuild()` function 
 complete [Rsbuild](https://rsbuild.rs) (Rspack + SWC) configuration. This includes transpiling and
 bundling multiple client application entry points, styles (CSS/SASS), HTML index file generation,
 and pre-compressed assets for production builds. See the docs within `configureRsbuild.js` for
-supported arguments and additional details.
+supported arguments and additional details. The package ships type declarations for both config
+modules. Add `// @ts-check` to the top of `rsbuild.config.mjs` to have the IDE check its options.
 
 The generated configuration also sets the value of several XH globals within the built JS code, via
 Rspack's DefinePlugin. These include `XH.appCode` and `XH.appName` (both required), `XH.appVersion`
@@ -160,7 +161,7 @@ export default defineConfig(configureVitest({appCode: 'myApp'}));
 ```
 
 Import the preset by package name. Vite bundles a relative import of this CommonJS file, and the
-bundled copy fails. Put specs next to the code they test, as `src/**/*.spec.ts`. The build skips
+bundled copy fails. The preset's type declarations let the IDE check its options. Put specs next to the code they test, as `src/**/*.spec.ts`. The build skips
 `*.spec.*` and `*.test.*` files in `src/apps/`, so a spec there does not become an app entry.
 See hoist-react's `docs/unit-testing.md` for how to write specs.
 
