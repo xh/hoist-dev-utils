@@ -119,6 +119,92 @@ Dev-utils 16 is Rsbuild only - `configureWebpack()` is gone. To move an app:
    twins of compressible assets. Chunk boundaries differ from webpack's, so per-file names and sizes
    will not line up.
 
+## Unit tests with Vitest
+
+The `configureVitest.js` module exports `configureVitest()`, a [Vitest](https://vitest.dev) preset
+for app unit tests. It compiles specs with the SWC inside Rspack and the same settings as
+`configureRsbuild()`, so tests run the code the app ships. It also sets the same `XH` constants and
+loads hoist-react's test setup, which starts a fake hoist-core server for each test file.
+
+**Requires hoist-react >= 89.** The preset loads `test-support/setup.ts` from the installed
+`@xh/hoist`, and hoist-react ships its `test-support/` folder from v89. With an older hoist-react,
+the preset fails with a message that names the version it found. Builds still work with that
+version.
+
+This package does not bring the test runners. Add them to the app as devDependencies:
+
+```bash
+pnpm add -D vitest jsdom msw @testing-library/react @testing-library/dom
+```
+
+Take the latest versions that fit the optional peer ranges in the `package.json` of `@xh/hoist`.
+pnpm warns about any version outside those ranges. Then add scripts:
+
+```json
+"scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "testWithHoist": "(cd ../../hoist-react && pnpm install) && pnpm install && XH_INLINE_HOIST=true vitest"
+}
+```
+
+hoist-react's test setup unmounts rendered components after each test, so it needs React Testing
+Library even if the app's specs never render. Then add a `vitest.config.mts` next to
+`rsbuild.config.mjs`:
+
+```typescript
+import configureVitest from '@xh/hoist-dev-utils/configureVitest';
+import {defineConfig} from 'vitest/config';
+
+export default defineConfig(configureVitest({appCode: 'myApp'}));
+```
+
+Import the preset by package name. Vite bundles a relative import of this CommonJS file, and the
+bundled copy fails. Put specs next to the code they test, as `src/**/*.spec.ts`. The build skips
+`*.spec.*` and `*.test.*` files in `src/apps/`, so a spec there does not become an app entry.
+See hoist-react's `docs/unit-testing.md` for how to write specs.
+
+To add Vitest settings, wrap the result in `mergeConfig()` from `vitest/config`. A scalar setting
+from the app wins. `mergeConfig()` joins arrays, so it cannot narrow a list: pass `include` and
+`setupFiles` to the preset instead.
+
+`configureVitest()` takes the same `env` object as `configureRsbuild()`, so an app can share one
+object between its two configs. Add the test-only keys in the Vitest config alone, as in
+`configureVitest({...env, setupFiles: ['./src/test/setup.ts']})`. `configureRsbuild()` warns about
+keys it does not know.
+
+| Option | In tests |
+|---|---|
+| `appCode` (required), `appName`, `appVersion`, `appBuild`, `baseUrl` | Set in `XH`, with the build defaults |
+| `inlineHoist`, `extraIncludePaths`, `extraExcludePaths`, `resolveAliases`, `swcOptions` | As in the build. An alias value that starts with `.` is relative to the root. `swcOptions` drops any `env` key, which SWC rejects with `jsc.target`. |
+| `extraModuleRules` | Ignored, with a warning. Rspack rules cannot run under Vite. |
+| Other build options | Ignored |
+| `root` | Project root. Default: the current directory. |
+| `include` | Spec globs. Default: `['src/**/*.spec.{ts,tsx}']`. |
+| `setupFiles` | App setup files, run after hoist-react's `test-support/setup.ts`. Default: `[]`. |
+| `timeZone` | Sets `TZ` for the run. Default: `'America/New_York'`. `null` keeps the machine zone. |
+| `selfHost` | For hoist-react's own config only. Aliases `@xh/hoist` to the project root. |
+
+The preset gives hoist-react's test kit a fixed setup. `XH.isDevelopmentMode` is false, and client
+app names come from `src/apps`, or `['app']` without that folder. Each test file runs isolated in
+jsdom, with mocks, env stubs and global stubs restored after each test. Stylesheet imports resolve to
+an empty module, and with `?inline`, `?raw` or `?url` to an empty string. `@xh/app-changelog.json`
+resolves to `{}`, and a `.md` import to its text.
+
+A run with `--no-isolate`, or in the `vmThreads` or `vmForks` pool, fails, because each test file
+boots its own `XH`. If the installed `@xh/hoist` declares a `vitest` peer dependency, the preset also
+fails on a Vitest major outside that range.
+
+`XH_INLINE_HOIST=true` (or `inlineHoist: true`) runs the app's tests against a hoist-react
+checkout at `../../hoist-react`, as `startWithHoist` does for the dev server. The preset aliases
+`@xh/hoist` to the checkout. It dedupes React, ag-Grid, msw, React Testing Library and MobX to the
+app's own copies, if the app has them. A Node resolve hook does the same for the checkout's
+dependencies, which Vitest loads outside Vite. Inline mode works under pnpm. It is untested under
+yarn and npm.
+
+The name matches Vitest's own `configureVitest` plugin hook. The two are unrelated: this one is a
+config factory, like `configureRsbuild()`.
+
 ## Favicons
 
 To include a favicon with your app, provide the `favicon` option to `configureRsbuild()`. This can be either
@@ -232,7 +318,8 @@ manager the app itself uses.
 This repo itself is managed with [pnpm](https://pnpm.io) - run `pnpm install` to install its
 dependencies. The required pnpm version is pinned via the `packageManager` field in `package.json`
 and will be provisioned automatically by [corepack](https://nodejs.org/api/corepack.html)
-(`corepack enable pnpm`) or by a standalone pnpm install of v10+.
+(`corepack enable pnpm`) or by a standalone pnpm install of v10+. Run `pnpm test` for the
+`node --test` specs under `test/`.
 
 ------------------------------------------
 

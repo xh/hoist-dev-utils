@@ -12,9 +12,13 @@
     "license": "Apache-2.0",
     "files": [
         "configureRsbuild.js",
+        "configureVitest.js",
         "lib/**/*",
         "static/**/*"
     ],
+    "scripts": {
+        "test": "node --test \"test/**/*.test.js\""
+    },
     "engines": {
         "node": ">=22.15.0"
     },
