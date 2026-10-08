@@ -171,8 +171,8 @@ from the app wins. `mergeConfig()` joins arrays, so it cannot narrow a list: pas
 
 `configureVitest()` takes the same `env` object as `configureRsbuild()`, so an app can share one
 object between its two configs. Add the test-only keys in the Vitest config alone, as in
-`configureVitest({...env, setupFiles: ['./src/test/setup.ts']})`. `configureRsbuild()` warns about
-keys it does not know.
+`configureVitest({...env, setupFiles: ['./src/test-support/setup.ts']})`. `configureRsbuild()`
+warns about keys it does not know.
 
 | Option | In tests |
 |---|---|
