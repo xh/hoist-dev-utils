@@ -123,8 +123,8 @@ function createConfig(env) {
     if (!selfHost && !inlineHoist) checkVitestMajor(root, hoistPath);
     warnIgnoredOptions(env);
 
-    // Set in the main process, so test workers inherit them. `@xh/hoist/test-support` checks the
-    // preset version against its own minimum.
+    // Set in the main process, so test workers inherit them. Nothing reads the preset version yet -
+    // it is there for `@xh/hoist/test-support` to check against a minimum of its own.
     if (timeZone != null) process.env.TZ = timeZone;
     process.env.XH_VITEST_PRESET_VERSION = devUtilsPkg.version;
 
