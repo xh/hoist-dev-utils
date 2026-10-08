@@ -1,21 +1,15 @@
 # Changelog
 
-## 17.0.0-SNAPSHOT - unreleased
+## 16.1.0 - 2026-10-08
 
 ### 🎁 New Features
 
 * Added `configureVitest()` (`@xh/hoist-dev-utils/configureVitest`), a Vitest preset for app unit
   tests. It compiles with the same SWC and settings as `configureRsbuild()`, sets the same `XH`
   constants and loads hoist-react's test setup. Requires hoist-react >= 89. See the README.
-* `configureVitest()` takes the same `env` object as `configureRsbuild()` and ignores build-only
-  options.
-* `XH_INLINE_HOIST=true` runs app tests against a local hoist-react checkout, as it does for the dev
-  server.
-* App entry discovery skips `*.spec.*` and `*.test.*` files in `src/apps/`, so a unit test there
-  does not become an app.
-* Ships type declarations for `configureVitest()` and `configureRsbuild()`. A `vitest.config.mts`
-  no longer warns that the module has no types (TS7016), and the IDE checks and documents its
-  options. A JS config gets the same help with `// @ts-check`.
+* Updated app entry discovery to skip `*.spec.*` and `*.test.*` files in `src/apps/`, so a unit test
+  there does not become an app.
+* Added type declarations for `configureVitest()` and `configureRsbuild()`.
 
 ### ⚙️ Technical
 
