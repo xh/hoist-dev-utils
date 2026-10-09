@@ -238,31 +238,6 @@ and paste the generated `configureRsbuild()` snippet into `rsbuild.config.mjs`. 
 encoded in the page URL, and in a comment within the generated `favicon.svg`, so you can reopen and
 tweak it later.
 
-### Generating PNGs from an existing SVG via `svg-favicon.sh`
-
-If you already have a square SVG (e.g. a custom logo), you can use the `svg-favicon.sh` script
-included in this repo to automatically create the PNG favicons listed above from it. Note that this
-script requires inkscape to be installed. Download the latest version
-from [https://inkscape.org/](https://inkscape.org/) or install on Mac via Homebrew with `brew install inkscape`.
-
-Inkscape includes a command-line interface which is leveraged by the script. In order for the script to be able to use
-it, you must first symlink Inkscape to `/usr/local/bin`. (Note this step is _not_ required if you have installed via
-Homebrew.)
-
-```shell
-# Not required if installed via Homebrew!
-ln -s /Applications/Inkscape.app/Contents/MacOS/inkscape \
-/usr/local/bin/inkscape
-```
-
-Then run the script, passing a path to the SVG file as the argument. The command below assumes that you have
-`hoist-dev-utils` checked out as a sibling of your top-level project directory, and that you are running the command
-from within `$projectDir/client-app/public`:
-
-```shell
-../../../hoist-dev-utils/svg-favicon.sh favicon.svg
-```
-
 ## ESLint Configuration
 
 ✨ This package includes a development dependency on the `@xh/eslint-config` package.
