@@ -227,10 +227,22 @@ The following files will be automatically bundled in your app's `manifest.json` 
 + `favicon-512.png` (512px x 512px)
 + `apple-touch-icon.png` (180px x 180px)
 
-### Generating favicons via `svg-favicon.sh`
+### Generating favicons with the Toolbox Favicon Generator
 
-You can use the `svg-favicon.sh` script included in this repo to automatically create these favicons from a square SVG.
-Note that this script requires inkscape to be installed. Download the latest version
+The easiest way to create a full favicon set is the
+[Favicon Generator](https://toolbox.xh.io/favicons/) example app in Toolbox. Pick any Font Awesome
+Pro or brand glyph, choose colors, a backdrop shape and padding, and preview the result in browser
+tabs and on a phone home screen. Download a zip of `favicon.svg`, `favicon-192.png`,
+`favicon-512.png` and `apple-touch-icon.png`, unzip it into your app's `client-app/public` folder,
+and paste the generated `configureRsbuild()` snippet into `rsbuild.config.mjs`. The design is
+encoded in the page URL, and in a comment within the generated `favicon.svg`, so you can reopen and
+tweak it later.
+
+### Generating PNGs from an existing SVG via `svg-favicon.sh`
+
+If you already have a square SVG (e.g. a custom logo), you can use the `svg-favicon.sh` script
+included in this repo to automatically create the PNG favicons listed above from it. Note that this
+script requires inkscape to be installed. Download the latest version
 from [https://inkscape.org/](https://inkscape.org/) or install on Mac via Homebrew with `brew install inkscape`.
 
 Inkscape includes a command-line interface which is leveraged by the script. In order for the script to be able to use
