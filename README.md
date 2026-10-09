@@ -229,8 +229,8 @@ The following files will be automatically bundled in your app's `manifest.json` 
 
 ### Generating favicons with the Toolbox Favicon Generator
 
-The easiest way to create a full favicon set is the
-[Favicon Generator](https://toolbox.xh.io/favicons/) example app in Toolbox. Pick any Font Awesome
+Use the [Favicon Generator](https://toolbox.xh.io/favicons/) example app in Toolbox to create a
+full favicon set. Pick any Font Awesome
 Pro or brand glyph, choose colors, a backdrop shape and padding, and preview the result in browser
 tabs and on a phone home screen. Download a zip of `favicon.svg`, `favicon-192.png`,
 `favicon-512.png` and `apple-touch-icon.png`, unzip it into your app's `client-app/public` folder,
