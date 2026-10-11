@@ -227,29 +227,15 @@ The following files will be automatically bundled in your app's `manifest.json` 
 + `favicon-512.png` (512px x 512px)
 + `apple-touch-icon.png` (180px x 180px)
 
-### Generating favicons via `svg-favicon.sh`
+### Generating favicons with the Toolbox Favicon Designer
 
-You can use the `svg-favicon.sh` script included in this repo to automatically create these favicons from a square SVG.
-Note that this script requires inkscape to be installed. Download the latest version
-from [https://inkscape.org/](https://inkscape.org/) or install on Mac via Homebrew with `brew install inkscape`.
-
-Inkscape includes a command-line interface which is leveraged by the script. In order for the script to be able to use
-it, you must first symlink Inkscape to `/usr/local/bin`. (Note this step is _not_ required if you have installed via
-Homebrew.)
-
-```shell
-# Not required if installed via Homebrew!
-ln -s /Applications/Inkscape.app/Contents/MacOS/inkscape \
-/usr/local/bin/inkscape
-```
-
-Then run the script, passing a path to the SVG file as the argument. The command below assumes that you have
-`hoist-dev-utils` checked out as a sibling of your top-level project directory, and that you are running the command
-from within `$projectDir/client-app/public`:
-
-```shell
-../../../hoist-dev-utils/svg-favicon.sh favicon.svg
-```
+Use the [Favicon Designer](https://toolbox.xh.io/favicons/) example app in Toolbox to create a
+full favicon set. Pick any Font Awesome Pro glyph, choose colors, a backdrop shape and padding, and
+preview the result in browser tabs and on a phone home screen. Download a zip of `favicon.svg`,
+`favicon-192.png`, `favicon-512.png` and `apple-touch-icon.png`, unzip it into your app's
+`client-app/public` folder, and paste the generated `configureRsbuild()` snippet into
+`rsbuild.config.mjs`. The design is encoded in the page URL, and in a comment within the generated
+`favicon.svg`, so you can reopen and tweak it later.
 
 ## ESLint Configuration
 
