@@ -8,6 +8,10 @@ on:
         paths: ['.github/actions/**', '.github/scripts/**', '.github/test/**']
     workflow_dispatch:
 
+# Both jobs only check out the repo and run shell tests.
+permissions:
+    contents: read
+
 jobs:
     test-validate-release-version:
         runs-on: ubuntu-latest
