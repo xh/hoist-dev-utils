@@ -78,16 +78,12 @@ jobs:
               VERSION: ${{ inputs.version }}
           run: npm version --no-git-tag-version "$VERSION"
 
-        # Auth prefers OIDC trusted publishing (npm >= 11.5.1), falling back to NODE_AUTH_TOKEN
-        # when no trusted publisher matches this repo and workflow. Drop the token here (and the
-        # NPM_TOKEN secret) only once every publish path uses OIDC and npm is set to disallow
-        # tokens.
-        #
-        # No `--provenance` flag: npm attaches provenance itself under trusted publishing, so its
-        # presence on the published version confirms the OIDC path was taken.
+        # Auth is OIDC trusted publishing only (npm >= 11.5.1), with no token fallback - a trusted
+        # publisher config that does not match this repo and workflow fails the publish rather
+        # than npm silently publishing with a long-lived token. npm attaches provenance itself
+        # under trusted publishing, so there is no `--provenance` flag.
         - name: Publish release to npm
           env:
-              NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
               IS_HOTFIX: ${{ inputs.is-hotfix }}
           run: |
               TAG_FLAG=""
