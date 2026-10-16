@@ -1,5 +1,13 @@
 # Changelog
 
+## 17.0.0-SNAPSHOT - unreleased
+
+### 🎁 New Features
+
+* The dev server now redirects a request for the bare root (e.g. `http://localhost:3000/`) to a
+  default app instead of returning a 404, as Hoist's production nginx config does. It goes to
+  `devServerOpenPage` when set, else to the `app` entry, else to the only entry if there is one.
+
 ## 16.1.0 - 2026-10-08
 
 ### 🎁 New Features

@@ -142,7 +142,8 @@ const hoistReactPkg = resolveAppPackage('@xh/hoist', basePath),
  * @param {number} [env.devGrailsPort] - port of local Grails server. Dev-mode only.
  * @param {number} [env.devWebpackPort] - port on which to start the dev server. (Historic name retained.) Dev-mode only.
  * @param {string} [env.devServerOpenPage] - path to auto-open when the dev server starts. Leave null to disable
- *      automatic page open on startup. Dev-mode only.
+ *      automatic page open on startup. Also where the dev server redirects a request for the bare root `/` -
+ *      unset, that redirect goes to the `app` entry, or to the only entry if there is one. Dev-mode only.
  * @param {boolean} [env.devLiveReload=true] - false to stop the dev server from reloading the page when an edit
  *      cannot be hot-swapped (the equivalent of webpack-dev-server's `--no-live-reload`). Hot-swaps of CSS and
  *      Fast-Refresh-eligible components still apply; other edits are rebuilt but not applied until a manual
@@ -297,6 +298,22 @@ async function configureRsbuild(env) {
     const clientApps = discoverClientApps(srcPath),
         clientAppNames = clientApps.map(it => it.name),
         appEntryPoints = Object.fromEntries(clientApps.map(it => [it.name, it.path]));
+
+    // Dev-server redirect target for the bare root, which has no entry of its own and would
+    // otherwise 404 - the open page when set, else the `app` entry, else a sole entry. Skipped
+    // for prod builds, and `URL.parse` returns null rather than throwing on a malformed value.
+    const openPagePath =
+            !prodBuild && env.devServerOpenPage
+                ? URL.parse(env.devServerOpenPage, 'http://localhost/')?.pathname
+                : null,
+        devRootRedirect =
+            openPagePath && openPagePath !== '/'
+                ? openPagePath
+                : clientAppNames.includes('app')
+                  ? '/app/'
+                  : clientAppNames.length === 1
+                    ? `/${clientAppNames[0]}/`
+                    : null;
 
     // Hoist-react's polyfills.js (a single `core-js/stable` import) is prepended to every app
     // entry. With SWC's preset-env in `entry` mode (see `tools.swc` below), that import is
@@ -565,6 +582,18 @@ async function configureRsbuild(env) {
                               to: `/${appName}/index.html`
                           }))
                       },
+                      // Redirect the bare root to a default app, as the `location = /` block in
+                      // Hoist's nginx configs does. Runs ahead of Rsbuild's own middleware.
+                      setup: devRootRedirect
+                          ? ({server}) => {
+                                server.middlewares.use((req, res, next) => {
+                                    if (req.url !== '/' && !req.url.startsWith('/?')) return next();
+                                    res.statusCode = 302;
+                                    res.setHeader('Location', devRootRedirect);
+                                    res.end();
+                                });
+                            }
+                          : undefined,
                       // Proxy API requests to the Grails backend, mirroring the production nginx setup.
                       // Only needed when baseUrl is a relative path (default '/api/') - if baseUrl is
                       // an absolute URL, the app will call the remote server directly. Note the
