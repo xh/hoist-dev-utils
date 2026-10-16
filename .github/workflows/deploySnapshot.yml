@@ -28,6 +28,12 @@ jobs:
         runs-on: ubuntu-latest
         permissions:
             contents: read
+            # Allows the job to mint a short-lived OIDC token, which npm exchanges for a scoped
+            # publish token (npm "trusted publishing"). Grants nothing on npm by itself - the
+            # registry only honors it if a trusted publisher is configured for the package naming
+            # this repo and workflow file. Also what lets npm attach a provenance attestation to
+            # the published tarball.
+            id-token: write
 
         steps:
         - uses: actions/checkout@v6
@@ -45,7 +51,9 @@ jobs:
           with:
               node-version-file: '.nvmrc'
               registry-url: 'https://registry.npmjs.org'
-              cache: 'pnpm'
+              # No dependency cache in a job that can publish, per npm's trusted publishing
+              # guidance - a poisoned cache would otherwise run with publish rights.
+              package-manager-cache: false
 
         - name: Install dependencies
           run: pnpm install --frozen-lockfile
@@ -56,6 +64,13 @@ jobs:
           with:
               version: ${{ inputs.version }}
 
+        # Auth prefers OIDC trusted publishing (npm >= 11.5.1), falling back to NODE_AUTH_TOKEN
+        # when no trusted publisher matches this repo and workflow. Drop the token here (and the
+        # NPM_TOKEN secret) only once every publish path uses OIDC and npm is set to disallow
+        # tokens.
+        #
+        # No `--provenance` flag: npm attaches provenance itself under trusted publishing, so its
+        # presence on the published version confirms the OIDC path was taken.
         - name: Publish snapshot to npm
           env:
               NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
