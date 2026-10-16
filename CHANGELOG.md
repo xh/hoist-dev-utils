@@ -1,6 +1,6 @@
 # Changelog
 
-## 17.0.0-SNAPSHOT - unreleased
+## 16.1.1 - 2026-10-16
 
 ### 🎁 New Features
 
