@@ -25,3 +25,11 @@ savePrefix: '~'
 # whole scope rather than pinning an exact version on every release.
 minimumReleaseAgeExclude:
     - '@xh/*'
+
+# Keep pnpm-lock.yaml a single YAML document. By default pnpm 12 records the pinned pnpm version in
+# a leading lockfile document, and GitHub's dependency graph reads only that first document - so it
+# sees none of our real deps and Dependabot raises no security alerts. With `ignore`, pnpm runs
+# whatever version is installed rather than switching to the `packageManager` pin. CI still installs
+# the pinned version via pnpm/setup. Remove once GitHub parses multi-document lockfiles - see
+# https://github.com/dependabot/dependabot-core/issues/15904.
+pmOnFail: ignore
