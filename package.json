@@ -25,21 +25,21 @@
         "node": ">=22.15.0"
     },
     "dependencies": {
-        "@rsbuild/core": "~2.2.11",
+        "@rsbuild/core": "~2.2.14",
         "@rsbuild/plugin-basic-ssl": "~2.0.0",
         "@rsbuild/plugin-react": "~2.1.1",
         "@rsbuild/plugin-sass": "~2.0.1",
-        "@types/lodash": "^4.17.25",
+        "@types/lodash": "^4.17.26",
         "@types/react": "^19.3.0",
         "@types/react-dom": "^19.3.0",
         "@xh/eslint-config": "^8.1.0",
         "changelog-parser": "~4.1.0",
         "lodash": "^4.18.1",
-        "sass-embedded": "^1.105.1",
+        "sass-embedded": "^1.106.0",
         "type-fest": "^5.10.0"
     },
     "devDependencies": {
-        "prettier": "^3.9.9"
+        "prettier": "^3.9.10"
     },
     "packageManager": "pnpm@12.10.1+sha512.ba40a37eb1a370d60fea8c4cf1d364c13bcccef518e98ad2bcee954f539d38da37458e58261a3fa55e06523450ea0ffff9f497b135be41f2c15c1642bacace6c"
 }

@@ -1,5 +1,11 @@
 # Changelog
 
+## 17.0.0-SNAPSHOT - unreleased
+
+### 📚 Libraries
+
+* sass-embedded `1.105 → 1.106`
+
 ## 16.1.1 - 2026-10-16
 
 ### 🎁 New Features
