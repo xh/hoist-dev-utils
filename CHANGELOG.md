@@ -1,6 +1,12 @@
 # Changelog
 
-## 17.0.0-SNAPSHOT - unreleased
+## 16.2.0 - 2026-11-02
+
+### 🐞 Bug Fixes
+
+* The `validate-release-version` GitHub action now accepts a repo's first release. With no release
+  tags, it validates against an implied `v0.0.0`, so the first version must be `1.0.0`, `0.1.0` or
+  `0.0.1`. A first release cannot be a hotfix.
 
 ### 📚 Libraries
 

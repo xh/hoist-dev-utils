@@ -1,8 +1,8 @@
 # Create Tag & GitHub Release — Reusable composite action.
 #
 # Tags the current commit, pushes the tag, and creates a GitHub release with auto-generated
-# notes. Uses find-latest-version.sh to scope release notes to the semver-previous tag.
-# Hotfix releases are marked as non-latest.
+# notes. Uses find-latest-version.sh to scope release notes to the semver-previous tag, or to the
+# full history for a first release. Hotfix releases are marked as non-latest.
 
 # Prerequisites:
 #   - Creates tags following the convention "v{X.Y.Z}" (e.g. v12.0.0) and expects existing release tags to use the same format.
@@ -45,7 +45,8 @@ runs:
               # Always scope release notes to the semver-previous tag so that
               # hotfix tags created out of order don't skew the range.
               NOTES_FLAG="--generate-notes"
-              PREV_TAG=$("$GITHUB_ACTION_PATH/../../scripts/find-latest-version.sh" "$VERSION") || true
+              # No previous tag (e.g. a first release) is expected, so drop the helper's error output.
+              PREV_TAG=$("$GITHUB_ACTION_PATH/../../scripts/find-latest-version.sh" "$VERSION" 2>/dev/null) || true
               if [ -n "$PREV_TAG" ]; then
                   NOTES_FLAG="--generate-notes --notes-start-tag v$PREV_TAG"
               fi

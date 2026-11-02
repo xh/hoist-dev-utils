@@ -3,6 +3,7 @@
 # Delegates to .github/scripts/validate-release-version.sh to check that a proposed
 # release version is valid semver, has not already been tagged, and is a strict single
 # increment from the latest relevant tag. Supports hotfix releases to older version lines.
+# With no release tags yet, the first release must be 1.0.0, 0.1.0 or 0.0.1.
 #
 # Prerequisites:
 #   - Release tags must follow the convention "v{X.Y.Z}" (e.g. v12.0.0).

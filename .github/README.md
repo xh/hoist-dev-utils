@@ -20,7 +20,8 @@ uses: xh/hoist-dev-utils/.github/actions/<action-name>@master
 
 Validates that a proposed release version is well-formed semver and a strict single increment
 (major, minor, or patch) from the latest existing tag. Supports hotfix releases to older version
-lines.
+lines. A repo with no release tags yet is treated as being at `v0.0.0`, so its first release must be
+`1.0.0`, `0.1.0` or `0.0.1`. A first release cannot be a hotfix.
 
 | Input | Required | Description |
 |---|---|---|
@@ -66,7 +67,7 @@ projects like hoist-core. Timestamp appending defaults to `false` for Maven Cent
 ### `create-tag-and-github-release`
 
 Creates a git tag (`v{version}`), pushes it, and creates a GitHub Release with auto-generated
-release notes scoped to the previous semver tag.
+release notes scoped to the previous semver tag. A first release gets notes for the full history.
 
 | Input | Required | Description |
 |---|---|---|

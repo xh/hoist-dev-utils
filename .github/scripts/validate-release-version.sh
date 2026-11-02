@@ -12,6 +12,9 @@ set -euo pipefail
 #  IS_HOTFIX  - If false, must be exactly one increment ahead of the globally latest tag.
 #               If true, must be exactly one increment ahead of a previous (non-latest) tag.
 #
+# A repo with no release tags yet is treated as being at an implied v0.0.0, so its first release
+# must be 1.0.0, 0.1.0 or 0.0.1. A first release cannot be a hotfix.
+#
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FIND_LATEST_VERSION="$SCRIPT_DIR/find-latest-version.sh"
@@ -28,15 +31,16 @@ if git tag -l "v$VERSION" | grep -q .; then
     exit 1
 fi
 
-# Strict version validation — the new version must be exactly one
+# Strict version validation - the new version must be exactly one
 # increment from the latest relevant tag and hotfix cannot be latest.
-LATEST=$("$FIND_LATEST_VERSION") || true
-if [ -z "$LATEST" ]; then
-    echo "::error::No existing release tags found. Cannot validate version."
-    exit 1
-fi
+# No tags is an expected case here, so drop the helper's error output.
+LATEST=$("$FIND_LATEST_VERSION" 2>/dev/null) || true
 
 if [ "$IS_HOTFIX" = "true" ]; then
+    if [ -z "$LATEST" ]; then
+        echo "::error::No existing release tags found. A first release cannot be a hotfix."
+        exit 1
+    fi
     # For hotfixes, validate against the version right before the proposed one.
     BASE=$("$FIND_LATEST_VERSION" "$VERSION") || true
     if [ -z "$BASE" ]; then
@@ -49,7 +53,8 @@ if [ "$IS_HOTFIX" = "true" ]; then
         exit 1
     fi
 else
-    BASE="$LATEST"
+    # First release - validate against an implied v0.0.0.
+    BASE="${LATEST:-0.0.0}"
 fi
 
 # VERSION must be exactly one increment from BASE.

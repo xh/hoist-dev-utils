@@ -122,7 +122,17 @@ echo "=== No tags ==="
 
 REPO=$(setup_repo)
 
-assert_failure "fails when no release tags exist" "$REPO" "1.0.0"
+assert_success "accepts first major (1.0.0)"           "$REPO" "1.0.0"
+assert_success "accepts first minor (0.1.0)"           "$REPO" "0.1.0"
+assert_success "accepts first patch (0.0.1)"           "$REPO" "0.0.1"
+assert_failure "rejects first release of 2.0.0"        "$REPO" "2.0.0"
+assert_failure "rejects first release of 1.1.0"        "$REPO" "1.1.0"
+assert_failure "rejects first release of 0.0.0"        "$REPO" "0.0.0"
+assert_failure "rejects first release as hotfix"       "$REPO" "1.0.0" "true"
+
+# Non-release tags do not count as release tags
+add_tags "$REPO" v1.0.0-rc1 release-5
+assert_success "ignores non-release tags (1.0.0)"      "$REPO" "1.0.0"
 
 rm -rf "$REPO"
 
