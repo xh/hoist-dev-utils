@@ -4,7 +4,8 @@
 
 ### 📚 Libraries
 
-* sass-embedded `1.105 → 1.106`
+* @rsbuild/core `2.2 → 2.3`
+* sass-embedded `1.105 → 1.107`
 
 ## 16.1.1 - 2026-10-16
 
