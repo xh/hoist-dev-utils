@@ -57,7 +57,7 @@ const HOIST_IMPORT = /^@xh\/hoist(?=\/|$)/;
  * Import it by package name - Vite bundles a relative import of this CommonJS file, which fails.
  * Wrap the result with `mergeConfig()` to add settings. Note that `mergeConfig()` concatenates
  * arrays, so `include` and `setupFiles` are options here. Requires hoist-react >= 89. Run tests
- * against a sibling hoist-react checkout with `XH_INLINE_HOIST=true vitest`.
+ * against a local hoist-react checkout with `XH_INLINE_HOIST=true vitest`.
  *
  * Takes the same `env` object as `configureRsbuild()`. App identity, `baseUrl`, `inlineHoist`,
  * `extraIncludePaths`, `extraExcludePaths`, `resolveAliases` and `swcOptions` apply as in the
@@ -70,8 +70,9 @@ const HOIST_IMPORT = /^@xh\/hoist(?=\/|$)/;
  * @param {string} [env.appBuild] - as for configureRsbuild(). Defaults to 'UNKNOWN'.
  * @param {string} [env.baseUrl] - as for configureRsbuild(). Defaults to '/api/', where the fake
  *      hoist-core in `@xh/hoist/test-support` serves.
- * @param {boolean} [env.inlineHoist=false] - true to test against a sibling hoist-react checkout at
- *      `../../hoist-react`. Also on when the `XH_INLINE_HOIST` environment variable is 'true'.
+ * @param {boolean} [env.inlineHoist=false] - true to test against a local hoist-react checkout, as
+ *      for configureRsbuild() - a sibling at `../../hoist-react`, or the path in the
+ *      `XH_HOIST_REACT_PATH` environment variable. Also on when `XH_INLINE_HOIST` is 'true'.
  * @param {string[]} [env.extraIncludePaths] - custom packages to compile, as in the build.
  * @param {string[]} [env.extraExcludePaths] - paths not to compile, as in the build.
  * @param {Object} [env.resolveAliases] - module aliases, as in the build. A key ending in `$`

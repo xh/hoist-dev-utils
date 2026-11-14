@@ -1,5 +1,17 @@
 # Changelog
 
+## 17.0.0-SNAPSHOT
+
+### 🎁 New Features
+
+* Inline mode can now use any hoist-react checkout. Set `XH_HOIST_REACT_PATH` to its absolute path,
+  e.g. to run an app worktree against a hoist-react worktree on a paired branch. The default is
+  still a sibling of the app's repo at `../../hoist-react`. `configureRsbuild()` and
+  `configureVitest()` both honor it. Apps should update their `startWithHoist` and `testWithHoist`
+  scripts to install from the same path - see the README.
+* Inline mode now fails fast when the path holds no hoist-react checkout, and the build banner shows
+  the checkout's path and branch.
+
 ## 16.2.0 - 2026-11-02
 
 ### 🐞 Bug Fixes

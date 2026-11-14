@@ -115,26 +115,69 @@ describe('resolveHoistPath', () => {
     const tmp = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'xh-hoist-path-'))),
         base = path.join(tmp, 'app', 'client-app'),
         checkout = path.join(tmp, 'hoist-react'),
-        store = path.join(tmp, 'store', '@xh', 'hoist');
+        worktree = path.join(tmp, 'hoist-react-worktrees', 'my-feature'),
+        notHoist = path.join(tmp, 'other-lib'),
+        store = path.join(tmp, 'store', '@xh', 'hoist'),
+        writePkg = (dir, name) => {
+            fs.mkdirSync(dir, {recursive: true});
+            fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({name}));
+        };
     fs.mkdirSync(path.join(base, 'node_modules', '@xh'), {recursive: true});
-    fs.mkdirSync(checkout);
+    writePkg(checkout, '@xh/hoist');
+    writePkg(worktree, '@xh/hoist');
+    writePkg(notHoist, 'other-lib');
     fs.mkdirSync(store, {recursive: true});
     fs.symlinkSync(store, path.join(base, 'node_modules', '@xh', 'hoist'));
 
     after(() => fs.rmSync(tmp, {recursive: true, force: true}));
 
     it('resolves the installed package to its real path', () => {
-        assert.equal(resolveHoistPath(base, false), store);
+        assert.equal(resolveHoistPath(base, false, {}), store);
+    });
+
+    it('ignores XH_HOIST_REACT_PATH outside inline mode', () => {
+        assert.equal(resolveHoistPath(base, false, {XH_HOIST_REACT_PATH: worktree}), store);
     });
 
     it('resolves a sibling checkout at ../../hoist-react in inline mode', () => {
-        assert.equal(resolveHoistPath(base, true), checkout);
+        assert.equal(resolveHoistPath(base, true, {}), checkout);
     });
 
-    it('returns the expected path when nothing is there', () => {
+    it('resolves the checkout named by XH_HOIST_REACT_PATH in inline mode', () => {
+        assert.equal(resolveHoistPath(base, true, {XH_HOIST_REACT_PATH: worktree}), worktree);
+    });
+
+    it('resolves a symlinked checkout to its real path', () => {
+        const link = path.join(tmp, 'linked-hoist');
+        fs.symlinkSync(worktree, link);
+        assert.equal(resolveHoistPath(base, true, {XH_HOIST_REACT_PATH: link}), worktree);
+    });
+
+    it('rejects a relative XH_HOIST_REACT_PATH', () => {
+        assert.throws(
+            () => resolveHoistPath(base, true, {XH_HOIST_REACT_PATH: '../hoist-react'}),
+            /must be an absolute path/
+        );
+    });
+
+    it('fails when XH_HOIST_REACT_PATH holds no hoist-react checkout', () => {
+        for (const p of [notHoist, path.join(tmp, 'missing')]) {
+            assert.throws(
+                () => resolveHoistPath(base, true, {XH_HOIST_REACT_PATH: p}),
+                /not a hoist-react checkout/
+            );
+        }
+    });
+
+    it('fails when inline mode finds no sibling checkout', () => {
+        const other = path.join(tmp, 'deeper', 'none', 'client-app');
+        assert.throws(() => resolveHoistPath(other, true, {}), /found no hoist-react checkout/);
+    });
+
+    it('returns the expected path when no package is installed', () => {
         const other = path.join(tmp, 'none', 'client-app');
         assert.equal(
-            resolveHoistPath(other, false),
+            resolveHoistPath(other, false, {}),
             path.join(other, 'node_modules', '@xh', 'hoist')
         );
     });

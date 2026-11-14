@@ -69,12 +69,16 @@ const plugin = (config, name) => config.plugins.find(it => it.name === name);
 const ENV_KEYS = [
     'TZ',
     'XH_INLINE_HOIST',
+    'XH_HOIST_REACT_PATH',
     'XH_VITEST_PRESET_VERSION',
     'XH_VITEST_INLINE_HOIST_CFG'
 ];
 let savedEnv, warnings;
 beforeEach(() => {
     savedEnv = Object.fromEntries(ENV_KEYS.map(k => [k, process.env[k]]));
+    // A developer's own shell may set these.
+    delete process.env.XH_INLINE_HOIST;
+    delete process.env.XH_HOIST_REACT_PATH;
     warnings = [];
     mock.method(console, 'warn', msg => warnings.push(msg));
 });
@@ -256,6 +260,18 @@ describe('configureVitest', () => {
                 hoistNodeModules: path.join(checkout, 'node_modules'),
                 singletons: ['react', 'msw', 'mobx']
             });
+        });
+
+        it('uses the checkout named by XH_HOIST_REACT_PATH', () => {
+            const root = makeApp({checkout: {version: '89.0.0'}}),
+                worktree = path.join(tmpRoot, `wt${fixtureCount}`, 'hoist-react');
+            writePkg(worktree, {name: '@xh/hoist', version: '90.0.0-SNAPSHOT'});
+            write(path.join(worktree, 'test-support', 'setup.ts'));
+            process.env.XH_HOIST_REACT_PATH = worktree;
+
+            const {resolve, test} = configureVitest({appCode: 'x', root, inlineHoist: true});
+            assert.equal(resolve.alias.at(-1).replacement, worktree);
+            assert.equal(test.setupFiles.at(-1), path.join(worktree, 'test-support/setup.ts'));
         });
 
         it('skips the vitest major check against the checkout', () => {

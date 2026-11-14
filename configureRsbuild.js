@@ -31,6 +31,7 @@ const {
     blueprintIconModulePatterns,
     generateBlueprintIconStubs,
     safeRealpath,
+    gitBranch,
     parseFlag,
     warnUnknownOptions,
     logSep,
@@ -78,7 +79,9 @@ const hoistReactPkg = resolveAppPackage('@xh/hoist', basePath),
  * @param {boolean} [env.prodBuild=false] - true to indicate this is a build (as opposed to run of the dev server)
  * @param {boolean} [env.inlineHoist=false] - true to use a locally checked-out copy of hoist-react
  *      when running the dev server, as opposed to using the downloaded dependency. This allows
- *      hoist-react developers to test plugin changes. Dev-mode only.
+ *      hoist-react developers to test plugin changes. Dev-mode only. The checkout is a sibling of
+ *      the app's repo at `../../hoist-react`, unless the `XH_HOIST_REACT_PATH` environment variable
+ *      names another (absolute) path, e.g. a git worktree.
  * @param {boolean} [env.reactProdMode=false] - true to use the production build of React
  *      when running the dev server.
  * @param {Object} [env.resolveAliases] - object mapping for custom module resolution.
@@ -207,6 +210,13 @@ async function configureRsbuild(env) {
     }
     checkHoistReactVersion(hoistReactPkg, inlineHoist);
 
+    // Resolve Hoist as either a local checkout (inline) or a downloaded package. Inline mode throws
+    // here, before any output, when the checkout is missing. Symlinks are resolved (a no-op for
+    // flat layouts) so the path matches the real module paths Rspack produces via its default
+    // resolve.symlinks behavior - required for the transpile include below to match under
+    // symlinking package managers (e.g. pnpm).
+    const hoistPath = resolveHoistPath(basePath, inlineHoist);
+
     process.env.NODE_ENV = prodBuild ? 'production' : 'development';
     process.env.REACT_NODE_ENV = reactProdMode ? 'production' : 'development';
 
@@ -223,7 +233,12 @@ async function configureRsbuild(env) {
     if (prodBuild && precompressAssets) logMsg('🗜️   Asset pre-compression enabled');
     logSep();
     logMsg('📚  Key libraries:');
-    logMsg(`  > @xh/hoist ${inlineHoist ? 'INLINE' : 'v' + hoistReactPkg.version}`);
+    if (inlineHoist) {
+        const branch = gitBranch(hoistPath);
+        logMsg(`  > @xh/hoist INLINE from ${hoistPath}${branch ? ` @ ${branch}` : ''}`);
+    } else {
+        logMsg(`  > @xh/hoist v${hoistReactPkg.version}`);
+    }
     logMsg(`  > @xh/hoist-dev-utils v${devUtilsPkg.version}`);
     logMsg(`  > react v${reactPkg.version}`);
     logMsg(`  > @rsbuild/core v${rsbuildVersion}`);
@@ -239,12 +254,6 @@ async function configureRsbuild(env) {
         // This very file lives within the dev-utils package, wherever it has been installed or
         // linked - avoids assuming the package is physically within the app's node_modules.
         hoistDevUtilsPath = __dirname;
-
-    // Resolve Hoist as either a sibling (inline, checked-out) project or a downloaded package.
-    // Resolve symlinks (a no-op for flat layouts) so the path matches the real module paths
-    // Rspack produces via its default resolve.symlinks behavior - required for the transpile
-    // include below to match under symlinking package managers (e.g. pnpm).
-    const hoistPath = resolveHoistPath(basePath, inlineHoist);
 
     // Check for and resolve standard/expected favicons.
     const {manifestIcons, appleTouchIconExists} = resolveIcons(

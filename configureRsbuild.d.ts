@@ -59,8 +59,9 @@ declare namespace configureRsbuild {
          */
         baseUrl?: string;
         /**
-         * True to use a sibling hoist-react checkout at `../../hoist-react` in place of the
-         * installed package. Dev-mode only for the build.
+         * True to use a local hoist-react checkout in place of the installed package - a sibling
+         * at `../../hoist-react`, or the absolute path in the `XH_HOIST_REACT_PATH` environment
+         * variable. Dev-mode only for the build.
          */
         inlineHoist?: boolean;
         /** Additional paths to transpile with the settings used for app and hoist-react code. */

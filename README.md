@@ -74,7 +74,7 @@ Typical `package.json` scripts:
 
 ```json
 "start": "pnpm install && rsbuild dev",
-"startWithHoist": "(cd ../../hoist-react && pnpm install) && pnpm install && rsbuild dev --env-mode inlineHoist",
+"startWithHoist": "(cd ${XH_HOIST_REACT_PATH:-../../hoist-react} && pnpm install) && pnpm install && rsbuild dev --env-mode inlineHoist",
 "build": "rsbuild build --env-mode prod",
 "buildAndAnalyze": "cross-env RSDOCTOR=true rsbuild build --env-mode prod"
 ```
@@ -91,6 +91,26 @@ and build with `RSDOCTOR=true`, and Rsbuild registers and launches
 
 See the [Hoist React docs](https://github.com/xh/hoist-react/blob/develop/docs/build-and-deploy-app.md)
 for step-by-step details on the build process.
+
+### Inline Hoist
+
+Inline mode builds the app against a local hoist-react checkout in place of the installed package,
+so a library change shows up in the app as you make it. By default the checkout is a sibling of the
+app's repo, at `../../hoist-react` from `client-app`.
+
+Set `XH_HOIST_REACT_PATH` to an absolute path to use another checkout. This is how a git worktree of
+an app runs against a worktree of hoist-react on a paired branch:
+
+```bash
+XH_HOIST_REACT_PATH=~/dev/hoist-react-worktrees/my-feature pnpm startWithHoist
+```
+
+Set it in the shell, not in a dotenv file. The `startWithHoist` and `testWithHoist` scripts read it
+to install the checkout's dependencies, and Rsbuild's dotenv files do not reach them. A tool such as
+direnv or mise can set it per worktree.
+
+Inline mode fails fast when the path holds no hoist-react checkout. The Rsbuild build banner shows
+the path and branch it builds from.
 
 ### Migrating from v15 (webpack)
 
@@ -145,7 +165,7 @@ pnpm warns about any version outside those ranges. Then add scripts:
 "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
-    "testWithHoist": "(cd ../../hoist-react && pnpm install) && pnpm install && XH_INLINE_HOIST=true vitest"
+    "testWithHoist": "(cd ${XH_HOIST_REACT_PATH:-../../hoist-react} && pnpm install) && pnpm install && XH_INLINE_HOIST=true vitest"
 }
 ```
 
@@ -196,8 +216,9 @@ A run with `--no-isolate`, or in the `vmThreads` or `vmForks` pool, fails, becau
 boots its own `XH`. If the installed `@xh/hoist` declares a `vitest` peer dependency, the preset also
 fails on a Vitest major outside that range.
 
-`XH_INLINE_HOIST=true` (or `inlineHoist: true`) runs the app's tests against a hoist-react
-checkout at `../../hoist-react`, as `startWithHoist` does for the dev server. The preset aliases
+`XH_INLINE_HOIST=true` (or `inlineHoist: true`) runs the app's tests against a local hoist-react
+checkout, as `startWithHoist` does for the dev server. See [Inline Hoist](#inline-hoist) for how the
+checkout is found. The preset aliases
 `@xh/hoist` to the checkout. It dedupes React, ag-Grid, msw, React Testing Library and MobX to the
 app's own copies, if the app has them. A Node resolve hook does the same for the checkout's
 dependencies, which Vitest loads outside Vite. Inline mode works under pnpm. It is untested under

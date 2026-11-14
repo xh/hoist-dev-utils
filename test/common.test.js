@@ -12,7 +12,12 @@ const assert = require('node:assert/strict'),
     path = require('node:path'),
     {after, describe, it} = require('node:test');
 
-const {checkHoistReactVersion, discoverClientApps, isVersionBelow} = require('../lib/common');
+const {
+    checkHoistReactVersion,
+    discoverClientApps,
+    gitBranch,
+    isVersionBelow
+} = require('../lib/common');
 
 describe('discoverClientApps', () => {
     const src = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'xh-client-apps-')));
@@ -52,5 +57,21 @@ describe('checkHoistReactVersion', () => {
         assert.doesNotThrow(() => checkHoistReactVersion({version: '87.0.0'}, true));
         assert.doesNotThrow(() => checkHoistReactVersion({version: '88.0.0'}, false));
         assert.doesNotThrow(() => checkHoistReactVersion({version: 'NOT_FOUND'}, false));
+    });
+});
+
+describe('gitBranch', () => {
+    it('returns the branch of a git checkout', () => {
+        const branch = gitBranch(path.resolve(__dirname, '..'));
+        assert.ok(branch && typeof branch === 'string');
+    });
+
+    it('returns null outside a git checkout', () => {
+        const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'xh-git-branch-'));
+        try {
+            assert.equal(gitBranch(dir), null);
+        } finally {
+            fs.rmSync(dir, {recursive: true, force: true});
+        }
     });
 });
