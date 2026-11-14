@@ -12,6 +12,10 @@
 * Inline mode now fails fast when the path holds no hoist-react checkout, and the build banner shows
   the checkout's path and branch.
 
+### 📚 Libraries
+
+* sass-embedded `1.107 → 1.108`
+
 ## 16.2.0 - 2026-11-02
 
 ### 🐞 Bug Fixes
