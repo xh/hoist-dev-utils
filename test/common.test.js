@@ -14,6 +14,7 @@ const assert = require('node:assert/strict'),
 
 const {
     checkHoistReactVersion,
+    checkRspackVersion,
     discoverClientApps,
     gitBranch,
     isVersionBelow
@@ -57,6 +58,18 @@ describe('checkHoistReactVersion', () => {
         assert.doesNotThrow(() => checkHoistReactVersion({version: '87.0.0'}, true));
         assert.doesNotThrow(() => checkHoistReactVersion({version: '88.0.0'}, false));
         assert.doesNotThrow(() => checkHoistReactVersion({version: 'NOT_FOUND'}, false));
+    });
+});
+
+describe('checkRspackVersion', () => {
+    it('fails on a blocked version', () => {
+        assert.throws(() => checkRspackVersion('2.3.2'), /@rspack\/core v2\.3\.2 is not supported/);
+    });
+
+    it('allows versions that are not blocked', () => {
+        for (const v of ['2.3.0', '2.3.1', '2.3.3']) {
+            assert.doesNotThrow(() => checkRspackVersion(v));
+        }
     });
 });
 

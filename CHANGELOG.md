@@ -12,6 +12,13 @@
 * Inline mode now fails fast when the path holds no hoist-react checkout, and the build banner shows
   the checkout's path and branch.
 
+### 🐞 Bug Fixes
+
+* Builds and the dev server now fail fast on `@rspack/core` 2.3.2, with a message naming the fix.
+  That release's minifier breaks classes that reference themselves in a static initializer, so the
+  build crashes on load. Rsbuild 2.3.x can resolve it in any app that refreshes its lockfile. Apps
+  should pin `"@rspack/core": "2.3.0"` with a pnpm override until a fixed Rspack ships. See #85.
+
 ### 📚 Libraries
 
 * sass-embedded `1.107 → 1.108`

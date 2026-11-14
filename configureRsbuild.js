@@ -22,6 +22,7 @@ const {
     devUtilsPkg,
     resolveAppPackage,
     checkHoistReactVersion,
+    checkRspackVersion,
     resolveIcons,
     writeChangelogJson,
     checkNoJsxFiles,
@@ -209,6 +210,7 @@ async function configureRsbuild(env) {
         }
     }
     checkHoistReactVersion(hoistReactPkg, inlineHoist);
+    checkRspackVersion(rspack.rspackVersion);
 
     // Resolve Hoist as either a local checkout (inline) or a downloaded package. Inline mode throws
     // here, before any output, when the checkout is missing. Symlinks are resolved (a no-op for
