@@ -1,5 +1,14 @@
 # Changelog
 
+## 17.0.0-SNAPSHOT
+
+### 🐞 Bug Fixes
+
+* Inline Hoist no longer breaks the build of an app that lacks one of the shared libraries it pins
+  to the app's copy (react, react-dom, ag-grid-react, ag-grid-community). The build now pins only
+  those the app has installed, as `configureVitest()` already did. Before, it pointed every import
+  of a missing library at a directory that did not exist.
+
 ## 16.3.0 - 2026-11-14
 
 ### 🎁 New Features

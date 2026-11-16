@@ -276,9 +276,12 @@ async function configureRsbuild(env) {
         resolveAliases['@xh/hoist'] = hoistPath;
 
         // Use the app's instance of each library hoist-react must share with it - React for hooks,
-        // ag-Grid for `useGridMenuItem`. See INLINE_HOIST_SINGLETONS.
+        // ag-Grid for `useGridMenuItem`. See INLINE_HOIST_SINGLETONS. Skip any the app lacks -
+        // an alias to a missing dir would fail every import of it, where the checkout's own copy
+        // serves an app that never loads that library itself.
         INLINE_HOIST_SINGLETONS.forEach(name => {
-            resolveAliases[name] = path.resolve('./node_modules', name);
+            const appCopy = path.resolve(basePath, 'node_modules', name);
+            if (fs.existsSync(path.join(appCopy, 'package.json'))) resolveAliases[name] = appCopy;
         });
     }
 
