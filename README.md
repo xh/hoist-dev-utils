@@ -162,6 +162,14 @@ as for inline Hoist. Do not commit it.
 }
 ```
 
+The build aliases each shared package to its directory, which bypasses the `exports` map in that
+package's `package.json`. React, react-dom, ag-Grid and Hoist resolve correctly this way. A peer
+that maps subpath imports only through `exports` can fail to resolve. Inline Hoist has the same
+limit.
+
+An app alias for a shared package, such as an older hand-written alias to a checkout, gives way to
+the shared copy. The build logs a warning that names it.
+
 Rsbuild compiles TypeScript from any directory, `node_modules` included. An installed companion
 package that ships only TypeScript therefore needs no `extraIncludePaths` entry. Add one only for a
 package that also ships plain `.js` source.

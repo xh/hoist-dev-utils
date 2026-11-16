@@ -36,7 +36,8 @@ const {
 const {
     INLINE_PACKAGES_VAR,
     parseInlinePackages,
-    planInlinePackages
+    planInlinePackages,
+    replacedAppAliases
 } = require('./lib/inlinePackages');
 
 // Build options a test run cannot honor - warned, then ignored. Every other build option is
@@ -146,6 +147,10 @@ function createConfig(env) {
     warnIgnoredOptions(env);
     inlinePlan.warnings.forEach(warn);
 
+    // As in the build, the shared copies win over an app alias for the same package.
+    const replacedAliases = replacedAppAliases(env.resolveAliases, inlinePlan.shared);
+    replacedAliases.forEach(key => warn(`App alias "${key}" replaced by an inline shared copy.`));
+
     // Set in the main process, so test workers inherit them. Nothing reads the preset version yet -
     // it is there for `@xh/hoist/test-support` to check against a minimum of its own.
     if (timeZone != null) process.env.TZ = timeZone;
@@ -225,7 +230,7 @@ function createConfig(env) {
 
         resolve: {
             alias: [
-                ...toViteAliases(env.resolveAliases, root),
+                ...toViteAliases(_.omit(env.resolveAliases, replacedAliases), root),
                 ...inlineAliases,
                 // Inline packages import Hoist too, and must reach this copy, not their own.
                 ...(selfHost || anyInline ? [{find: HOIST_IMPORT, replacement: hoistPath}] : [])

@@ -12,7 +12,12 @@ const assert = require('node:assert/strict'),
     path = require('node:path'),
     {after, describe, it} = require('node:test');
 
-const {parseInlinePackages, planInlinePackages} = require('../lib/inlinePackages');
+const {
+    parseInlinePackages,
+    planInlinePackages,
+    replacedAppAliases,
+    withInlineCacheDigest
+} = require('../lib/inlinePackages');
 
 //------------------------
 // Fixtures - throwaway layouts under the OS temp dir.
@@ -363,5 +368,53 @@ describe('planInlinePackages', () => {
                 "@xh/hoist-chat-kit is not in the app's package.json - running it inline anyway."
             ]);
         });
+    });
+});
+
+describe('replacedAppAliases', () => {
+    it('names the app aliases for a shared package, exact-match keys included', () => {
+        const shared = [{name: '@xh/hoist-chat-kit'}, {name: 'react'}];
+        assert.deepEqual(
+            replacedAppAliases(
+                {'@xh/hoist-chat-kit': '../../kit', react$: '/r', '@xh/hoist-chat-kit-x': '/x'},
+                shared
+            ),
+            ['@xh/hoist-chat-kit', 'react$']
+        );
+        assert.deepEqual(replacedAppAliases(undefined, shared), []);
+    });
+});
+
+describe('withInlineCacheDigest', () => {
+    const kit = {name: '@xh/hoist-chat-kit', path: '/w/hoist-chat-kit'},
+        inline = {inlineHoist: true, hoistPath: '/w/hoist-react', packages: [kit]};
+
+    it('keys an enabled cache on the inline Hoist path and each inline package', () => {
+        assert.deepEqual(withInlineCacheDigest(true, inline), {
+            cacheDigest: [
+                'inlineHoist:/w/hoist-react',
+                'inlinePackage:@xh/hoist-chat-kit=/w/hoist-chat-kit'
+            ]
+        });
+        assert.deepEqual(withInlineCacheDigest(true, {...inline, inlineHoist: false}).cacheDigest, [
+            'inlinePackage:@xh/hoist-chat-kit=/w/hoist-chat-kit'
+        ]);
+    });
+
+    it("keeps the app's options and digest, ahead of the inline settings", () => {
+        const appCache = {cacheDirectory: '/c', cacheDigest: ['v2']};
+        assert.deepEqual(withInlineCacheDigest(appCache, {...inline, packages: []}), {
+            cacheDirectory: '/c',
+            cacheDigest: ['v2', 'inlineHoist:/w/hoist-react']
+        });
+        assert.deepEqual(appCache.cacheDigest, ['v2']);
+    });
+
+    it('returns the setting as passed when the cache is off or nothing is inline', () => {
+        assert.equal(withInlineCacheDigest(false, inline), false);
+        const none = {inlineHoist: false, hoistPath: '/h', packages: []},
+            appCache = {cacheDigest: ['v2']};
+        assert.equal(withInlineCacheDigest(true, none), true);
+        assert.equal(withInlineCacheDigest(appCache, none), appCache);
     });
 });

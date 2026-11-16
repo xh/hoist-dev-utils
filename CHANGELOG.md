@@ -17,6 +17,9 @@
   to the app's copy (react, react-dom, ag-grid-react, ag-grid-community). The build now pins only
   those the app has installed, as `configureVitest()` already did. Before, it pointed every import
   of a missing library at a directory that did not exist.
+* With `buildCache` on, inline Hoist now adds the checkout path to the cache digest. A run with
+  inline Hoist no longer reuses snapshots from a packaged run, or the reverse. Inline packages add
+  their names and paths the same way. The build keeps any `cacheDigest` the app passes.
 
 ### 📚 Libraries
 

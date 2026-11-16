@@ -406,6 +406,23 @@ describe('configureVitest', () => {
             );
         });
 
+        it('replaces an app alias for a shared package, with a warning', () => {
+            const root = makeApp({deps: [['react']]}),
+                kit = makeKit(root),
+                {resolve} = configureVitest({
+                    appCode: 'x',
+                    root,
+                    inlinePackages: '@xh/hoist-chat-kit',
+                    resolveAliases: {'@xh/hoist-chat-kit': '/old/hack', other: '/o'}
+                });
+            assert.deepEqual(
+                resolve.alias.filter(it => it.find === '@xh/hoist-chat-kit'),
+                [{find: '@xh/hoist-chat-kit', replacement: kit}]
+            );
+            assert.ok(resolve.alias.some(it => it.find === 'other'));
+            assert.ok(warnings.some(it => it.includes('App alias "@xh/hoist-chat-kit" replaced')));
+        });
+
         it('fails fast on a missing checkout, as an Error that Vite can report', () => {
             assert.throws(
                 () => configureVitest({appCode: 'x', root: makeApp(), inlinePackages: '@xh/nope'}),

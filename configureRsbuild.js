@@ -50,7 +50,9 @@ const {
 const {
     INLINE_PACKAGES_VAR,
     parseInlinePackages,
-    planInlinePackages
+    planInlinePackages,
+    replacedAppAliases,
+    withInlineCacheDigest
 } = require('./lib/inlinePackages');
 
 // These are not deps of hoist-dev-utils but of the consuming app, so resolve them from the
@@ -290,6 +292,9 @@ async function configureRsbuild(env) {
         logMsg('🔗  Shared with inline packages, one copy each:');
         inlinePlan.shared.forEach(({name, dir}) => logMsg(`  > ${name} from ${dir}`));
         inlinePlan.warnings.forEach(it => logMsg(`⚠️  ${it}`));
+        replacedAppAliases(env.resolveAliases, inlinePlan.shared).forEach(key =>
+            logMsg(`⚠️  App alias "${key}" replaced by the shared copy above.`)
+        );
     }
 
     const srcPath = path.resolve(basePath, 'src'),
@@ -330,6 +335,9 @@ async function configureRsbuild(env) {
     // Inline packages: alias each shared name - the packages themselves, their peers, Hoist and
     // the singletons above - to the one copy every importer gets. Aliases are global, so the
     // dependencies a checkout installs share that copy too. See lib/inlinePackages.js.
+    replacedAppAliases(resolveAliases, inlinePlan.shared).forEach(key => {
+        delete resolveAliases[key];
+    });
     inlinePlan.shared.forEach(({name, dir}) => {
         resolveAliases[name] = dir;
     });
@@ -606,7 +614,12 @@ async function configureRsbuild(env) {
         },
 
         performance: {
-            buildCache,
+            // Inline settings change module resolution, so they key the cache too.
+            buildCache: withInlineCacheDigest(buildCache, {
+                inlineHoist,
+                hoistPath,
+                packages: inlinePackages
+            }),
             printFileSize: prodBuild ? {detail: false} : false
         },
 
