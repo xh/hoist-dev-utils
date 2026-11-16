@@ -64,6 +64,14 @@ declare namespace configureRsbuild {
          * variable. Dev-mode only for the build.
          */
         inlineHoist?: boolean;
+        /**
+         * Companion packages to run from a local checkout, as inlineHoist does for hoist-react -
+         * each `name` (a sibling checkout at `../../<name without scope>`) or `name=/abs/path`. A
+         * comma-separated string is also accepted. Set by the `XH_INLINE_PACKAGES` environment
+         * variable. Peers of an inline package, `@xh/hoist` and React resolve to one copy shared
+         * with the app. Dev-mode only for the build.
+         */
+        inlinePackages?: string | string[];
         /** Additional paths to transpile with the settings used for app and hoist-react code. */
         extraIncludePaths?: string[];
         /** Paths to exclude from transpiling, e.g. a local package's nested node_modules. */

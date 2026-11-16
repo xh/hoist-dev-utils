@@ -41,9 +41,12 @@ Two config modules over a small shared core:
 - **`lib/hoistCompile.js`** - the one source for what both configs must agree on: Hoist's SWC
   settings, app identity defaults, the `xh*` defines, the hoist-react path rule and the
   inline-hoist singletons. No bundler API, as for `lib/common.js`.
+- **`lib/inlinePackages.js`** - plans inline mode for companion packages (`XH_INLINE_PACKAGES`):
+  locates each checkout and picks the one copy of each shared package - peers, `@xh/hoist`,
+  React - that every importer gets. Both configs consume the plan. No bundler API.
 - **`lib/vitestInlineHoist.mjs`** - a Node resolve hook that `configureVitest()` runs first in
-  inline-hoist mode. It sends React and the other singletons from the checkout's dependencies to
-  the app's copies.
+  any inline mode. It sends React and the other shared packages imported from a checkout's
+  dependencies to the app's copies.
 - **`lib/common.js`** - bundler-agnostic helpers (version checks, entry discovery, CHANGELOG
   parsing, Blueprint icon stubs, manifest content, logging). Nothing in here may touch a bundler
   API.
@@ -61,6 +64,8 @@ Key behaviors:
 - Injects `XH.appCode`, `XH.appName`, `XH.appVersion`, `XH.appBuild` via `rspack.DefinePlugin`
 - Parses the consuming app's `CHANGELOG.md` into JSON for runtime access
 - Supports `inlineHoist` mode for local hoist-react development (resolves from sibling directory)
+- Supports `inlinePackages` for local development of companion packages such as
+  `@xh/hoist-chat-kit`, alone or with `inlineHoist`
 - Handles CSS/SASS processing, HTML generation, favicon/manifest setup, bundle analysis and
   pre-compressed assets
 

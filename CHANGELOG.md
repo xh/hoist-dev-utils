@@ -2,12 +2,25 @@
 
 ## 17.0.0-SNAPSHOT
 
+### 🎁 New Features
+
+* Inline mode now covers Hoist companion packages that ship as source, such as
+  `@xh/hoist-chat-kit` or a client library built on hoist-react. Set `XH_INLINE_PACKAGES` to the
+  package names, each with an optional `=/abs/path`, to run local checkouts in place of the
+  installed copies. Builds and `configureVitest()` both honor it, alone or with inline Hoist. Each
+  package's peers, Hoist and React resolve to one copy shared with the app. See the README's
+  "Inline packages" section.
+
 ### 🐞 Bug Fixes
 
 * Inline Hoist no longer breaks the build of an app that lacks one of the shared libraries it pins
   to the app's copy (react, react-dom, ag-grid-react, ag-grid-community). The build now pins only
   those the app has installed, as `configureVitest()` already did. Before, it pointed every import
   of a missing library at a directory that did not exist.
+
+### 📚 Libraries
+
+* semver `added @ 7.8`
 
 ## 16.3.0 - 2026-11-14
 

@@ -33,6 +33,12 @@ const {
     xhDefines
 } = require('./lib/hoistCompile');
 
+const {
+    INLINE_PACKAGES_VAR,
+    parseInlinePackages,
+    planInlinePackages
+} = require('./lib/inlinePackages');
+
 // Build options a test run cannot honor - warned, then ignored. Every other build option is
 // accepted silently, so an app can pass one `env` object to both configs.
 const IGNORED_BUILD_OPTIONS = {extraModuleRules: 'Rspack rules cannot run under Vite'};
@@ -60,8 +66,8 @@ const HOIST_IMPORT = /^@xh\/hoist(?=\/|$)/;
  * against a local hoist-react checkout with `XH_INLINE_HOIST=true vitest`.
  *
  * Takes the same `env` object as `configureRsbuild()`. App identity, `baseUrl`, `inlineHoist`,
- * `extraIncludePaths`, `extraExcludePaths`, `resolveAliases` and `swcOptions` apply as in the
- * build. Other build options are ignored - `extraModuleRules` with a warning.
+ * `inlinePackages`, `extraIncludePaths`, `extraExcludePaths`, `resolveAliases` and `swcOptions`
+ * apply as in the build. Other build options are ignored - `extraModuleRules` with a warning.
  *
  * @param {Object} env - config passed in from the app's Vitest config.
  * @param {string} env.appCode - as for configureRsbuild(), baked into tests as XH.appCode.
@@ -73,6 +79,10 @@ const HOIST_IMPORT = /^@xh\/hoist(?=\/|$)/;
  * @param {boolean} [env.inlineHoist=false] - true to test against a local hoist-react checkout, as
  *      for configureRsbuild() - a sibling at `../../hoist-react`, or the path in the
  *      `XH_HOIST_REACT_PATH` environment variable. Also on when `XH_INLINE_HOIST` is 'true'.
+ * @param {(string|string[])} [env.inlinePackages] - companion packages to test from a local
+ *      checkout, as for configureRsbuild(). Read from the `XH_INLINE_PACKAGES` environment
+ *      variable when not passed. The checkout's own specs are not collected - `include` globs
+ *      match under the root only.
  * @param {string[]} [env.extraIncludePaths] - custom packages to compile, as in the build.
  * @param {string[]} [env.extraExcludePaths] - paths not to compile, as in the build.
  * @param {Object} [env.resolveAliases] - module aliases, as in the build. A key ending in `$`
@@ -114,7 +124,18 @@ function createConfig(env) {
         include = env.include ?? ['src/**/*.spec.{ts,tsx}'],
         setupFiles = _.castArray(env.setupFiles ?? []),
         timeZone = env.timeZone === undefined ? 'America/New_York' : env.timeZone,
-        hoistSetup = path.join(hoistPath, 'test-support/setup.ts');
+        hoistSetup = path.join(hoistPath, 'test-support/setup.ts'),
+        inlinePlan = planInlinePackages({
+            appRoot: root,
+            specs: selfHost
+                ? []
+                : parseInlinePackages(env.inlinePackages ?? process.env[INLINE_PACKAGES_VAR]),
+            hoistPath,
+            inlineHoist,
+            extraSingletons: INLINE_TEST_SINGLETONS
+        }),
+        inlinePackages = inlinePlan.packages,
+        anyInline = inlineHoist || inlinePackages.length > 0;
 
     checkSwcApi();
     if (!fs.existsSync(hoistSetup)) {
@@ -123,6 +144,7 @@ function createConfig(env) {
     // Packaged mode only - a checkout or hoist-react itself may be mid-way through a vitest bump.
     if (!selfHost && !inlineHoist) checkVitestMajor(root, hoistPath);
     warnIgnoredOptions(env);
+    inlinePlan.warnings.forEach(warn);
 
     // Set in the main process, so test workers inherit them. Nothing reads the preset version yet -
     // it is there for `@xh/hoist/test-support` to check against a minimum of its own.
@@ -130,18 +152,39 @@ function createConfig(env) {
     process.env.XH_VITEST_PRESET_VERSION = devUtilsPkg.version;
 
     // Inline mode: dedupe singletons the app has its own copy of (listing one it lacks breaks the
-    // Node hook), and pass the hook its settings through a private variable. Reusing
-    // XH_INLINE_HOIST would leave inline mode on for the rest of a watch session.
-    const inlineSingletons = inlineHoist
-        ? [...INLINE_HOIST_SINGLETONS, ...INLINE_TEST_SINGLETONS].filter(it =>
-              fs.existsSync(path.join(root, 'node_modules', it, 'package.json'))
-          )
+    // Node hook), plus the peers of inline packages that the app installs. Hoist and the packages
+    // themselves are aliased below. See lib/inlinePackages.js.
+    const inlineSingletons = anyInline
+        ? _.uniq([
+              ...[...INLINE_HOIST_SINGLETONS, ...INLINE_TEST_SINGLETONS].filter(it =>
+                  fs.existsSync(path.join(root, 'node_modules', it, 'package.json'))
+              ),
+              ...inlinePlan.shared
+                  .filter(it => it.source === 'app' && it.name !== '@xh/hoist')
+                  .map(it => it.name)
+          ])
         : [];
-    if (inlineHoist) {
+
+    // Aliases for the inline packages and for a peer taken from Hoist's own copy, which the app
+    // does not install - `dedupe` resolves from the root only.
+    const inlineAliases = inlinePlan.shared
+        .filter(it => it.name !== '@xh/hoist' && it.source !== 'app')
+        .map(it => ({find: it.name, replacement: it.dir}));
+
+    // Pass the Node hook its settings through a private variable. Reusing XH_INLINE_HOIST would
+    // leave inline mode on for the rest of a watch session.
+    if (anyInline) {
         process.env.XH_VITEST_INLINE_HOIST_CFG = JSON.stringify({
-            appRoot: root,
-            hoistNodeModules: path.join(hoistPath, 'node_modules'),
-            singletons: inlineSingletons
+            fromDirs: [
+                ...(inlineHoist ? [path.join(hoistPath, 'node_modules')] : []),
+                ...inlinePackages.map(it => it.nodeModules)
+            ],
+            singletons: [
+                ...inlineSingletons.map(name => ({name, from: root})),
+                ...inlinePlan.shared
+                    .filter(it => it.source === 'hoist')
+                    .map(it => ({name: it.name, from: nodeModulesParent(it.dir)}))
+            ]
         });
     } else {
         delete process.env.XH_VITEST_INLINE_HOIST_CFG;
@@ -153,11 +196,15 @@ function createConfig(env) {
             xhSwcPlugin({
                 // In selfHost, hoist-react is the root - its source already sits outside
                 // node_modules, and listing the root would also compile its dependencies' JS.
-                includePaths: selfHost ? extraIncludePaths : [hoistPath, ...extraIncludePaths],
-                // As in the build, inline mode skips the checkout's own node_modules.
-                excludePaths: inlineHoist
-                    ? [path.join(hoistPath, 'node_modules'), ...extraExcludePaths]
-                    : extraExcludePaths,
+                includePaths: selfHost
+                    ? extraIncludePaths
+                    : [hoistPath, ...inlinePackages.map(it => it.path), ...extraIncludePaths],
+                // As in the build, inline mode skips the checkouts' own node_modules.
+                excludePaths: [
+                    ...(inlineHoist ? [path.join(hoistPath, 'node_modules')] : []),
+                    ...inlinePackages.map(it => it.nodeModules),
+                    ...extraExcludePaths
+                ],
                 swcOptions: env.swcOptions || {}
             }),
             xhAppChangelogPlugin(),
@@ -179,7 +226,9 @@ function createConfig(env) {
         resolve: {
             alias: [
                 ...toViteAliases(env.resolveAliases, root),
-                ...(selfHost || inlineHoist ? [{find: HOIST_IMPORT, replacement: hoistPath}] : [])
+                ...inlineAliases,
+                // Inline packages import Hoist too, and must reach this copy, not their own.
+                ...(selfHost || anyInline ? [{find: HOIST_IMPORT, replacement: hoistPath}] : [])
             ],
             dedupe: inlineSingletons,
             // Vitest externalizes JS in `"type": "module"` packages, so Node would load an opt-in
@@ -189,7 +238,18 @@ function createConfig(env) {
 
         // Vite serves files outside root only from allowed dirs. Setting this replaces the default,
         // so root is listed again. This package's dir holds the inline-mode setup file.
-        server: inlineHoist ? {fs: {allow: [root, hoistPath, __dirname]}} : {},
+        server: anyInline
+            ? {
+                  fs: {
+                      allow: [
+                          root,
+                          ...(inlineHoist ? [hoistPath] : []),
+                          ...inlinePackages.map(it => it.path),
+                          __dirname
+                      ]
+                  }
+              }
+            : {},
 
         // The settings the test kit's isolation contract needs. No `exclude` or `reporters`, so an
         // app's values set through mergeConfig() win.
@@ -200,7 +260,7 @@ function createConfig(env) {
             isolate: true,
             include,
             setupFiles: [
-                ...(inlineHoist ? [path.join(__dirname, 'lib/vitestInlineHoist.mjs')] : []),
+                ...(anyInline ? [path.join(__dirname, 'lib/vitestInlineHoist.mjs')] : []),
                 hoistSetup,
                 ...setupFiles
             ],
@@ -466,6 +526,13 @@ function toViteAliases(resolveAliases, root) {
                 : {find: key, replacement};
         })
     );
+}
+
+// The dir a package dir is found from, as Node resolves it - the parent of its node_modules.
+function nodeModulesParent(dir) {
+    const parts = dir.split(path.sep),
+        idx = parts.lastIndexOf('node_modules');
+    return idx > 0 ? parts.slice(0, idx).join(path.sep) : path.dirname(dir);
 }
 
 // A directory path in posix form with a trailing slash, for prefix matches against Vite ids.

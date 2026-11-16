@@ -112,6 +112,60 @@ direnv or mise can set it per worktree.
 Inline mode fails fast when the path holds no hoist-react checkout. The Rsbuild build banner shows
 the path and branch it builds from.
 
+### Inline packages
+
+Inline packages extend inline mode to Hoist companion packages that ship as source, such as
+`@xh/hoist-chat-kit`, `@xh/package-template` or a client library built on hoist-react. The build
+runs a local checkout of the package in place of the installed copy, so a change to the package
+shows up in the app as you make it.
+
+Set `XH_INLINE_PACKAGES` to a comma-separated list of package names. Add `=/abs/path` to a name to
+use a checkout at that path. Without a path, the checkout is a sibling of the app's repo, named for
+the package without its scope:
+
+```bash
+# ../../hoist-chat-kit from client-app
+XH_INLINE_PACKAGES=@xh/hoist-chat-kit pnpm start
+
+# A worktree, together with inline Hoist
+XH_INLINE_PACKAGES=@xh/hoist-chat-kit=$HOME/dev/hoist-chat-kit-worktrees/my-feature pnpm startWithHoist
+```
+
+`readCliEnv()` maps the variable onto the `inlinePackages` option, and `configureVitest()` reads it
+too. An app config needs no change. Production builds ignore it, with a warning.
+
+A checkout installs its own dependencies, which hold a second copy of Hoist and React for its tests
+and type checks. Two copies of either break the app, so the build shares one copy of these with the
+app:
+
+- every `peerDependency` of an inline package
+- `@xh/hoist`, from the inline hoist-react checkout under inline Hoist
+- React, react-dom and ag-Grid, if the app has them
+
+A shared package resolves to an inline checkout if it is one, else to the app's copy. A peer that
+the app does not install resolves to Hoist's own copy. All other dependencies of the package resolve
+from its checkout, as its lockfile lays them out. A companion package must declare Hoist, React and
+any other library it shares with the app as `peerDependencies`.
+
+The build fails fast if a checkout is missing, holds another package, has no `node_modules`, or
+lacks a required peer. It warns if a peer range does not match the version the app runs, or if a
+shared library is under `dependencies`. The build banner shows the path and branch of each checkout
+and the packages it shares.
+
+Bundler aliases do not reach `tsc` or the IDE, which still read the installed package's types. To
+type-check against the checkout, add a `paths` entry for the package to the app's `tsconfig.json`,
+as for inline Hoist. Do not commit it.
+
+```json
+"paths": {
+    "@xh/hoist-chat-kit/*": ["../../hoist-chat-kit/*"]
+}
+```
+
+Rsbuild compiles TypeScript from any directory, `node_modules` included. An installed companion
+package that ships only TypeScript therefore needs no `extraIncludePaths` entry. Add one only for a
+package that also ships plain `.js` source.
+
 ### Migrating from v15 (webpack)
 
 Dev-utils 16 is Rsbuild only - `configureWebpack()` is gone. To move an app:
@@ -197,7 +251,7 @@ warns about keys it does not know.
 | Option | In tests |
 |---|---|
 | `appCode` (required), `appName`, `appVersion`, `appBuild`, `baseUrl` | Set in `XH`, with the build defaults |
-| `inlineHoist`, `extraIncludePaths`, `extraExcludePaths`, `resolveAliases`, `swcOptions` | As in the build. An alias value that starts with `.` is relative to the root. `swcOptions` drops any `env` key, which SWC rejects with `jsc.target`. |
+| `inlineHoist`, `inlinePackages`, `extraIncludePaths`, `extraExcludePaths`, `resolveAliases`, `swcOptions` | As in the build. An alias value that starts with `.` is relative to the root. `swcOptions` drops any `env` key, which SWC rejects with `jsc.target`. |
 | `extraModuleRules` | Ignored, with a warning. Rspack rules cannot run under Vite. |
 | Other build options | Ignored |
 | `root` | Project root. Default: the current directory. |
@@ -223,6 +277,10 @@ checkout is found. The preset aliases
 app's own copies, if the app has them. A Node resolve hook does the same for the checkout's
 dependencies, which Vitest loads outside Vite. Inline mode works under pnpm. It is untested under
 yarn and npm.
+
+`XH_INLINE_PACKAGES` (or `inlinePackages`) runs the tests against local checkouts of companion
+packages, with the shared copies described in [Inline packages](#inline-packages). The preset does
+not collect a checkout's own specs, because `include` globs match under the project root only.
 
 The name matches Vitest's own `configureVitest` plugin hook. The two are unrelated: this one is a
 config factory, like `configureRsbuild()`.
