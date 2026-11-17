@@ -26,7 +26,6 @@ const {
 } = require('./lib/common');
 
 const {
-    INLINE_HOIST_SINGLETONS,
     hoistSwcTransform,
     resolveAppIdentity,
     resolveHoistPath,
@@ -156,19 +155,12 @@ function createConfig(env) {
     if (timeZone != null) process.env.TZ = timeZone;
     process.env.XH_VITEST_PRESET_VERSION = devUtilsPkg.version;
 
-    // Inline mode: dedupe singletons the app has its own copy of (listing one it lacks breaks the
-    // Node hook), plus the peers of inline packages that the app installs. Hoist and the packages
-    // themselves are aliased below. See lib/inlinePackages.js.
-    const inlineSingletons = anyInline
-        ? _.uniq([
-              ...[...INLINE_HOIST_SINGLETONS, ...INLINE_TEST_SINGLETONS].filter(it =>
-                  fs.existsSync(path.join(root, 'node_modules', it, 'package.json'))
-              ),
-              ...inlinePlan.shared
-                  .filter(it => it.source === 'app' && it.name !== '@xh/hoist')
-                  .map(it => it.name)
-          ])
-        : [];
+    // Inline mode: dedupe the shared packages the app has its own copy of - singletons and the
+    // peers of inline packages. Hoist and the checkouts are aliased below. See
+    // lib/inlinePackages.js.
+    const inlineSingletons = inlinePlan.shared
+        .filter(it => it.source === 'app' && it.name !== '@xh/hoist')
+        .map(it => it.name);
 
     // Aliases for the inline packages and for a peer taken from Hoist's own copy, which the app
     // does not install - `dedupe` resolves from the root only.

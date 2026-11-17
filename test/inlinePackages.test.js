@@ -127,11 +127,28 @@ describe('parseInlinePackages', () => {
 
 describe('planInlinePackages', () => {
     describe('locating checkouts', () => {
-        it('plans nothing without packages, even with inline Hoist', () => {
+        it('plans nothing when nothing is inline', () => {
             const w = makeWorkspace();
-            assert.deepEqual(plan(w, '', {inlineHoist: true}), {
+            assert.deepEqual(plan(w, ''), {packages: [], shared: [], warnings: []});
+        });
+
+        it('plans inline Hoist alone: the checkout, and the singletons the app installs', () => {
+            const w = makeWorkspace({
+                appDeps: {react: '19.3.1', 'ag-grid-react': '36.3.0', msw: '3.0.0'}
+            });
+            // A copy above the app - Node would find it, but the app does not install it.
+            writePkg(path.join(w.ws, 'app', 'node_modules', 'react-dom'), {name: 'react-dom'});
+
+            const p = plan(w, '', {inlineHoist: true, extraSingletons: ['msw']}),
+                nm = path.join(w.appRoot, 'node_modules');
+            assert.deepEqual(p, {
                 packages: [],
-                shared: [],
+                shared: [
+                    {name: '@xh/hoist', dir: w.hoistCheckout, source: 'inline'},
+                    {name: 'react', dir: path.join(nm, 'react'), source: 'app'},
+                    {name: 'ag-grid-react', dir: path.join(nm, 'ag-grid-react'), source: 'app'},
+                    {name: 'msw', dir: path.join(nm, 'msw'), source: 'app'}
+                ],
                 warnings: []
             });
         });

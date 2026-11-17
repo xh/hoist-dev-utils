@@ -39,13 +39,7 @@ const {
     logMsg
 } = require('./lib/common');
 
-const {
-    HOIST_SWC,
-    INLINE_HOIST_SINGLETONS,
-    resolveAppIdentity,
-    resolveHoistPath,
-    xhDefines
-} = require('./lib/hoistCompile');
+const {HOIST_SWC, resolveAppIdentity, resolveHoistPath, xhDefines} = require('./lib/hoistCompile');
 
 const {
     INLINE_PACKAGES_VAR,
@@ -287,9 +281,9 @@ async function configureRsbuild(env) {
     logSep();
     logMsg('🎯  Targets:');
     targetBrowsers.forEach(it => logMsg(`  > ${it}`));
-    if (inlinePackages.length) {
+    if (inlinePlan.shared.length) {
         logSep();
-        logMsg('🔗  Shared with inline packages, one copy each:');
+        logMsg('🔗  Shared inline, one copy each:');
         inlinePlan.shared.forEach(({name, dir}) => logMsg(`  > ${name} from ${dir}`));
         inlinePlan.warnings.forEach(it => logMsg(`⚠️  ${it}`));
         replacedAppAliases(env.resolveAliases, inlinePlan.shared).forEach(key =>
@@ -317,24 +311,10 @@ async function configureRsbuild(env) {
             ? null
             : generateBlueprintIconStubs(basePath, hoistPath);
 
-    // Tell the bundler where to look for modules when resolving imports - this is the key to
-    // getting inlineHoist mode to look in within the checked-out hoist-react project at hoistPath.
-    if (inlineHoist) {
-        resolveAliases['@xh/hoist'] = hoistPath;
-
-        // Use the app's instance of each library hoist-react must share with it - React for hooks,
-        // ag-Grid for `useGridMenuItem`. See INLINE_HOIST_SINGLETONS. Skip any the app lacks -
-        // an alias to a missing dir would fail every import of it, where the checkout's own copy
-        // serves an app that never loads that library itself.
-        INLINE_HOIST_SINGLETONS.forEach(name => {
-            const appCopy = path.resolve(basePath, 'node_modules', name);
-            if (fs.existsSync(path.join(appCopy, 'package.json'))) resolveAliases[name] = appCopy;
-        });
-    }
-
-    // Inline packages: alias each shared name - the packages themselves, their peers, Hoist and
-    // the singletons above - to the one copy every importer gets. Aliases are global, so the
-    // dependencies a checkout installs share that copy too. See lib/inlinePackages.js.
+    // Inline mode: alias each shared name to the one copy every importer gets - each checkout,
+    // hoist-react's included, plus their peers and the libraries hoist-react must share with the
+    // app (React for hooks, ag-Grid for `useGridMenuItem`). Aliases are global, so the dependencies
+    // a checkout installs share that copy too. See lib/inlinePackages.js.
     replacedAppAliases(resolveAliases, inlinePlan.shared).forEach(key => {
         delete resolveAliases[key];
     });

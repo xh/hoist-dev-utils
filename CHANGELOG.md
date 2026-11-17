@@ -21,6 +21,11 @@
   inline Hoist no longer reuses snapshots from a packaged run, or the reverse. Inline packages add
   their names and paths the same way. The build keeps any `cacheDigest` the app passes.
 
+### ⚙️ Technical
+
+* Inline Hoist now runs through the same resolution plan as inline packages. Its module graph is
+  unchanged. The build banner now lists the copies it shares with the app.
+
 ### 📚 Libraries
 
 * semver `added @ 7.8`
