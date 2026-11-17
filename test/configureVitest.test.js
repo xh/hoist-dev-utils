@@ -70,6 +70,7 @@ const ENV_KEYS = [
     'TZ',
     'XH_INLINE_HOIST',
     'XH_HOIST_REACT_PATH',
+    'XH_INLINE_PACKAGES',
     'XH_VITEST_PRESET_VERSION',
     'XH_VITEST_INLINE_HOIST_CFG'
 ];
@@ -79,6 +80,7 @@ beforeEach(() => {
     // A developer's own shell may set these.
     delete process.env.XH_INLINE_HOIST;
     delete process.env.XH_HOIST_REACT_PATH;
+    delete process.env.XH_INLINE_PACKAGES;
     warnings = [];
     mock.method(console, 'warn', msg => warnings.push(msg));
 });
@@ -256,9 +258,8 @@ describe('configureVitest', () => {
                 path.join(checkout, 'test-support/setup.ts')
             ]);
             assert.deepEqual(JSON.parse(process.env.XH_VITEST_INLINE_HOIST_CFG), {
-                appRoot: root,
-                hoistNodeModules: path.join(checkout, 'node_modules'),
-                singletons: ['react', 'msw', 'mobx']
+                fromDirs: [path.join(checkout, 'node_modules')],
+                singletons: ['react', 'msw', 'mobx'].map(name => ({name, from: root}))
             });
         });
 
@@ -289,6 +290,153 @@ describe('configureVitest', () => {
             assert.ok(process.env.XH_VITEST_INLINE_HOIST_CFG);
             configureVitest({appCode: 'x', root});
             assert.equal(process.env.XH_VITEST_INLINE_HOIST_CFG, undefined);
+        });
+    });
+
+    describe('inline packages', () => {
+        // A kit checkout beside the app's repo, holding its own copies of its peers.
+        function makeKit(root, pkg = {}) {
+            const dir = path.resolve(root, '../../hoist-chat-kit');
+            writePkg(dir, {
+                name: '@xh/hoist-chat-kit',
+                version: '2.1.0',
+                peerDependencies: {'@xh/hoist': '>=89.0.0', react: '^19.0.0'},
+                ...pkg
+            });
+            ['@xh/hoist', 'react', 'msw'].forEach(name =>
+                writePkg(path.join(dir, 'node_modules', name), {name, version: '0.0.1'})
+            );
+            write(path.join(dir, 'core', 'ChatModel.spec.ts'));
+            return dir;
+        }
+
+        it('turns on with XH_INLINE_PACKAGES, sharing Hoist and peers with the app', () => {
+            const root = makeApp({deps: [['react', '19.3.1'], ['msw']]}),
+                kit = makeKit(root);
+            writePkg(root, {name: 'app', dependencies: {'@xh/hoist-chat-kit': '^2'}});
+            process.env.XH_INLINE_PACKAGES = '@xh/hoist-chat-kit';
+
+            const {resolve, server, test} = configureVitest({appCode: 'x', root}),
+                hoistDir = path.join(root, 'node_modules', '@xh', 'hoist');
+
+            assert.deepEqual(resolve.alias, [
+                {find: '@xh/hoist-chat-kit', replacement: kit},
+                {find: /^@xh\/hoist(?=\/|$)/, replacement: hoistDir}
+            ]);
+            assert.deepEqual(resolve.dedupe, ['react', 'msw']);
+            assert.deepEqual(server.fs.allow, [root, kit, devUtilsDir]);
+            assert.deepEqual(test.setupFiles, [
+                path.join(devUtilsDir, 'lib/vitestInlineHoist.mjs'),
+                path.join(hoistDir, 'test-support/setup.ts')
+            ]);
+            // The include globs stay under the root - the kit's own specs are not collected.
+            assert.deepEqual(test.include, ['src/**/*.spec.{ts,tsx}']);
+            assert.deepEqual(JSON.parse(process.env.XH_VITEST_INLINE_HOIST_CFG), {
+                fromDirs: [path.join(kit, 'node_modules')],
+                singletons: ['react', 'msw'].map(name => ({name, from: root}))
+            });
+            assert.deepEqual(warnings, []);
+        });
+
+        it("compiles the checkout's JS but not its dependencies'", async () => {
+            const root = makeApp({deps: [['react', '19.3.1']]}),
+                kit = makeKit(root),
+                swc = plugin(
+                    configureVitest({appCode: 'x', root, inlinePackages: ['@xh/hoist-chat-kit']}),
+                    'xh-swc'
+                ),
+                js = 'export const x = 1;',
+                compiled = async file => (await swc.transform(js, file)) !== null;
+            assert.ok(await compiled(path.join(kit, 'core/a.js')), 'checkout JS');
+            assert.ok(!(await compiled(path.join(kit, 'node_modules/rxjs/a.js'))), 'its deps');
+            assert.ok(!(await compiled(path.join(kit, 'node_modules/rxjs/a.ts'))), 'even TS');
+        });
+
+        it('combines with inline Hoist, sending the kit to the Hoist checkout', () => {
+            const root = makeApp({checkout: {version: '91.0.0-SNAPSHOT'}, deps: [['react']]}),
+                kit = makeKit(root),
+                checkout = path.resolve(root, '../../hoist-react'),
+                {resolve, server} = configureVitest({
+                    appCode: 'x',
+                    root,
+                    inlineHoist: true,
+                    inlinePackages: '@xh/hoist-chat-kit'
+                });
+            assert.equal(resolve.alias.at(-1).replacement, checkout);
+            assert.deepEqual(server.fs.allow, [root, checkout, kit, devUtilsDir]);
+            assert.deepEqual(JSON.parse(process.env.XH_VITEST_INLINE_HOIST_CFG).fromDirs, [
+                path.join(checkout, 'node_modules'),
+                path.join(kit, 'node_modules')
+            ]);
+        });
+
+        it("resolves a peer the app lacks from Hoist's copy, by alias and in the Node hook", () => {
+            const root = makeApp({deps: [['react']]}),
+                hoistDir = path.join(root, 'node_modules', '@xh', 'hoist'),
+                mobx = path.join(hoistDir, 'node_modules', 'mobx');
+            writePkg(mobx, {name: 'mobx', version: '6.15.0'});
+            makeKit(root, {peerDependencies: {'@xh/hoist': '*', mobx: '^6'}});
+
+            const {resolve} = configureVitest({
+                appCode: 'x',
+                root,
+                inlinePackages: '@xh/hoist-chat-kit'
+            });
+            assert.ok(resolve.alias.some(it => it.find === 'mobx' && it.replacement === mobx));
+            assert.ok(!resolve.dedupe.includes('mobx'));
+            assert.deepEqual(JSON.parse(process.env.XH_VITEST_INLINE_HOIST_CFG).singletons.at(-1), {
+                name: 'mobx',
+                from: hoistDir
+            });
+        });
+
+        it('warns on a peer range the app misses, and ignores the variable for selfHost', () => {
+            const root = makeApp({deps: [['react', '18.3.1']]});
+            makeKit(root);
+            configureVitest({appCode: 'x', root, inlinePackages: '@xh/hoist-chat-kit'});
+            assert.ok(
+                warnings.some(it => /wants react "\^19.0.0", but the app will run 18/.test(it))
+            );
+
+            const hoistRoot = makeApp({hoist: null, apps: null});
+            write(path.join(hoistRoot, 'test-support', 'setup.ts'));
+            process.env.XH_INLINE_PACKAGES = '@xh/not-there';
+            assert.doesNotThrow(() =>
+                configureVitest({appCode: 'x', root: hoistRoot, selfHost: true})
+            );
+        });
+
+        it('replaces an app alias for a shared package, with a warning', () => {
+            const root = makeApp({deps: [['react']]}),
+                kit = makeKit(root),
+                {resolve} = configureVitest({
+                    appCode: 'x',
+                    root,
+                    inlinePackages: '@xh/hoist-chat-kit',
+                    resolveAliases: {'@xh/hoist-chat-kit': '/old/hack', other: '/o'}
+                });
+            assert.deepEqual(
+                resolve.alias.filter(it => it.find === '@xh/hoist-chat-kit'),
+                [{find: '@xh/hoist-chat-kit', replacement: kit}]
+            );
+            assert.ok(resolve.alias.some(it => it.find === 'other'));
+            assert.ok(warnings.some(it => it.includes('App alias "@xh/hoist-chat-kit" replaced')));
+        });
+
+        it("reads XH_INLINE_PACKAGES='false' as off, as the build does", () => {
+            process.env.XH_INLINE_PACKAGES = 'false';
+            const {resolve} = configureVitest({appCode: 'x', root: makeApp()});
+            assert.deepEqual(resolve.alias, []);
+            assert.equal(process.env.XH_VITEST_INLINE_HOIST_CFG, undefined);
+        });
+
+        it('fails fast on a missing checkout, as an Error that Vite can report', () => {
+            assert.throws(
+                () => configureVitest({appCode: 'x', root: makeApp(), inlinePackages: '@xh/nope'}),
+                e =>
+                    e instanceof Error &&
+                    /Inline package @xh\/nope found no checkout/.test(e.message)
+            );
         });
     });
 

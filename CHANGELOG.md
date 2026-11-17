@@ -1,5 +1,38 @@
 # Changelog
 
+## 16.4.0 - 2026-11-16
+
+### 🎁 New Features
+
+* Inline mode now covers Hoist companion packages that ship as source, such as
+  `@xh/hoist-chat-kit` or a client library built on hoist-react. Set `XH_INLINE_PACKAGES` to the
+  package names, each with an optional `=/abs/path`, to run local checkouts in place of the
+  installed copies. Builds and `configureVitest()` both honor it, alone or with inline Hoist. Each
+  package's peers, Hoist and React resolve to one copy shared with the app. See the README's
+  "Inline packages" section.
+
+### 🐞 Bug Fixes
+
+* Inline Hoist no longer breaks the build of an app that lacks one of the shared libraries it pins
+  to the app's copy (react, react-dom, ag-grid-react, ag-grid-community). The build now pins only
+  those the app has installed, as `configureVitest()` already did. Before, it pointed every import
+  of a missing library at a directory that did not exist.
+* With `buildCache` on, inline Hoist now adds the checkout path to the cache digest. A run with
+  inline Hoist no longer reuses snapshots from a packaged run, or the reverse. Inline packages add
+  their names and paths the same way. The build keeps any `cacheDigest` the app passes.
+
+### ⚙️ Technical
+
+* Inline Hoist now runs through the same resolution plan as inline packages. Its module graph is
+  unchanged. The build banner now lists the copies it shares with the app.
+* Under inline Hoist, an app's `resolveAliases` entry for `@xh/hoist`, React or ag-Grid now gives
+  way to the shared copy, with a warning. This applies to exact-match keys such as `react$` too. In
+  tests, the app's alias used to win.
+
+### 📚 Libraries
+
+* semver `added @ 7.8`
+
 ## 16.3.0 - 2026-11-14
 
 ### 🎁 New Features

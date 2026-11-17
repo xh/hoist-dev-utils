@@ -39,13 +39,15 @@ const {
     logMsg
 } = require('./lib/common');
 
+const {HOIST_SWC, resolveAppIdentity, resolveHoistPath, xhDefines} = require('./lib/hoistCompile');
+
 const {
-    HOIST_SWC,
-    INLINE_HOIST_SINGLETONS,
-    resolveAppIdentity,
-    resolveHoistPath,
-    xhDefines
-} = require('./lib/hoistCompile');
+    INLINE_PACKAGES_VAR,
+    parseInlinePackages,
+    planInlinePackages,
+    replacedAppAliases,
+    withInlineCacheDigest
+} = require('./lib/inlinePackages');
 
 // These are not deps of hoist-dev-utils but of the consuming app, so resolve them from the
 // app's own directory (basePath).
@@ -65,10 +67,12 @@ const hoistReactPkg = resolveAppPackage('@xh/hoist', basePath),
  * Sample commands to run configurations produced by this method include:
  *      `rsbuild build --env-mode prod` to trigger a production build
  *      `rsbuild dev --env-mode inlineHoist` to run dev server w/hoist-react in inline mode
+ *      `XH_INLINE_PACKAGES=@xh/hoist-chat-kit rsbuild dev` to run a companion package inline
  *
  * Note that Rsbuild's CLI has no `--env key=value` flag. Build-time overrides (appVersion, appBuild)
  * flow in as environment variables - see the `{@link readCliEnv}` helper, which maps
- * `XH_APP_VERSION`, `XH_APP_BUILD`, `XH_PROD_BUILD`, `XH_INLINE_HOIST`, etc. onto env options.
+ * `XH_APP_VERSION`, `XH_APP_BUILD`, `XH_PROD_BUILD`, `XH_INLINE_HOIST`, `XH_INLINE_PACKAGES`, etc.
+ * onto env options.
  *
  * @param {Object} env - config passed in from the app's rsbuild config.
  * @param {string} env.appCode - short, internal code for the application - baked into client as XH.appCode. Should be
@@ -83,6 +87,15 @@ const hoistReactPkg = resolveAppPackage('@xh/hoist', basePath),
  *      hoist-react developers to test plugin changes. Dev-mode only. The checkout is a sibling of
  *      the app's repo at `../../hoist-react`, unless the `XH_HOIST_REACT_PATH` environment variable
  *      names another (absolute) path, e.g. a git worktree.
+ * @param {(string|string[])} [env.inlinePackages] - companion packages to run from a local checkout
+ *      in place of the installed copy, as inlineHoist does for hoist-react - e.g.
+ *      `@xh/hoist-chat-kit`. Each entry is `name`, for a checkout that is a sibling of the app's repo
+ *      named for the package without its scope (`../../hoist-chat-kit`), or `name=/abs/path`. A
+ *      comma-separated string is also accepted, as set by the `XH_INLINE_PACKAGES` environment
+ *      variable. Every peerDependency of an inline package, plus `@xh/hoist` and React, resolves to
+ *      a single copy shared with the app - the inline checkout where there is one. Its other
+ *      dependencies resolve from its own checkout. Dev-mode only - ignored with a warning when
+ *      prodBuild is true.
  * @param {boolean} [env.reactProdMode=false] - true to use the production build of React
  *      when running the dev server.
  * @param {Object} [env.resolveAliases] - object mapping for custom module resolution.
@@ -166,6 +179,8 @@ async function configureRsbuild(env) {
 
     const prodBuild = parseFlag(env.prodBuild, false) === true,
         inlineHoist = !prodBuild && parseFlag(env.inlineHoist, false) === true,
+        // Not parsed for prod builds, where a stray value must not fail the build.
+        inlinePackageSpecs = prodBuild ? [] : parseInlinePackages(env.inlinePackages),
         reactProdMode = prodBuild || parseFlag(env.reactProdMode, false) === true,
         resolveAliases = Object.assign({}, env.resolveAliases),
         buildCache = _.isPlainObject(env.buildCache)
@@ -219,6 +234,15 @@ async function configureRsbuild(env) {
     // symlinking package managers (e.g. pnpm).
     const hoistPath = resolveHoistPath(basePath, inlineHoist);
 
+    // Plan inline packages - throws here, as above, when a checkout or a required peer is missing.
+    const inlinePlan = planInlinePackages({
+            appRoot: basePath,
+            specs: inlinePackageSpecs,
+            hoistPath,
+            inlineHoist
+        }),
+        inlinePackages = inlinePlan.packages;
+
     process.env.NODE_ENV = prodBuild ? 'production' : 'development';
     process.env.REACT_NODE_ENV = reactProdMode ? 'production' : 'development';
 
@@ -230,6 +254,10 @@ async function configureRsbuild(env) {
     if (prodBuild) logMsg('🚀  Production build enabled');
     if (!prodBuild) logMsg('💻  Development mode enabled');
     if (inlineHoist) logMsg('🏗️   Inline Hoist enabled');
+    if (inlinePackages.length) logMsg('📦  Inline packages enabled');
+    if (prodBuild && !_.isEmpty(env.inlinePackages)) {
+        logMsg(`⚠️  Inline packages ignored for production builds (${INLINE_PACKAGES_VAR}).`);
+    }
     if (reactProdMode) logMsg('⚛️   React Production mode enabled');
     if (buildCache) logMsg('💾  Persistent build cache enabled');
     if (prodBuild && precompressAssets) logMsg('🗜️   Asset pre-compression enabled');
@@ -241,6 +269,10 @@ async function configureRsbuild(env) {
     } else {
         logMsg(`  > @xh/hoist v${hoistReactPkg.version}`);
     }
+    inlinePackages.forEach(({name, path: dir}) => {
+        const branch = gitBranch(dir);
+        logMsg(`  > ${name} INLINE from ${dir}${branch ? ` @ ${branch}` : ''}`);
+    });
     logMsg(`  > @xh/hoist-dev-utils v${devUtilsPkg.version}`);
     logMsg(`  > react v${reactPkg.version}`);
     logMsg(`  > @rsbuild/core v${rsbuildVersion}`);
@@ -249,6 +281,15 @@ async function configureRsbuild(env) {
     logSep();
     logMsg('🎯  Targets:');
     targetBrowsers.forEach(it => logMsg(`  > ${it}`));
+    if (inlinePlan.shared.length) {
+        logSep();
+        logMsg('🔗  Shared inline, one copy each:');
+        inlinePlan.shared.forEach(({name, dir}) => logMsg(`  > ${name} from ${dir}`));
+        inlinePlan.warnings.forEach(it => logMsg(`⚠️  ${it}`));
+        replacedAppAliases(env.resolveAliases, inlinePlan.shared).forEach(key =>
+            logMsg(`⚠️  App alias "${key}" replaced by the shared copy above.`)
+        );
+    }
 
     const srcPath = path.resolve(basePath, 'src'),
         outPath = path.resolve(basePath, 'build'),
@@ -270,20 +311,25 @@ async function configureRsbuild(env) {
             ? null
             : generateBlueprintIconStubs(basePath, hoistPath);
 
-    // Tell the bundler where to look for modules when resolving imports - this is the key to
-    // getting inlineHoist mode to look in within the checked-out hoist-react project at hoistPath.
-    if (inlineHoist) {
-        resolveAliases['@xh/hoist'] = hoistPath;
+    // Inline mode: alias each shared name to the one copy every importer gets - each checkout,
+    // hoist-react's included, plus their peers and the libraries hoist-react must share with the
+    // app (React for hooks, ag-Grid for `useGridMenuItem`). Aliases are global, so the dependencies
+    // a checkout installs share that copy too. See lib/inlinePackages.js.
+    replacedAppAliases(resolveAliases, inlinePlan.shared).forEach(key => {
+        delete resolveAliases[key];
+    });
+    inlinePlan.shared.forEach(({name, dir}) => {
+        resolveAliases[name] = dir;
+    });
 
-        // Use the app's instance of each library hoist-react must share with it - React for hooks,
-        // ag-Grid for `useGridMenuItem`. See INLINE_HOIST_SINGLETONS.
-        INLINE_HOIST_SINGLETONS.forEach(name => {
-            resolveAliases[name] = path.resolve('./node_modules', name);
-        });
-    }
-
-    // When running inline, resolve inline Hoist's own node_modules so we can exclude them.
-    const hoistNodeModulesPath = inlineHoist ? path.resolve(hoistPath, 'node_modules') : null;
+    // When running inline, resolve the checkouts' own node_modules so we can exclude them. Their
+    // dependencies ship built - compiling them would be slow, and could break them.
+    const hoistNodeModulesPath = inlineHoist ? path.resolve(hoistPath, 'node_modules') : null,
+        inlineSrcPaths = inlinePackages.map(it => it.path),
+        inlineExcludePaths = _.compact([
+            hoistNodeModulesPath,
+            ...inlinePackages.map(it => it.nodeModules)
+        ]);
 
     // Determine source map (devtool) mode.
     let devtool;
@@ -368,8 +414,8 @@ async function configureRsbuild(env) {
                 splitChunks: false,
                 reactRefreshOptions: {
                     // Refresh app source, hoist-react (raw TS in node_modules) and custom packages.
-                    include: [srcPath, hoistPath, ...extraIncludePaths],
-                    exclude: hoistNodeModulesPath ? [hoistNodeModulesPath] : []
+                    include: [srcPath, hoistPath, ...inlineSrcPaths, ...extraIncludePaths],
+                    exclude: inlineExcludePaths
                 }
             }),
 
@@ -391,9 +437,9 @@ async function configureRsbuild(env) {
             // currently transpiling anything in hoist-react on its own. (Rsbuild's default include
             // also compiles every .ts/.tsx it encounters, so this is largely belt-and-braces for
             // hoist's plain-JS `polyfills.js` and any custom packages.)
-            include: [srcPath, hoistPath, ...extraIncludePaths],
-            // In inline mode also *avoid* transpiling inline hoist's own node_modules libraries.
-            exclude: inlineHoist ? [hoistNodeModulesPath, ...extraExcludePaths] : extraExcludePaths,
+            include: [srcPath, hoistPath, ...inlineSrcPaths, ...extraIncludePaths],
+            // In inline mode also *avoid* transpiling the checkouts' own node_modules libraries.
+            exclude: [...inlineExcludePaths, ...extraExcludePaths],
 
             // TC39 Stage 3 (2023-11) decorators, transformed by SWC alone - no Babel pass. This is
             // the emit hoist-react >= 88 is written against: `@observable accessor` / `@bindable
@@ -548,7 +594,12 @@ async function configureRsbuild(env) {
         },
 
         performance: {
-            buildCache,
+            // Inline settings change module resolution, so they key the cache too.
+            buildCache: withInlineCacheDigest(buildCache, {
+                inlineHoist,
+                hoistPath,
+                packages: inlinePackages
+            }),
             printFileSize: prodBuild ? {detail: false} : false
         },
 
@@ -852,6 +903,7 @@ function readCliEnv(processEnv = process.env) {
         XH_APP_BUILD: 'appBuild',
         XH_PROD_BUILD: 'prodBuild',
         XH_INLINE_HOIST: 'inlineHoist',
+        [INLINE_PACKAGES_VAR]: 'inlinePackages',
         XH_REACT_PROD_MODE: 'reactProdMode',
         XH_BUILD_CACHE: 'buildCache',
         XH_MINIFY: 'minify',
