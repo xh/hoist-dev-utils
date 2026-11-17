@@ -110,8 +110,8 @@ describe('parseInlinePackages', () => {
         ]);
     });
 
-    it('reads nothing from an unset, empty or false value', () => {
-        [undefined, null, '', false, [], ' , '].forEach(v =>
+    it("reads nothing from an unset, empty or false value, 'false' included", () => {
+        [undefined, null, '', false, 'false', [], ' , '].forEach(v =>
             assert.deepEqual(parseInlinePackages(v), [])
         );
     });
@@ -121,6 +121,7 @@ describe('parseInlinePackages', () => {
         assert.throws(() => parseInlinePackages('a=../a'), /must be absolute - found "..\/a"/);
         assert.throws(() => parseInlinePackages('a,a=/x'), /lists a more than once/);
         assert.throws(() => parseInlinePackages('=/x'), /has no package name/);
+        assert.throws(() => parseInlinePackages('a= '), /entry "a=" has an empty path/);
         assert.throws(() => parseInlinePackages([true]), /takes package names/);
     });
 });
@@ -261,6 +262,12 @@ describe('planInlinePackages', () => {
                 dir: path.join(path.dirname(path.dirname(w.hoistInstalled)), 'mobx'),
                 source: 'hoist'
             });
+        });
+
+        it("ignores a stray copy of a peer above the app, for Hoist's own", () => {
+            const w = makeWorkspace({packages: {'acme-hoist': {peerDependencies: {mobx: '^6'}}}});
+            writePkg(path.join(w.ws, 'app', 'node_modules', 'mobx'), {name: 'mobx'});
+            assert.equal(sharedMap(plan(w, 'acme-hoist')).mobx.source, 'hoist');
         });
 
         it('fails fast on a missing required peer, naming package, peer and where it looked', () => {

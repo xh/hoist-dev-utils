@@ -120,8 +120,8 @@ runs a local checkout of the package in place of the installed copy, so a change
 shows up in the app as you make it.
 
 Set `XH_INLINE_PACKAGES` to a comma-separated list of package names. Add `=/abs/path` to a name to
-use a checkout at that path. Without a path, the checkout is a sibling of the app's repo, named for
-the package without its scope:
+use a checkout at that path, which cannot contain a comma. Without a path, the checkout is a sibling
+of the app's repo, named for the package without its scope:
 
 ```bash
 # ../../hoist-chat-kit from client-app
@@ -163,12 +163,14 @@ as for inline Hoist. Do not commit it.
 ```
 
 The build aliases each shared package to its directory, which bypasses the `exports` map in that
-package's `package.json`. React, react-dom, ag-Grid and Hoist resolve correctly this way. A peer
-that maps subpath imports only through `exports` can fail to resolve. Inline Hoist has the same
-limit.
+package's `package.json`. The directory then resolves through its `main`, `module` or `browser`
+field. React, react-dom, ag-Grid and Hoist resolve correctly this way. A peer that has no such
+field, or maps subpaths only through `exports`, fails to resolve, and the build reports the error.
+Inline Hoist has the same limit.
 
 An app alias for a shared package, such as an older hand-written alias to a checkout, gives way to
-the shared copy. The build logs a warning that names it.
+the shared copy, under inline Hoist too. The build and `configureVitest()` log a warning that names
+it.
 
 Rsbuild compiles TypeScript from any directory, `node_modules` included. An installed companion
 package that ships only TypeScript therefore needs no `extraIncludePaths` entry. Add one only for a

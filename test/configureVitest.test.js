@@ -423,6 +423,13 @@ describe('configureVitest', () => {
             assert.ok(warnings.some(it => it.includes('App alias "@xh/hoist-chat-kit" replaced')));
         });
 
+        it("reads XH_INLINE_PACKAGES='false' as off, as the build does", () => {
+            process.env.XH_INLINE_PACKAGES = 'false';
+            const {resolve} = configureVitest({appCode: 'x', root: makeApp()});
+            assert.deepEqual(resolve.alias, []);
+            assert.equal(process.env.XH_VITEST_INLINE_HOIST_CFG, undefined);
+        });
+
         it('fails fast on a missing checkout, as an Error that Vite can report', () => {
             assert.throws(
                 () => configureVitest({appCode: 'x', root: makeApp(), inlinePackages: '@xh/nope'}),

@@ -25,6 +25,9 @@
 
 * Inline Hoist now runs through the same resolution plan as inline packages. Its module graph is
   unchanged. The build banner now lists the copies it shares with the app.
+* Under inline Hoist, an app's `resolveAliases` entry for `@xh/hoist`, React or ag-Grid now gives
+  way to the shared copy, with a warning. This applies to exact-match keys such as `react$` too. In
+  tests, the app's alias used to win.
 
 ### 📚 Libraries
 
