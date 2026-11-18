@@ -106,8 +106,8 @@ XH_HOIST_REACT_PATH=~/dev/hoist-react-worktrees/my-feature pnpm startWithHoist
 ```
 
 Set it in the shell, not in a dotenv file. The `startWithHoist` and `testWithHoist` scripts read it
-to install the checkout's dependencies, and Rsbuild's dotenv files do not reach them. A tool such as
-direnv or mise can set it per worktree.
+to install the checkout's dependencies, and Rsbuild's dotenv files do not reach them. Vitest does not
+load dotenv files either. A tool such as direnv or mise can set it per worktree.
 
 Inline mode fails fast when the path holds no hoist-react checkout. The Rsbuild build banner shows
 the path and branch it builds from.
@@ -132,7 +132,8 @@ XH_INLINE_PACKAGES=@xh/hoist-chat-kit=$HOME/dev/hoist-chat-kit-worktrees/my-feat
 ```
 
 `readCliEnv()` maps the variable onto the `inlinePackages` option, and `configureVitest()` reads it
-too. An app config needs no change. Production builds ignore it, with a warning.
+too. An app config needs no change. Set it in the shell. A dotenv file reaches the build but not
+Vitest. Production builds ignore it, with a warning.
 
 A checkout installs its own dependencies, which hold a second copy of Hoist and React for its tests
 and type checks. Two copies of either break the app, so the build shares one copy of these with the
