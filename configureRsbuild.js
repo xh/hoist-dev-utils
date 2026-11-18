@@ -39,7 +39,13 @@ const {
     logMsg
 } = require('./lib/common');
 
-const {HOIST_SWC, resolveAppIdentity, resolveHoistPath, xhDefines} = require('./lib/hoistCompile');
+const {
+    HOIST_SWC,
+    hoistMinifyOptions,
+    resolveAppIdentity,
+    resolveHoistPath,
+    xhDefines
+} = require('./lib/hoistCompile');
 
 const {
     INLINE_PACKAGES_VAR,
@@ -550,16 +556,7 @@ async function configureRsbuild(env) {
                 js: prodBuild && minify,
                 css: prodBuild && minify,
                 jsOptions: {
-                    minimizerOptions: _.merge(
-                        {
-                            // Mangling renames local identifiers for meaningfully smaller bundles.
-                            // Function and class names are kept - relied upon for error messages,
-                            // logging, and debugging of deployed builds.
-                            compress: {keep_classnames: true, keep_fnames: true},
-                            mangle: {keep_classnames: true, keep_fnames: true}
-                        },
-                        minifyOptions
-                    )
+                    minimizerOptions: _.merge(hoistMinifyOptions(), minifyOptions)
                 }
             }
         },

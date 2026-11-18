@@ -26,6 +26,13 @@ savePrefix: '~'
 minimumReleaseAgeExclude:
     - '@xh/*'
 
+# Rspack 2.3.2 and 2.3.3 mangle wrongly with Hoist's minify options (see BLOCKED_RSPACK_VERSIONS in
+# lib/common.js). Rsbuild's `~2.3.x` range would resolve 2.3.3, so pin Rspack here to run this
+# repo's tests on a good release. Apps need the same pin in their own overrides. Remove both once a
+# fixed Rspack ships and `test/minify.test.js` passes on it.
+overrides:
+    '@rspack/core': 2.3.1
+
 # Keep pnpm-lock.yaml a single YAML document. By default pnpm 12 records the pinned pnpm version in
 # a leading lockfile document, and GitHub's dependency graph reads only that first document - so it
 # sees none of our real deps and Dependabot raises no security alerts. With `ignore`, pnpm runs

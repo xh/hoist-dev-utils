@@ -64,10 +64,11 @@ describe('checkHoistReactVersion', () => {
 describe('checkRspackVersion', () => {
     it('fails on a blocked version', () => {
         assert.throws(() => checkRspackVersion('2.3.2'), /@rspack\/core v2\.3\.2 is not supported/);
+        assert.throws(() => checkRspackVersion('2.3.3'), /"@rspack\/core": "2\.3\.1"/);
     });
 
     it('allows versions that are not blocked', () => {
-        for (const v of ['2.3.0', '2.3.1', '2.3.3']) {
+        for (const v of ['2.3.0', '2.3.1', '2.3.4']) {
             assert.doesNotThrow(() => checkRspackVersion(v));
         }
     });

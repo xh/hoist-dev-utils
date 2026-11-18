@@ -1,5 +1,26 @@
 # Changelog
 
+## 16.4.2 - 2026-11-18
+
+### 🐞 Bug Fixes
+
+* Builds and the dev server now fail fast on `@rspack/core` 2.3.3 as well as 2.3.2. Its minifier
+  can give a local variable the same name as a kept class name (web-infra-dev/rspack#16695). In
+  Highcharts this leaves every chart blank, with `Cannot access '...' before initialization`. The
+  fix is merged upstream but not yet released.
+* Rsbuild is pinned back to 2.3.1. Apps must pin `"@rspack/core": "2.3.1"` with a pnpm override,
+  because Rsbuild's `~2.3.x` range resolves Rspack 2.3.3. Restore the override if 16.4.1 led you to
+  remove it.
+
+### ⚙️ Technical
+
+* New `test/minify.test.js` runs both Rspack minifier bugs against the installed Rspack with
+  Hoist's minify options. Dev builds don't minify, so neither bug showed up before deploy.
+
+### 📚 Libraries
+
+* @rsbuild/core `2.3.3 → 2.3.1`
+
 ## 16.4.1 - 2026-11-18
 
 ### 🐞 Bug Fixes
@@ -8,6 +29,8 @@
   minifier bug that crashed production builds on load (#85). Apps should remove the
   `"@rspack/core": "2.3.0"` pnpm override that 16.3.0 advised. If the override stays, the app runs
   Rspack 2.3.0 under Rsbuild 2.3.3, which expects 2.3.3.
+* **Superseded:** Rspack 2.3.3 has a different minifier bug that breaks Highcharts. Don't use this
+  release - see 16.4.2.
 
 ### 📚 Libraries
 
