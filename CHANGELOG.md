@@ -1,5 +1,18 @@
 # Changelog
 
+## 16.4.1 - 2026-11-18
+
+### 🐞 Bug Fixes
+
+* Requires Rsbuild 2.3.3, which brings in `@rspack/core` 2.3.3. That release fixes the 2.3.2
+  minifier bug that crashed production builds on load (#85). Apps should remove the
+  `"@rspack/core": "2.3.0"` pnpm override that 16.3.0 advised. If the override stays, the app runs
+  Rspack 2.3.0 under Rsbuild 2.3.3, which expects 2.3.3.
+
+### 📚 Libraries
+
+* @rsbuild/core `2.3.0 → 2.3.3`
+
 ## 16.4.0 - 2026-11-16
 
 ### 🎁 New Features
