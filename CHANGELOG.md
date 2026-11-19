@@ -1,5 +1,21 @@
 # Changelog
 
+## 17.0.0-SNAPSHOT
+
+**Requires hoist-react >= 91**, up from 88 in v16. Upgrade both together.
+
+### 💥 Breaking Changes
+
+* **Requires hoist-react >= 91.** Builds against an earlier hoist-react fail fast. hoist-react 91
+  removes Blueprint, and this release no longer stubs Blueprint's icons, so an earlier hoist-react
+  would bundle the full `@blueprintjs/icons` set (about 0.5MB gzipped).
+* Removed the Blueprint icon stubs and the `loadAllBlueprintJsIcons` option. Remove
+  `loadAllBlueprintJsIcons` from `rsbuild.config.mjs`, which now logs it as an unknown option.
+
+### ⚙️ Technical
+
+* Builds against hoist-react 91 no longer log `Could not resolve @blueprintjs/icons`.
+
 ## 16.5.0 - 2026-11-18
 
 ### 🎁 New Features

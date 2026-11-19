@@ -49,8 +49,7 @@ Two config modules over a small shared core:
   any inline mode. It sends React and the other shared packages imported from a checkout's
   dependencies to the app's copies.
 - **`lib/common.js`** - bundler-agnostic helpers (version checks, entry discovery, CHANGELOG
-  parsing, Blueprint icon stubs, manifest content, logging). Nothing in here may touch a bundler
-  API.
+  parsing, manifest content, logging). Nothing in here may touch a bundler API.
 - **`lib/HoistManifestPlugin.js`** and **`lib/HoistCompressionPlugin.js`** - small Rspack plugins
   emitting the per-app `manifest.json` and the pre-compressed `.br` / `.gz` asset copies. The
   compression plugin stands in for `compression-webpack-plugin`, which declares webpack as a
@@ -73,10 +72,6 @@ Key behaviors:
 **`static/`** contains assets bundled with the package:
 - `index.html` — Template for the per-app index.html, rendered by Rsbuild's html-rspack-plugin via
   a flat set of template parameters
-
-BlueprintJS icon stubs (which strip the ~700-icon set down to the icons Hoist actually uses) are
-generated at build time by `generateBlueprintIconStubs()` in `lib/common.js` and swapped in
-via `rspack.NormalModuleReplacementPlugin` - apps opt out with `env.loadAllBlueprintJsIcons`.
 
 ## Development
 

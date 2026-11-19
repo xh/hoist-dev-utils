@@ -52,11 +52,11 @@ describe('isVersionBelow', () => {
 describe('checkHoistReactVersion', () => {
     it('fails the build below the floor, except for an inline checkout', () => {
         assert.throws(
-            () => checkHoistReactVersion({version: '87.0.0'}, false),
+            () => checkHoistReactVersion({version: '90.2.0'}, false),
             /requires hoist-react/
         );
-        assert.doesNotThrow(() => checkHoistReactVersion({version: '87.0.0'}, true));
-        assert.doesNotThrow(() => checkHoistReactVersion({version: '88.0.0'}, false));
+        assert.doesNotThrow(() => checkHoistReactVersion({version: '90.2.0'}, true));
+        assert.doesNotThrow(() => checkHoistReactVersion({version: '91.0.0-SNAPSHOT'}, false));
         assert.doesNotThrow(() => checkHoistReactVersion({version: 'NOT_FOUND'}, false));
     });
 });
