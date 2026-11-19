@@ -129,11 +129,6 @@ declare namespace configureRsbuild {
          * they use as devDependencies of the app.
          */
         extraModuleRules?: Record<string, any>[];
-        /**
-         * True to load all BlueprintJs icons. Default false loads only the icons Hoist React
-         * needs, for a much smaller bundle.
-         */
-        loadAllBlueprintJsIcons?: boolean;
         /** Root path from which the app will be served, used as the base path for static files. */
         contextRoot?: string;
         /**

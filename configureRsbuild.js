@@ -29,8 +29,6 @@ const {
     discoverClientApps,
     manifestContent,
     fileHash,
-    blueprintIconModulePatterns,
-    generateBlueprintIconStubs,
     safeRealpath,
     gitBranch,
     parseFlag,
@@ -148,8 +146,6 @@ const hoistReactPkg = resolveAppPackage('@xh/hoist', basePath),
  * @param {(boolean|string)} [env.sourceMaps=true] - control sourceMap generation. Set to `true` to enable defaults
  *      specific to dev vs. prod builds, `false` to disable source maps entirely, special string `'devOnly'` to enable
  *      default for dev and disable in prod, or any other valid Rspack `devtool` string to specify a mode directly.
- * @param {boolean} [env.loadAllBlueprintJsIcons=false] - false to only load the BlueprintJs icons required by Hoist
- *      React, resulting in a much smaller bundle size. Set to true if your app wishes to access all the BP icons.
  * @param {boolean} [env.minify=true] - false to skip JS/CSS minification in production builds - for diagnosing
  *      built-output issues against readable code. Build output is otherwise identical to a minified build.
  * @param {boolean|Object} [env.buildCache=false] - true to enable Rspack's persistent build cache, which reuses
@@ -318,12 +314,6 @@ async function configureRsbuild(env) {
         favicon,
         copyPublicAssets
     );
-
-    // Generate lightweight stub modules for Blueprint icons, unless app opts into the full set.
-    const loadAllBlueprintJsIcons = parseFlag(env.loadAllBlueprintJsIcons, false) === true,
-        bpIconStubs = loadAllBlueprintJsIcons
-            ? null
-            : generateBlueprintIconStubs(basePath, hoistPath);
 
     // Inline mode: alias each shared name to the one copy every importer gets - each checkout,
     // hoist-react's included, plus their peers and the libraries hoist-react must share with the
@@ -770,18 +760,6 @@ async function configureRsbuild(env) {
 
                 appendPlugins(
                     _.compact([
-                        // Load only the BlueprintJS icons used by Hoist-React components - swap the
-                        // icon package entry and path barrels for generated stubs.
-                        ...(bpIconStubs
-                            ? ['entry', 'paths16', 'paths20'].map(
-                                  key =>
-                                      new rspack.NormalModuleReplacementPlugin(
-                                          blueprintIconModulePatterns[key],
-                                          bpIconStubs[key]
-                                      )
-                              )
-                            : []),
-
                         // Avoid bundling all moment.js locales and blowing up the bundle size
                         // See https://github.com/jmblog/how-to-optimize-momentjs-with-webpack
                         new rspack.IgnorePlugin({
