@@ -1,5 +1,15 @@
 # Changelog
 
+## 16.5.0 - 2026-11-18
+
+### 🎁 New Features
+
+* New `devFastRefresh` option (`XH_DEV_FAST_REFRESH`). Set it to `false` to turn off React Fast
+  Refresh. CSS edits still hot-swap, but every JS/TS edit reloads the page, so no component keeps
+  stale state across an edit.
+* New `devHmr` option (`XH_DEV_HMR`). Set it to `false` to turn off hot module replacement, CSS
+  included, so every edit reloads the page.
+
 ## 16.4.2 - 2026-11-18
 
 ### 🐞 Bug Fixes

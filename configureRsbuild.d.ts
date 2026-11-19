@@ -194,6 +194,16 @@ declare namespace configureRsbuild {
          * Default true. Dev-mode only.
          */
         devLiveReload?: boolean;
+        /**
+         * False to turn off React Fast Refresh. CSS edits still hot-swap, but every JS/TS edit
+         * reloads the page. Default true. Dev-mode only.
+         */
+        devFastRefresh?: boolean;
+        /**
+         * False to turn off hot module replacement, CSS included, so every edit reloads the page.
+         * Implies `devFastRefresh: false`. Default true. Dev-mode only.
+         */
+        devHmr?: boolean;
         /** Options to spread onto the defaults for Rsbuild's `server` config. Dev-mode only. */
         devServerOptions?: Record<string, any>;
     }

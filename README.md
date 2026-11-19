@@ -70,6 +70,12 @@ Run with `rsbuild dev` / `rsbuild build --env-mode prod`. Build-time options rea
    `startWith...` script variants. Only `PUBLIC_`-prefixed variables are exposed to client code;
    `XH_*` values stay build-time.
 
+In dev, CSS edits hot-swap and React Fast Refresh hot-swaps components. Two variables change this
+for a developer who prefers full reloads:
+
+* `XH_DEV_FAST_REFRESH=false` - every JS/TS edit reloads the page. CSS edits still hot-swap.
+* `XH_DEV_HMR=false` - every edit reloads the page, CSS included.
+
 Typical `package.json` scripts:
 
 ```json

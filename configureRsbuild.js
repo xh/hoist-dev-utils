@@ -171,6 +171,12 @@ const hoistReactPkg = resolveAppPackage('@xh/hoist', basePath),
  *      cannot be hot-swapped (the equivalent of webpack-dev-server's `--no-live-reload`). Hot-swaps of CSS and
  *      Fast-Refresh-eligible components still apply; other edits are rebuilt but not applied until a manual
  *      reload. Dev-mode only.
+ * @param {boolean} [env.devFastRefresh=true] - false to turn off React Fast Refresh. CSS edits still
+ *      hot-swap, but every JS/TS edit reloads the page, so no component keeps stale state across an
+ *      edit. Dev-mode only.
+ * @param {boolean} [env.devHmr=true] - false to turn off hot module replacement entirely, CSS included.
+ *      Every edit reloads the page. Implies `devFastRefresh: false`. With `devLiveReload: false` as
+ *      well, edits reach the page only on a manual reload. Dev-mode only.
  * @param {(boolean|Object)} [env.devHttps] - `true` to run the dev server locally over SSL with an auto-generated
  *      self-signed cert (browser will warn). Or provide an object of Node `https.createServer` options to enable SSL
  *      while specifying a custom cert/key. Default `false` runs locally over HTTP only. Dev-mode only.
@@ -195,6 +201,8 @@ async function configureRsbuild(env) {
         minify = parseFlag(env.minify, true) === true,
         devClientOverlay = env.devClientOverlay ?? {errors: true, runtimeErrors: false},
         devLiveReload = parseFlag(env.devLiveReload, true) === true,
+        devHmr = parseFlag(env.devHmr, true) === true,
+        devFastRefresh = devHmr && parseFlag(env.devFastRefresh, true) === true,
         devHost = env.devHost ? env.devHost.toLowerCase() : 'localhost',
         devHttps = prodBuild ? null : _.isPlainObject(env.devHttps) ? env.devHttps : !!env.devHttps,
         devGrailsPort = env.devGrailsPort || 8080,
@@ -418,6 +426,8 @@ async function configureRsbuild(env) {
                 swcReactOptions: {runtime: HOIST_SWC.reactRuntime},
                 // Rsbuild's React-specific vendor chunking is tied to its own split presets.
                 splitChunks: false,
+                // Off, JS edits fall back to a full reload while CSS still hot-swaps.
+                fastRefresh: devFastRefresh,
                 reactRefreshOptions: {
                     // Refresh app source, hoist-react (raw TS in node_modules) and custom packages.
                     include: [srcPath, hoistPath, ...inlineSrcPaths, ...extraIncludePaths],
@@ -604,6 +614,9 @@ async function configureRsbuild(env) {
             ? undefined
             : {
                   progressBar: true,
+                  // Off, every edit (CSS included) falls back to `liveReload`. Also turns off Fast
+                  // Refresh, which needs HMR.
+                  hmr: devHmr,
                   // Full-page fallback when an update cannot be hot-applied (models, element-factory
                   // modules) - off for webpack-dev-server's `--no-live-reload` workflow.
                   liveReload: devLiveReload,
@@ -909,6 +922,8 @@ function readCliEnv(processEnv = process.env) {
         XH_DEV_GRAILS_PORT: 'devGrailsPort',
         XH_DEV_PORT: 'devWebpackPort',
         XH_DEV_LIVE_RELOAD: 'devLiveReload',
+        XH_DEV_FAST_REFRESH: 'devFastRefresh',
+        XH_DEV_HMR: 'devHmr',
         XH_LOG_LEVEL: 'logLevel'
     };
     const ret = {};
