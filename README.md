@@ -76,6 +76,9 @@ for a developer who prefers full reloads:
 * `XH_DEV_FAST_REFRESH=false` - every JS/TS edit reloads the page. CSS edits still hot-swap.
 * `XH_DEV_HMR=false` - every edit reloads the page, CSS included.
 
+Set `XH_DEV_OPEN_BROWSER=false` to stop the dev server opening a browser tab on start. The bare
+root `/` still redirects to `devServerOpenPage`.
+
 Typical `package.json` scripts:
 
 ```json
