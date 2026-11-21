@@ -380,6 +380,11 @@ The `xh-changelog` command in this package does the work. It runs on plain Node 
 dependencies, from anywhere inside the repo. In an app, run it from `client-app/`. It works on the
 nearest `CHANGELOG.md` above the current directory.
 
+A repo without a `package.json`, such as hoist-core, can still use it. CI runs the
+`check-changelog` action, which needs no install. Locally, run
+`node <hoist-dev-utils checkout>/bin/xh-changelog.js`, or `npx -p @xh/hoist-dev-utils xh-changelog`,
+which downloads the whole package.
+
 ### Write a fragment
 
 A fragment is the body of a release without its `##` heading. It uses the same `###` sections and
