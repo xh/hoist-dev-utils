@@ -35,12 +35,12 @@ importers:
       '@xh/eslint-config':
         specifier: ^8.1.0
         version: 8.1.0(supports-color@8.1.1)
-      changelog-parser:
-        specifier: ~4.1.0
-        version: 4.1.0
       lodash:
         specifier: ^4.18.1
         version: 4.18.1
+      remove-markdown:
+        specifier: ~0.6.4
+        version: 0.6.4
       sass-embedded:
         specifier: ^1.108.2
         version: 1.108.2
@@ -51,6 +51,9 @@ importers:
         specifier: ^5.10.0
         version: 5.10.0
     devDependencies:
+      changelog-parser:
+        specifier: 4.1.0
+        version: 4.1.0
       prettier:
         specifier: ^3.10.1
         version: 3.10.1
