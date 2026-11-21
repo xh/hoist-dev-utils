@@ -362,6 +362,23 @@ describe('xh-changelog CLI', () => {
         assert.equal(cli('release', '1.2.0', '--allow-breaking'), 0);
     });
 
+    it('names a new unreleased heading for the package version in a snapshot build', () => {
+        fs.writeFileSync(
+            path.join(root, 'CHANGELOG.md'),
+            CHANGELOG.replace('## 2.0.0-SNAPSHOT - unreleased\n\n', '')
+        );
+        fs.writeFileSync(path.join(root, 'client-app/package.json'), '{"version": "2.0-SNAPSHOT"}');
+        cli('init');
+        write('a.md', '### 🎁 New Features\n\n* Added A.\n');
+        assert.equal(cli('snapshot'), 0);
+        assert.match(changelog(), /## 2\.0-SNAPSHOT - unreleased\n\n### 🎁 New Features/);
+    });
+
+    it('fails --require when it cannot diff against the base', () => {
+        cli('init');
+        assert.equal(cli('check', '--base', 'no-such-ref', '--require'), 1);
+    });
+
     it('writes fragments under the unreleased heading for a snapshot build', () => {
         cli('init');
         write('a.md', '### 🎁 New Features\n\n* Added A.\n');
@@ -408,5 +425,71 @@ describe('app changelog JSON', () => {
         const [top] = (await build()).versions;
         assert.equal(top.version, '2.0.0-SNAPSHOT');
         assert.deepEqual(top.sections, []);
+    });
+});
+
+describe('review regressions', () => {
+    it('keeps a code block with the bullet it follows', () => {
+        const {markdown} = assembleBody(
+            [
+                fragment('### 🎁 New Features\n\n* First.\n'),
+                fragment(
+                    '### 🎁 New Features\n\n* Renamed `Foo`. Update calls:\n\n```ts\nbar();\n```\n'
+                )
+            ],
+            CONFIG
+        );
+        assert.equal(
+            markdown,
+            '### 🎁 New Features\n\n* First.\n* Renamed `Foo`. Update calls:\n\n```ts\nbar();\n```'
+        );
+    });
+
+    it('keeps topic groups from legacy entries', () => {
+        const {markdown} = assembleBody(
+            [fragment('### 💥 Breaking Changes\n\n* Loose.\n\n#### Grid\n\n* Grouped.\n')],
+            CONFIG
+        );
+        assert.equal(markdown, '### 💥 Breaking Changes\n\n* Loose.\n\n#### Grid\n\n* Grouped.');
+    });
+
+    it('merges library bumps only in a Libraries section', () => {
+        const {markdown} = assembleBody(
+            [fragment('### ⚙️ Technical\n\n* a `1.0 → 1.1`\n* a `1.1 → 1.2`\n')],
+            CONFIG
+        );
+        assert.equal(markdown, '### ⚙️ Technical\n\n* a `1.0 → 1.1`\n* a `1.1 → 1.2`');
+    });
+
+    it('refuses a release that matches an existing one in another form', () => {
+        assert.throws(
+            () => insertRelease(CHANGELOG, {heading: '## 1.1', body: '', version: '1.1'}),
+            /already has/
+        );
+    });
+
+    it('keeps CRLF line endings', () => {
+        const crlf = CHANGELOG.replace(/\n/g, '\r\n'),
+            {text} = insertRelease(crlf, {
+                heading: '## 1.2.0',
+                body: '### T\n\n* x.',
+                version: '1.2.0'
+            });
+        assert.equal(text.split('\n').length, text.split('\r\n').length);
+    });
+
+    it('ignores a byte order mark and a comment marker inside a code span', () => {
+        const {sections} = parseFragment(
+            '\uFEFF### 🎁 New Features\n\n* Uses `<!--` here.\n* Two.\n'
+        );
+        assert.equal(sections[0].title, '🎁 New Features');
+        assert.equal(sections[0].blocks.length, 2);
+    });
+
+    it('clears empty section headings left under the unreleased heading', () => {
+        const legacy = CHANGELOG.replace('unreleased\n', 'unreleased\n\n### 🎁 New Features\n');
+        const {fragment, text} = extractUnreleased(legacy);
+        assert.equal(fragment, null);
+        assert.equal(parseChangelog(text).releases[0].sections.length, 0);
     });
 });

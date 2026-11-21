@@ -449,9 +449,11 @@ suffix, a `####` group, an empty fragment or bullet, and entries written straigh
 
 Run `xh-changelog release 92.1.0`, review and edit the new block in `CHANGELOG.md`, then commit.
 
-- Sections follow the config order. Within a section, prose comes first, then bullets, in fragment
-  file name order. Duplicate bullets are dropped, and two bumps of one library in the `Libraries`
-  section merge into one bullet.
+- Sections follow the config order. Within a section, bullets follow fragment file name order.
+  Prose that opens a fragment's section goes above the bullets. Prose that follows a bullet, such
+  as a code block, stays with that bullet.
+- Duplicate bullets are dropped. Two bumps of one library in a `Libraries` section merge into one
+  bullet.
 - The block goes above the newest release with a lower version, so a hotfix to an older line lands
   in version order.
 - A `Breaking Changes` section blocks a release that is not a major (`N.0.0` or `N.0`), unless you

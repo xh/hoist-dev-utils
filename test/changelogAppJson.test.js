@@ -62,8 +62,8 @@ describe('buildAppChangelogJson', () => {
         ),
         byVersion = v => json.versions.find(it => it.version === v);
 
-    it('reads a two-part version', () => {
-        assert.equal(json.versions[0].version, '5.0');
+    it('reads a two-part unreleased version as a snapshot, so it cannot be marked read', () => {
+        assert.equal(json.versions[0].version, '5.0-SNAPSHOT');
     });
 
     it('lists sections with entries, as markdown without the leading marker', () => {
