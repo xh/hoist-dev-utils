@@ -27,6 +27,8 @@ const {
     writeChangelogJson,
     checkNoJsxFiles,
     discoverClientApps,
+    appRouteRewrites,
+    pathPrefixFilter,
     manifestContent,
     fileHash,
     blueprintIconModulePatterns,
@@ -648,12 +650,7 @@ async function configureRsbuild(env) {
                       https: _.isPlainObject(devHttps) ? devHttps : undefined,
                       open: env.devServerOpenPage ? [env.devServerOpenPage] : false,
                       // Support HTML5 history routes for apps, with /appName/ as the base route for each
-                      historyApiFallback: {
-                          rewrites: clientAppNames.map(appName => ({
-                              from: new RegExp(`^/${appName}`),
-                              to: `/${appName}/index.html`
-                          }))
-                      },
+                      historyApiFallback: {rewrites: appRouteRewrites(clientAppNames)},
                       // Redirect the bare root to a default app, as the `location = /` block in
                       // Hoist's nginx configs does. Runs ahead of Rsbuild's own middleware.
                       setup: devRootRedirect
@@ -675,7 +672,7 @@ async function configureRsbuild(env) {
                       proxy: baseUrl.startsWith('/')
                           ? [
                                 {
-                                    pathFilter: baseUrl.slice(0, -1),
+                                    pathFilter: pathPrefixFilter(baseUrl.slice(0, -1)),
                                     target: `http://${devHost}:${devGrailsPort}`,
                                     pathRewrite: {[`^${baseUrl.slice(0, -1)}`]: ''},
                                     changeOrigin: true,

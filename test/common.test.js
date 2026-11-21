@@ -13,11 +13,13 @@ const assert = require('node:assert/strict'),
     {after, describe, it} = require('node:test');
 
 const {
+    appRouteRewrites,
     checkHoistReactVersion,
     checkRspackVersion,
     discoverClientApps,
     gitBranch,
-    isVersionBelow
+    isVersionBelow,
+    pathPrefixFilter
 } = require('../lib/common');
 
 describe('discoverClientApps', () => {
@@ -87,5 +89,34 @@ describe('gitBranch', () => {
         } finally {
             fs.rmSync(dir, {recursive: true, force: true});
         }
+    });
+});
+
+describe('appRouteRewrites', () => {
+    // As Rsbuild's history fallback applies them: the first rewrite whose pattern matches wins.
+    const target = (rewrites, pathname) => rewrites.find(it => it.from.test(pathname))?.to ?? null;
+
+    it("sends an app's routes to its index.html, but not another app's whose name it begins", () => {
+        const rewrites = appRouteRewrites(['portfolio', 'portfolioBlueprints']);
+        assert.equal(target(rewrites, '/portfolio'), '/portfolio/index.html');
+        assert.equal(target(rewrites, '/portfolio/'), '/portfolio/index.html');
+        assert.equal(target(rewrites, '/portfolio/positions/AAPL'), '/portfolio/index.html');
+        assert.equal(target(rewrites, '/portfolioBlueprints'), '/portfolioBlueprints/index.html');
+        assert.equal(
+            target(rewrites, '/portfolioBlueprints/one-grid'),
+            '/portfolioBlueprints/index.html'
+        );
+        assert.equal(target(rewrites, '/portfolios'), null);
+    });
+});
+
+describe('pathPrefixFilter', () => {
+    it('matches the prefix and the paths below it, not a path that only begins with it', () => {
+        const filter = pathPrefixFilter('/api');
+        assert.ok(filter('/api'));
+        assert.ok(filter('/api/xh/version'));
+        assert.ok(!filter('/apiDocs'));
+        assert.ok(!filter('/apiDocs/index.html'));
+        assert.ok(!filter('/app'));
     });
 });
