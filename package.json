@@ -10,7 +10,11 @@
     "bugs": "https://github.com/xh/hoist-dev-utils/issues",
     "author": "Extremely Heavy Industries, Inc.",
     "license": "Apache-2.0",
+    "bin": {
+        "xh-changelog": "bin/xh-changelog.js"
+    },
     "files": [
+        "bin/**/*",
         "configureRsbuild.js",
         "configureRsbuild.d.ts",
         "configureVitest.js",
