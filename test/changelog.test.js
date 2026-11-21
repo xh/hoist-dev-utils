@@ -373,3 +373,40 @@ describe('xh-changelog CLI', () => {
         assert.ok(fs.existsSync(path.join(root, 'changelog.d/a.md')));
     });
 });
+
+describe('app changelog JSON', () => {
+    const {writeChangelogJson} = require('../lib/common');
+    let root;
+    beforeEach(() => {
+        root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'xh-app-changelog-')));
+        fs.mkdirSync(path.join(root, 'client-app/node_modules'), {recursive: true});
+        fs.mkdirSync(path.join(root, 'changelog.d'));
+        fs.writeFileSync(path.join(root, 'CHANGELOG.md'), CHANGELOG);
+    });
+    afterEach(() => fs.rmSync(root, {recursive: true, force: true}));
+
+    const build = async () =>
+        JSON.parse(
+            fs.readFileSync(
+                await writeChangelogJson(path.join(root, 'client-app'), true, '2.0.0-SNAPSHOT'),
+                'utf8'
+            )
+        );
+
+    it('shows unreleased fragments under the unreleased heading', async () => {
+        fs.writeFileSync(
+            path.join(root, 'changelog.d/a.md'),
+            '### 🎁 New Features\n\n* Added a wrapped\n  entry.\n'
+        );
+        const [top, next] = (await build()).versions;
+        assert.equal(top.version, '2.0.0-SNAPSHOT');
+        assert.deepEqual(top.parsed['🎁 New Features'], ['Added a wrapped entry.']);
+        assert.equal(next.version, '1.1.0');
+    });
+
+    it('leaves an empty unreleased heading when there are no fragments', async () => {
+        const [top] = (await build()).versions;
+        assert.equal(top.version, '2.0.0-SNAPSHOT');
+        assert.deepEqual(top.sections, []);
+    });
+});

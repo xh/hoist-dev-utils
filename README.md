@@ -461,9 +461,24 @@ the next release lists it twice.
 
 ### Snapshot builds
 
-A library's published snapshot should show what it holds. Run `xh-changelog snapshot --version
-<snapshot version>` in the snapshot publish job, after checkout and before `npm publish`, so the
-package's `CHANGELOG.md` lists the unreleased entries.
+A snapshot should show what it holds.
+
+- **Apps** need no setup. The build reads the fragments and shows them in the in-app release notes
+  under the unreleased heading, or under the app version if `CHANGELOG.md` has no unreleased
+  heading.
+- **Libraries** run `xh-changelog snapshot` in the snapshot publish job, after checkout and before
+  `npm publish`. It writes the fragments under the unreleased heading of the package's
+  `CHANGELOG.md`.
+
+### In-app release notes
+
+The build turns an app's `CHANGELOG.md` into the JSON that hoist-react's `ChangelogService` shows
+in-app. It reads the file with the same parser as `xh-changelog`, so a bullet keeps all of its
+lines. App changelogs can wrap bullets and nest sub-bullets the way library changelogs do.
+
+The JSON keeps the shape that older hoist-react versions read: plain-text items in `parsed`, with
+wrapped lines joined and each sub-bullet appended after a ` • `. It also adds a `sections` list
+of markdown items, which hoist-react 92 and later render with code spans, links and nested lists.
 
 ## Shared GitHub Actions
 
