@@ -33,13 +33,14 @@
         "@types/react": "^19.3.0",
         "@types/react-dom": "^19.3.0",
         "@xh/eslint-config": "^8.1.0",
-        "changelog-parser": "~4.1.0",
         "lodash": "^4.18.1",
+        "remove-markdown": "~0.6.4",
         "sass-embedded": "^1.108.2",
         "semver": "^7.8.5",
         "type-fest": "^5.10.0"
     },
     "devDependencies": {
+        "changelog-parser": "4.1.0",
         "prettier": "^3.10.1"
     },
     "packageManager": "pnpm@12.10.1+sha512.ba40a37eb1a370d60fea8c4cf1d364c13bcccef518e98ad2bcee954f539d38da37458e58261a3fa55e06523450ea0ffff9f497b135be41f2c15c1642bacace6c"
