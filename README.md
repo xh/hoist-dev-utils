@@ -364,6 +364,107 @@ This example file:
 If required, rules and other settings extended from this base configuration can be overridden at the
 app level.
 
+## Changelog fragments
+
+Hoist libraries and apps keep a curated `CHANGELOG.md`. When every pull request edits the top of
+that one file, two things go wrong. Parallel pull requests conflict over it. And a pull request
+that merges after a release can put its entries under the version that just shipped, because git
+merges the lines into the renamed release block without a conflict.
+
+Changelog fragments fix both. Each pull request writes its entries in a new file in `changelog.d/`,
+next to `CHANGELOG.md`. A release assembles the fragments into `CHANGELOG.md` under the real version
+number and deletes them. People still write and review every entry, and still curate each release
+in `CHANGELOG.md` before they commit it.
+
+The `xh-changelog` command in this package does the work. It runs on plain Node with no other
+dependencies, from anywhere inside the repo. In an app, run it from `client-app/`. It works on the
+nearest `CHANGELOG.md` above the current directory.
+
+### Write a fragment
+
+A fragment is the body of a release without its `##` heading. It uses the same `###` sections and
+bullets as `CHANGELOG.md`. Bullets can wrap, and they can hold sub-bullets.
+
+```markdown
+### 🎁 New Features
+
+* Added `Callout.dismissible`, which shows a close button. The dismissed state persists with
+  `persistWith`.
+
+### 🐞 Bug Fixes
+
+* Fixed `GridModel` losing its sort when its store reloaded with a filter applied.
+```
+
+Run `xh-changelog new` to create `changelog.d/<branch>.md` with the valid sections listed in a
+comment, or create the file yourself with any name. A pull request can add more than one fragment,
+and it can edit a fragment that another pull request added.
+
+Fragments hold entries only. Leave release-level notes out of them: an upgrade difficulty rating in
+the `💥 Breaking Changes` heading, an upgrade-notes link, and `####` topic groups. Add those when you
+curate the release.
+
+### Commands
+
+| Command | What it does |
+|---|---|
+| `xh-changelog new [name]` | Creates `changelog.d/<name>.md`. The name defaults to the git branch. |
+| `xh-changelog check` | Validates every fragment, and checks that `CHANGELOG.md` has no entries under its unreleased heading. Add `--base <ref>` to warn when the branch adds no fragment, and `--require` to make that an error. |
+| `xh-changelog preview` | Prints the next release as it would be assembled. |
+| `xh-changelog release <version>` | Assembles the fragments into `CHANGELOG.md` and deletes them. Takes `--date`, `--dry-run` and `--allow-breaking`. |
+| `xh-changelog snapshot [--version <v>]` | Writes the assembled fragments under the unreleased heading, for a snapshot build. Never commit the result. |
+| `xh-changelog init` | Sets up `changelog.d/` in a repo. |
+
+`check` fails on a version heading in a fragment, a section that is not in the config, a heading
+suffix, a `####` group, an empty fragment or bullet, and entries written straight into
+`CHANGELOG.md`. It warns on lines longer than `maxLineLength`.
+
+### Set up a repo
+
+1. Run `xh-changelog init`. It creates `changelog.d/config.json` and `changelog.d/README.md`. If
+   `CHANGELOG.md` has entries under an unreleased heading, it moves them into
+   `changelog.d/unreleased.md`.
+2. Check the section list and order in `changelog.d/config.json`. `init` infers them from recent
+   releases.
+3. Keep a bare unreleased heading, such as `## 92.0.0-SNAPSHOT - unreleased`, at the top of
+   `CHANGELOG.md`. It shows the version under development. Nothing is written under it.
+4. Add the check to CI. See `check-changelog` in [`.github/README.md`](.github/README.md).
+5. Point your contributor docs, `CLAUDE.md` and pull request template at `changelog.d/`.
+
+`changelog.d/config.json` takes these keys:
+
+| Key | Default | Description |
+|---|---|---|
+| `sections` | Inferred from recent releases | `###` section titles, in release order. Fragments may use only these. |
+| `headingFormat` | `## {version} - {date}` | Release heading. `init` uses `## v{version} - {date}` if the latest release heading has a `v`. |
+| `maxLineLength` | None | Warn on longer fragment lines. Libraries that hard-wrap set `100`. |
+| `allowOtherSections` | `false` | Accept sections that are not in `sections`, for apps that add one-off sections. They go after the listed sections. |
+
+### Release
+
+Run `xh-changelog release 92.1.0`, review and edit the new block in `CHANGELOG.md`, then commit.
+
+- Sections follow the config order. Within a section, prose comes first, then bullets, in fragment
+  file name order. Duplicate bullets are dropped, and two bumps of one library in the `Libraries`
+  section merge into one bullet.
+- The block goes above the newest release with a lower version, so a hotfix to an older line lands
+  in version order.
+- A `Breaking Changes` section blocks a release that is not a major (`N.0.0` or `N.0`), unless you
+  pass `--allow-breaking`.
+- Releasing the major that the unreleased heading names rolls the heading forward, for example
+  from `92.0.0-SNAPSHOT` to `93.0.0-SNAPSHOT`.
+- Entries still written under the unreleased heading join the release, with a warning.
+
+For a hotfix on a release branch, add the fragment there and run `release`. When you merge the
+hotfix back, delete the matching fragment on `develop` if the same fix landed there too. Otherwise
+the next release lists it twice.
+
+### Snapshot builds
+
+A library's published snapshot should show what it holds. Run `xh-changelog snapshot --version
+<snapshot version>` in the snapshot publish job, after checkout and before `npm publish`, so the
+package's `CHANGELOG.md` lists the unreleased entries.
+
 ## Shared GitHub Actions
 
 This repository provides a set of reusable [composite GitHub Actions](https://docs.github.com/en/actions/sharing-automations/creating-actions/creating-a-composite-action)
@@ -381,6 +482,8 @@ Available actions under `.github/actions/`:
   `gradle.properties` for Java/Grails projects.
 * **`create-tag-and-github-release`** — Tags a commit, pushes the tag, and creates a GitHub Release
   with auto-generated notes.
+* **`check-changelog`** - Validates the changelog fragments a pull request adds. See
+  [Changelog fragments](#changelog-fragments).
 
 Because this is a public repository, these actions can be referenced by any GitHub repository.
 They are used by Hoist ecosystem projects and are available to any Hoist application or library.

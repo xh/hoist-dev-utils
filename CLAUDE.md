@@ -141,12 +141,18 @@ requirements are unchanged.
 
 ### Changelog
 
-All notable changes are documented in `CHANGELOG.md`. The topmost entry covers unreleased work and
-uses the SNAPSHOT version as its heading with no date (e.g. `## v12.0.0-SNAPSHOT`). The actual
-release version may differ. At release time, the heading is updated to the final version with a date
-(e.g. `## v11.2.0 - 2026-03-15`).
+All notable changes are documented in `CHANGELOG.md`, but new entries never go there directly.
+Each change adds a fragment in `changelog.d/` - see the README section "Changelog fragments", which
+documents the `xh-changelog` command this package ships. In short:
 
-Entries use categorized sections with emoji headings as needed:
+- Write `changelog.d/<branch>.md` with the same `###` sections and bullets as `CHANGELOG.md`, and
+  no version heading. `pnpm changelog new` creates it. `pnpm changelog check` validates it.
+- `CHANGELOG.md` keeps a bare `## <next-major>.0.0-SNAPSHOT - unreleased` heading at the top. Never
+  write entries under it.
+- At release, `pnpm changelog release <version>` assembles the fragments into `CHANGELOG.md` and
+  deletes them. Review and edit the result before you commit it.
+
+Fragments use these sections, as needed, in this order (`changelog.d/config.json`):
 - `### 💥 Breaking Changes` — incompatible changes, note required hoist-react version
 - `### 🎁 New Features` — new configureRsbuild options or capabilities
 - `### ⚙️ Technical` — internal changes, refactors, config adjustments

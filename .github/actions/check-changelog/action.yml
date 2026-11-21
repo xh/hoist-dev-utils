@@ -1,0 +1,47 @@
+# Check Changelog - Reusable composite action that validates changelog fragments on a pull request.
+#
+# Runs `xh-changelog check` from this repository's checkout of hoist-dev-utils, with plain Node and
+# no install, so it works in npm projects, Hoist apps and Gradle projects alike. It fails on a
+# malformed fragment or on entries written straight into CHANGELOG.md, and warns when the pull
+# request adds no fragment at all.
+#
+# Prerequisites:
+#   - The calling workflow must check out with `fetch-depth: 0`, so the PR's base commit is present.
+#   - Node is on the PATH (it is on GitHub-hosted runners).
+
+name: Check Changelog
+description: Validates changelog fragments in changelog.d/ and warns when a pull request adds none.
+
+inputs:
+    base:
+        description: 'Ref or SHA to diff against when looking for a new fragment. Defaults to the pull request base.'
+        required: false
+        default: ''
+    require:
+        description: 'Set to true to fail, not warn, when the pull request adds no fragment.'
+        required: false
+        default: 'false'
+    skip-label:
+        description: 'A pull request with this label is not expected to add a fragment.'
+        required: false
+        default: 'no-changelog'
+    working-directory:
+        description: 'Directory to run from. The check uses the nearest CHANGELOG.md at or above it.'
+        required: false
+        default: '.'
+
+runs:
+    using: composite
+    steps:
+        - name: Check changelog fragments
+          shell: bash
+          working-directory: ${{ inputs.working-directory }}
+          env:
+              BASE: ${{ inputs.base || github.event.pull_request.base.sha }}
+              REQUIRE: ${{ inputs.require }}
+              SKIP: ${{ contains(github.event.pull_request.labels.*.name, inputs.skip-label) }}
+          run: |
+              args=(check)
+              if [[ -n "$BASE" && "$SKIP" != "true" ]]; then args+=(--base "$BASE"); fi
+              if [[ "$REQUIRE" == "true" ]]; then args+=(--require); fi
+              node "$GITHUB_ACTION_PATH/../../../bin/xh-changelog.js" "${args[@]}"

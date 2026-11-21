@@ -80,6 +80,41 @@ release notes scoped to the previous semver tag. A first release gets notes for 
   and expects tags in this format.
 - The `GH_TOKEN` environment variable must be set (typically `${{ secrets.GITHUB_TOKEN }}`).
 
+### `check-changelog`
+
+Validates the changelog fragments in `changelog.d/` on a pull request. It runs `xh-changelog check`
+from this repository with plain Node and no install, so it works for npm projects, Hoist apps and
+Gradle projects alike. See [Changelog fragments](../README.md#changelog-fragments).
+
+The check fails on a malformed fragment and on entries written straight into `CHANGELOG.md`. It
+warns, or fails with `require`, when the pull request adds or edits no fragment. A pull request with
+the `skip-label` label skips that last check.
+
+| Input | Required | Description |
+|---|---|---|
+| `base` | No | Ref to diff against (default: the pull request base) |
+| `require` | No | Fail, not warn, when no fragment is added (default: `false`) |
+| `skip-label` | No | Label that marks a pull request as needing no entry (default: `no-changelog`) |
+| `working-directory` | No | Where to run. The check uses the nearest `CHANGELOG.md` at or above it (default: `.`) |
+
+**Prerequisites:**
+- The calling workflow must check out with `fetch-depth: 0`, so the base commit is present.
+- To re-run when a label changes, trigger on `labeled` and `unlabeled` too:
+
+```yaml
+on:
+    pull_request:
+        types: [opened, synchronize, reopened, labeled, unlabeled]
+jobs:
+    check:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v6
+              with:
+                  fetch-depth: 0
+            - uses: xh/hoist-dev-utils/.github/actions/check-changelog@master
+```
+
 ## Supporting Scripts
 
 The `scripts/` directory contains shell scripts used internally by the composite actions:
@@ -102,6 +137,7 @@ The `workflows/` directory contains workflows for hoist-dev-utils' *own* CI/CD:
   `develop`. Uses `prepare-npm-snapshot-version`.
 - **`unitTestActions.yml`** — Runs unit tests for the shared actions and scripts on PRs that
   modify files under `.github/`.
+- **`changelog.yml`** - Runs `check-changelog` on every pull request.
 
 These workflows also serve as reference examples for how to integrate the shared actions, but are themselves dedicated 
 to actually building and releasing this library itself.

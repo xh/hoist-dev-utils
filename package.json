@@ -23,7 +23,8 @@
         "static/**/*"
     ],
     "scripts": {
-        "test": "node --test \"test/**/*.test.js\""
+        "test": "node --test \"test/**/*.test.js\"",
+        "changelog": "node bin/xh-changelog.js"
     },
     "engines": {
         "node": ">=22.15.0"
