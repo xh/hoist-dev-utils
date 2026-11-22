@@ -629,6 +629,17 @@ describe('xh-changelog init', () => {
         assert.match(read('.github/workflows/changelog.yml'), /check-changelog@master\n$/);
         assert.match(read('changelog.d/README.md'), /pnpm changelog add feature "Added/);
         assert.match(read('changelog.d/README.md'), /### 🎁 New Features/);
+        assert.match(read('changelog.d/README.md'), /Run it from `client-app\/`\./);
+        assert.doesNotMatch(read('changelog.d/README.md'), /Entry conventions/);
+    });
+
+    it("points the README at the repo's entry conventions", () => {
+        fs.writeFileSync(path.join(root, 'CLAUDE.md'), '# App\n\n## Changelog\n\nRules.\n');
+        cli('init');
+        assert.match(
+            read('changelog.d/README.md'),
+            /Entry conventions are in the "Changelog" section/
+        );
     });
 
     it('leaves an existing script and workflow alone, and skips the workflow with --no-ci', () => {
