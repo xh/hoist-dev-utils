@@ -53,6 +53,12 @@ jobs:
               version: ${{ inputs.version }}
               is-hotfix: ${{ inputs.is-hotfix }}
 
+        # Fails unless CHANGELOG.md holds this version and no changelog fragments are left.
+        - name: Check changelog
+          uses: ./.github/actions/check-changelog
+          with:
+              release: ${{ inputs.version }}
+
         # Installs the pnpm version pinned via the packageManager field in package.json.
         - name: Setup pnpm
           uses: pnpm/setup@v2

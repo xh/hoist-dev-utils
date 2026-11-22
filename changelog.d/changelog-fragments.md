@@ -10,7 +10,8 @@
     * `xh-changelog init` sets up a repo: the config, a README, a `changelog` package script and a
       GitHub workflow.
 * New `check-changelog` shared action, which runs `xh-changelog check` on pull requests. The job
-  summary shows the entries that the pull request adds.
+  summary shows the entries that the pull request adds. In a release build, pass `release` to fail
+  the build unless `CHANGELOG.md` holds the version and no fragments are left.
 * App builds show unreleased changelog fragments in the in-app release notes, under the version in
   development.
 * App release notes keep wrapped bullets and sub-bullets. Before, the build kept only the first line
