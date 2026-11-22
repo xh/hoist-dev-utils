@@ -426,6 +426,35 @@ describe('app changelog JSON', () => {
         assert.equal(top.version, '2.0.0-SNAPSHOT');
         assert.deepEqual(top.sections, []);
     });
+
+    // Runs a build with console output captured, and returns the JSON and the log lines.
+    const buildLogged = async (t, version) => {
+        const lines = [];
+        t.mock.method(console, 'log', (...args) => lines.push(args.join(' ')));
+        const file = await writeChangelogJson(path.join(root, 'client-app'), true, version);
+        return {json: JSON.parse(fs.readFileSync(file, 'utf8')), log: lines.join('\n')};
+    };
+
+    it('still builds the released notes when the fragments cannot be read', async t => {
+        fs.writeFileSync(path.join(root, 'changelog.d/config.json'), '{not json');
+        fs.writeFileSync(path.join(root, 'changelog.d/a.md'), '### 🎁 New Features\n\n* A.\n');
+        const {json, log} = await buildLogged(t, '2.0.0-SNAPSHOT');
+        assert.deepEqual(
+            json.versions.map(v => v.version),
+            ['2.0.0-SNAPSHOT', '1.1.0', '1.0.0']
+        );
+        assert.match(log, /could not read the fragments in changelog\.d\/.*config\.json/);
+        assert.doesNotMatch(log, /exception parsing CHANGELOG\.md/);
+    });
+
+    it('warns when a release build still finds fragments', async t => {
+        fs.writeFileSync(path.join(root, 'changelog.d/a.md'), '### 🎁 New Features\n\n* A.\n');
+        const release = await buildLogged(t, '1.2.0');
+        assert.match(release.log, /WARNING - this is a build of release 1\.2\.0/);
+
+        const snapshot = await buildLogged(t, '2.0.0-SNAPSHOT');
+        assert.doesNotMatch(snapshot.log, /WARNING - this is a build of release/);
+    });
 });
 
 describe('review regressions', () => {
@@ -539,9 +568,23 @@ describe('writing entries with less typing', () => {
         assert.equal(cli('add', 'Bug Fixes', '* Fixed more.', '--name', 'b'), 0);
         assert.equal(
             read('changelog.d/b.md'),
-            '### 🐞 Bug Fixes\n\n* Fixed a crash when the grid had no\n  data.\n* Fixed more.\n\n' +
-                '### 🎁 New Features\n\n* Added a thing.\n'
+            '### 🎁 New Features\n\n* Added a thing.\n\n' +
+                '### 🐞 Bug Fixes\n\n* Fixed a crash when the grid had no\n  data.\n* Fixed more.\n'
         );
+        assert.equal(cli('check'), 0);
+    });
+
+    it('adds a new section in the configured order, not at the end', () => {
+        write('changelog.d/g.md', '### 🐞 Bug Fixes\n\n* One.\n\n### ⚙️ Technical\n\n* Two.\n');
+        cli('add', 'feature', 'Added a thing.', '--name', 'g');
+        cli('add', 'breaking', 'Removed a thing.', '--name', 'g');
+        assert.deepEqual(read('changelog.d/g.md').match(/^### .*$/gm), [
+            '### 💥 Breaking Changes',
+            '### 🎁 New Features',
+            '### 🐞 Bug Fixes',
+            '### ⚙️ Technical'
+        ]);
+        assert.match(read('changelog.d/g.md'), /\* Added a thing\.\n\n### 🐞 Bug Fixes/);
         assert.equal(cli('check'), 0);
     });
 
@@ -761,7 +804,7 @@ describe('matching the repo it runs in', () => {
         assert.equal(cli('add', 'feature', 'Added it.', '--name', 'a'), 0);
         assert.equal(
             read('changelog.d/a.md'),
-            '### Bug Fixes\n- Fixed it.\n\n### New Features\n- Added it.\n'
+            '### New Features\n- Added it.\n\n### Bug Fixes\n- Fixed it.\n'
         );
         assert.equal(cli('release', '1.1.0'), 0);
         assert.match(

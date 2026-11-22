@@ -455,7 +455,9 @@ without `.md`, because a release would leave its entries out. It warns on lines 
 2. Check the section list and order in `changelog.d/config.json`.
 3. Keep a bare unreleased heading, such as `## 92.0.0-SNAPSHOT - unreleased`, at the top of
    `CHANGELOG.md`. It shows the version under development. Nothing is written under it.
-4. Point your contributor docs, `CLAUDE.md` and pull request template at `changelog.d/`.
+4. Point your contributor docs, `CLAUDE.md` and pull request template at `changelog.d/`. Check the
+   header comment of `CHANGELOG.md` too. An app's header often says to write each bullet as one
+   line, which no longer applies.
 
 `changelog.d/config.json` takes these keys:
 
@@ -498,7 +500,8 @@ A snapshot should show what it holds.
 
 - **Apps** need no setup. The build reads the fragments and shows them in the in-app release notes
   under the unreleased heading, or under the app version if `CHANGELOG.md` has no unreleased
-  heading.
+  heading. A build of a release version that still finds fragments logs a warning, because its
+  users would see those entries as unreleased. Run `xh-changelog release` before a release build.
 - **Libraries** run `xh-changelog snapshot` in the snapshot publish job, after checkout and before
   `npm publish`. It writes the fragments under the unreleased heading of the package's
   `CHANGELOG.md`.
@@ -511,7 +514,8 @@ lines. App changelogs can wrap bullets and nest sub-bullets the way library chan
 
 The JSON keeps the shape that older hoist-react versions read: plain-text items in `parsed`, with
 wrapped lines joined and each sub-bullet appended after a ` • `. It also adds a `sections` list
-of markdown items, which hoist-react 91.1 and later render with code spans, links and nested lists.
+of markdown items, which hoist-react releases after 91.0 render with code spans, links and nested
+lists.
 
 ## Shared GitHub Actions
 

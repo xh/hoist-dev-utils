@@ -119,6 +119,10 @@ jobs:
             - uses: xh/hoist-dev-utils/.github/actions/check-changelog@master
 ```
 
+The action runs the `xh-changelog` command from its own checkout of this repository, not from the
+calling project's `node_modules`. A workflow that pins the action to a commit SHA therefore also
+pins the version of the checks it runs.
+
 **In a release build**, pass the version as `release`. The action then fails unless
 `CHANGELOG.md` holds that version and `changelog.d/` has no fragments left. This stops a release
 that someone started before running `xh-changelog release`. It needs no `fetch-depth`.
