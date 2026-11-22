@@ -607,6 +607,15 @@ describe('writing entries with less typing', () => {
         assert.equal(cli('check', '--release', '2.0.0'), 1);
     });
 
+    it('sets a new entry off from a paragraph, and keeps the file name visible', () => {
+        write('changelog.d/f.md', '### 🎁 New Features\n\nIntro.\n\n### 🐞 Bug Fixes\n\n* One.\n');
+        cli('add', 'feature', 'Added a thing.', '--name', 'f');
+        assert.match(read('changelog.d/f.md'), /Intro\.\n\n\* Added a thing\.\n\n### 🐞 Bug Fixes/);
+
+        cli('add', 'fix', 'Two.', '--name', '../.hidden');
+        assert.ok(fs.existsSync(path.join(root, 'changelog.d/hidden.md')));
+    });
+
     it('takes entry text that starts with dashes', () => {
         assert.equal(cli('add', 'fix', '--watch mode now works.', '--name', 'e'), 0);
         assert.match(read('changelog.d/e.md'), /\* --watch mode now works\./);
