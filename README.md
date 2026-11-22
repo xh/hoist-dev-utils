@@ -401,9 +401,20 @@ bullets as `CHANGELOG.md`. Bullets can wrap, and they can hold sub-bullets.
 * Fixed `GridModel` losing its sort when its store reloaded with a filter applied.
 ```
 
-Run `xh-changelog new` to create `changelog.d/<branch>.md` with the valid sections listed in a
-comment, or create the file yourself with any name. A pull request can add more than one fragment,
-and it can edit a fragment that another pull request added.
+For a one-line entry, `xh-changelog add` does the typing. It names the file for your branch and
+finds the section from a short name, such as `fix`, `feature`, `tech` or `lib`:
+
+```bash
+xh-changelog add fix "Fixed GridModel losing its sort when its store reloaded with a filter."
+```
+
+It wraps the bullet at `maxLineLength` and adds it under the right heading, creating the file or the
+section if needed. For a longer entry, run `xh-changelog new` to create `changelog.d/<branch>.md`
+with the valid sections listed in a comment, or create the file yourself with any name. You can
+leave the emoji off a heading, as in `### Bug Fixes`. The release writes the configured title.
+
+A pull request can add more than one fragment, and it can edit a fragment that another pull request
+added.
 
 Fragments hold entries only. Leave release-level notes out of them: an upgrade difficulty rating in
 the `💥 Breaking Changes` heading, an upgrade-notes link, and `####` topic groups. Add those when you
@@ -413,28 +424,36 @@ curate the release.
 
 | Command | What it does |
 |---|---|
-| `xh-changelog new [name]` | Creates `changelog.d/<name>.md`. The name defaults to the git branch. |
+| `xh-changelog add <section> <text>` | Adds one entry to this branch's fragment. `<section>` is a section title or part of one. Takes `--name <fragment>`. |
+| `xh-changelog new [name]` | Creates an empty `changelog.d/<name>.md` to edit. The name defaults to the git branch. |
 | `xh-changelog check` | Validates every fragment, and checks that `CHANGELOG.md` has no entries under its unreleased heading. Add `--base <ref>` to warn when the branch adds no fragment, and `--require` to make that an error. |
-| `xh-changelog preview` | Prints the next release as it would be assembled. |
+| `xh-changelog preview` | Prints the next release as it would be assembled. Add `--base <ref>` to print only the entries this branch adds. |
 | `xh-changelog release <version>` | Assembles the fragments into `CHANGELOG.md` and deletes them. Takes `--date`, `--dry-run` and `--allow-breaking`. |
 | `xh-changelog snapshot [--version <v>]` | Writes the assembled fragments under the unreleased heading, for a snapshot build. Never commit the result. |
 | `xh-changelog init` | Sets up `changelog.d/` in a repo. |
 
 `check` fails on a version heading in a fragment, a section that is not in the config, a heading
 suffix, a `####` group, an empty fragment or bullet, and entries written straight into
-`CHANGELOG.md`. It warns on lines longer than `maxLineLength`.
+`CHANGELOG.md`. It also fails on a file in `changelog.d/` that is not a fragment, such as one saved
+without `.md`, because a release would leave its entries out. It warns on lines longer than
+`maxLineLength`, and on an entry that a release in `CHANGELOG.md` already holds.
 
 ### Set up a repo
 
-1. Run `xh-changelog init`. It creates `changelog.d/config.json` and `changelog.d/README.md`. If
-   `CHANGELOG.md` has entries under an unreleased heading, it moves them into
-   `changelog.d/unreleased.md`.
-2. Check the section list and order in `changelog.d/config.json`. `init` infers them from recent
-   releases.
+1. Run `xh-changelog init`, in an app from `client-app/`. It does the following, and skips any
+   part that is already there:
+    - Creates `changelog.d/config.json`, inferred from recent releases.
+    - Creates `changelog.d/README.md`, a short guide for the team.
+    - Moves any entries under an unreleased heading in `CHANGELOG.md` to
+      `changelog.d/unreleased.md`.
+    - Adds a `changelog` script to `package.json`, so the team runs `pnpm changelog`.
+    - Adds `.github/workflows/changelog.yml`, which runs the shared
+      [`check-changelog`](.github/README.md) action on pull requests. It does this only in a repo
+      that has a `.github/workflows` folder. Pass `--no-ci` to skip it.
+2. Check the section list and order in `changelog.d/config.json`.
 3. Keep a bare unreleased heading, such as `## 92.0.0-SNAPSHOT - unreleased`, at the top of
    `CHANGELOG.md`. It shows the version under development. Nothing is written under it.
-4. Add the check to CI. See `check-changelog` in [`.github/README.md`](.github/README.md).
-5. Point your contributor docs, `CLAUDE.md` and pull request template at `changelog.d/`.
+4. Point your contributor docs, `CLAUDE.md` and pull request template at `changelog.d/`.
 
 `changelog.d/config.json` takes these keys:
 
@@ -442,7 +461,7 @@ suffix, a `####` group, an empty fragment or bullet, and entries written straigh
 |---|---|---|
 | `sections` | Inferred from recent releases | `###` section titles, in release order. Fragments may use only these. |
 | `headingFormat` | `## {version} - {date}` | Release heading. `init` uses `## v{version} - {date}` if the latest release heading has a `v`. |
-| `maxLineLength` | None | Warn on longer fragment lines. Libraries that hard-wrap set `100`. |
+| `maxLineLength` | None | Warn on longer fragment lines, and wrap entries that `add` writes. `init` sets `100` if recent releases keep to it. |
 | `allowOtherSections` | `false` | Accept sections that are not in `sections`, for apps that add one-off sections. They go after the listed sections. |
 
 ### Release
@@ -464,7 +483,7 @@ Run `xh-changelog release 92.1.0`, review and edit the new block in `CHANGELOG.m
 
 For a hotfix on a release branch, add the fragment there and run `release`. When you merge the
 hotfix back, delete the matching fragment on `develop` if the same fix landed there too. Otherwise
-the next release lists it twice.
+the next release lists it twice. `check` warns about an entry that a release already holds.
 
 ### Snapshot builds
 

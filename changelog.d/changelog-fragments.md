@@ -5,7 +5,12 @@
   `CHANGELOG.md`. Pull requests stop conflicting over `CHANGELOG.md`, and an entry merged after a
   release can no longer land under the version that shipped. It runs on plain Node, for libraries
   and apps alike. See the README section "Changelog fragments".
-* New `check-changelog` shared action, which runs `xh-changelog check` on pull requests.
+    * `xh-changelog add fix "<text>"` adds one entry to the branch's fragment. It finds the section
+      from a short name, so nobody types an emoji heading.
+    * `xh-changelog init` sets up a repo: the config, a README, a `changelog` package script and a
+      GitHub workflow.
+* New `check-changelog` shared action, which runs `xh-changelog check` on pull requests. The job
+  summary shows the entries that the pull request adds.
 * App builds show unreleased changelog fragments in the in-app release notes, under the version in
   development.
 * App release notes keep wrapped bullets and sub-bullets. Before, the build kept only the first line

@@ -3,7 +3,8 @@
 # Runs `xh-changelog check` from this repository's checkout of hoist-dev-utils, with plain Node and
 # no install, so it works in npm projects, Hoist apps and Gradle projects alike. It fails on a
 # malformed fragment or on entries written straight into CHANGELOG.md, and warns when the pull
-# request adds no fragment at all.
+# request adds no fragment at all. It also writes the entries the pull request adds to the job
+# summary, as the release will show them.
 #
 # Prerequisites:
 #   - The calling workflow must check out with `fetch-depth: 0`, so the PR's base commit is present.
@@ -44,4 +45,14 @@ runs:
               args=(check)
               if [[ -n "$BASE" && "$SKIP" != "true" ]]; then args+=(--base "$BASE"); fi
               if [[ "$REQUIRE" == "true" ]]; then args+=(--require); fi
-              node "$GITHUB_ACTION_PATH/../../../bin/xh-changelog.js" "${args[@]}"
+              cli="$GITHUB_ACTION_PATH/../../../bin/xh-changelog.js"
+              if [[ -n "$BASE" && -n "$GITHUB_STEP_SUMMARY" ]]; then
+                  {
+                      echo "### Changelog entries in this pull request"
+                      echo
+                      GITHUB_ACTIONS=false node "$cli" preview --base "$BASE" 2>/dev/null \
+                          | sed -e 's/^## /#### /' -e 's/^### /##### /' \
+                          || echo "Could not build a preview."
+                  } >> "$GITHUB_STEP_SUMMARY"
+              fi
+              node "$cli" "${args[@]}"

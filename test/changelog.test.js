@@ -493,3 +493,176 @@ describe('review regressions', () => {
         assert.equal(parseChangelog(text).releases[0].sections.length, 0);
     });
 });
+
+describe('writing entries with less typing', () => {
+    const {execFileSync} = require('node:child_process');
+    let root, logs;
+    const cli = (...argv) =>
+        run(argv, {
+            cwd: root,
+            log: m => logs.push(m),
+            warn: m => logs.push(m),
+            env: {},
+            today: '2026-03-01'
+        });
+    const git = (...args) => execFileSync('git', args, {cwd: root, stdio: 'ignore'});
+    const read = name => fs.readFileSync(path.join(root, name), 'utf8');
+    const write = (name, text) => {
+        fs.mkdirSync(path.dirname(path.join(root, name)), {recursive: true});
+        fs.writeFileSync(path.join(root, name), text);
+    };
+
+    beforeEach(() => {
+        root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'xh-changelog-')));
+        write('CHANGELOG.md', CHANGELOG);
+        write('changelog.d/config.json', JSON.stringify({...CONFIG, maxLineLength: 40}));
+        logs = [];
+    });
+    afterEach(() => fs.rmSync(root, {recursive: true, force: true}));
+
+    it('accepts a section heading written without its emoji, and releases it with one', () => {
+        write('changelog.d/a.md', '### bug fixes\n\n* Fixed a bug.\n');
+        assert.equal(cli('check'), 0);
+        assert.equal(cli('release', '1.2.0'), 0);
+        assert.match(
+            read('CHANGELOG.md'),
+            /## 1\.2\.0 - 2026-03-01\n\n### 🐞 Bug Fixes\n\n\* Fixed/
+        );
+    });
+
+    it('adds an entry under the section a short name refers to, wrapped at the line length', () => {
+        assert.equal(
+            cli('add', 'fix', 'Fixed a crash when the grid had no data.', '--name', 'b'),
+            0
+        );
+        assert.equal(cli('add', 'features', 'Added', 'a', 'thing.', '--name', 'b'), 0);
+        assert.equal(cli('add', 'Bug Fixes', '* Fixed more.', '--name', 'b'), 0);
+        assert.equal(
+            read('changelog.d/b.md'),
+            '### 🐞 Bug Fixes\n\n* Fixed a crash when the grid had no\n  data.\n* Fixed more.\n\n' +
+                '### 🎁 New Features\n\n* Added a thing.\n'
+        );
+        assert.equal(cli('check'), 0);
+    });
+
+    it('adds an entry to a fragment that `new` created, below its comment', () => {
+        cli('new', 'c');
+        cli('add', 'tech', 'Tuned a thing.', '--name', 'c');
+        assert.match(read('changelog.d/c.md'), /-->\n\n### ⚙️ Technical\n\n\* Tuned a thing\.\n$/);
+        assert.equal(cli('check'), 0);
+    });
+
+    it('refuses a section name that matches none or more than one section', () => {
+        assert.equal(cli('add', 'x', 'Text.', '--name', 'd'), 1);
+        assert.match(logs.at(-1), /No section matches "x"/);
+        assert.equal(cli('add', 'e', 'Text.', '--name', 'd'), 1);
+        write('changelog.d/config.json', JSON.stringify({sections: ['Bug Fixes', 'Other Fixes']}));
+        assert.equal(cli('add', 'fix', 'Text.', '--name', 'd'), 1);
+        assert.match(logs.at(-1), /more than one section/);
+        assert.ok(!fs.existsSync(path.join(root, 'changelog.d/d.md')));
+    });
+
+    it('fails check on a file in changelog.d that a release would leave out', () => {
+        write('changelog.d/a.md', '### 🐞 Bug Fixes\n\n* Fixed a bug.\n');
+        write('changelog.d/my-branch.txt', '### 🐞 Bug Fixes\n\n* Lost.\n');
+        assert.equal(cli('check'), 1);
+        assert.match(logs.join('\n'), /my-branch\.txt: error: Not a fragment/);
+    });
+
+    it('warns when a fragment repeats an entry that a release already holds', () => {
+        write('changelog.d/a.md', '### ⚙️ Technical\n\n* Tuned a thing.\n* Tuned another.\n');
+        assert.equal(cli('check'), 0);
+        const warnings = logs.filter(l => /warning/.test(l));
+        assert.equal(warnings.length, 1);
+        assert.match(warnings[0], /a\.md:3: warning: Release "1\.1\.0 - 2026-02-01" already has/);
+    });
+
+    it('previews only the entries that the branch adds', () => {
+        write('changelog.d/a.md', '### 🐞 Bug Fixes\n\n* On develop.\n');
+        git('init', '-q', '-b', 'develop');
+        git('add', '-A');
+        git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qm', 'base');
+        git('switch', '-qc', 'feature');
+        assert.equal(cli('preview', '--base', 'develop'), 0);
+        assert.match(logs.at(-1), /adds no changelog entries/);
+
+        cli('add', 'fix', 'On the branch.');
+        git('add', '-A');
+        git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qm', 'entry');
+        assert.equal(cli('preview', '--base', 'develop'), 0);
+        assert.match(logs.at(-1), /\* On the branch\./);
+        assert.doesNotMatch(logs.at(-1), /On develop/);
+        assert.ok(fs.existsSync(path.join(root, 'changelog.d/feature.md')));
+    });
+
+    it('prints usage for --help', () => {
+        assert.equal(cli('--help'), 0);
+        assert.match(logs[0], /^Usage: xh-changelog/);
+    });
+});
+
+describe('xh-changelog init', () => {
+    let root, logs;
+    const cli = (...argv) =>
+        run(argv, {cwd: path.join(root, 'client-app'), log: m => logs.push(m), env: {}});
+    const read = name => fs.readFileSync(path.join(root, name), 'utf8');
+
+    beforeEach(() => {
+        root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'xh-changelog-')));
+        fs.mkdirSync(path.join(root, 'client-app'));
+        fs.mkdirSync(path.join(root, '.github/workflows'), {recursive: true});
+        fs.writeFileSync(path.join(root, 'CHANGELOG.md'), CHANGELOG);
+        fs.writeFileSync(
+            path.join(root, 'client-app/package.json'),
+            '{\n  "name": "app",\n  "scripts": {"start": "x"},\n' +
+                '  "devDependencies": {"@xh/hoist-dev-utils": "^17.0.0"}\n}\n'
+        );
+        fs.writeFileSync(path.join(root, 'client-app/pnpm-lock.yaml'), '');
+        logs = [];
+    });
+    afterEach(() => fs.rmSync(root, {recursive: true, force: true}));
+
+    it('adds a package script, a workflow and a README that uses the package manager', () => {
+        assert.equal(cli('init'), 0);
+        assert.equal(JSON.parse(read('client-app/package.json')).scripts.changelog, 'xh-changelog');
+        assert.match(read('client-app/package.json'), /^\{\n  "name"/);
+        assert.match(read('.github/workflows/changelog.yml'), /check-changelog@master\n$/);
+        assert.match(read('changelog.d/README.md'), /pnpm changelog add feature "Added/);
+        assert.match(read('changelog.d/README.md'), /### 🎁 New Features/);
+    });
+
+    it('leaves an existing script and workflow alone, and skips the workflow with --no-ci', () => {
+        fs.writeFileSync(
+            path.join(root, '.github/workflows/ci.yml'),
+            'uses: xh/hoist-dev-utils/.github/actions/check-changelog@abc\n'
+        );
+        assert.equal(cli('init'), 0);
+        assert.ok(!fs.existsSync(path.join(root, '.github/workflows/changelog.yml')));
+
+        fs.rmSync(path.join(root, '.github/workflows/ci.yml'));
+        fs.rmSync(path.join(root, 'changelog.d'), {recursive: true});
+        logs = [];
+        assert.equal(cli('init', '--no-ci'), 0);
+        assert.ok(!fs.existsSync(path.join(root, '.github/workflows/changelog.yml')));
+        assert.doesNotMatch(logs.join('\n'), /Added a "changelog" script/);
+    });
+
+    it('names plain xh-changelog where no package installs the tool', () => {
+        fs.rmSync(path.join(root, 'client-app/package.json'));
+        assert.equal(cli('init'), 0);
+        assert.match(read('changelog.d/README.md'), /run `xh-changelog add`/);
+    });
+
+    it('sets the house line length only for a changelog that keeps to it', () => {
+        const wrapped = n =>
+            `## ${n}.0.0 - 2026-01-01\n\n### 🎁 New Features\n\n` +
+            Array.from({length: 12}, (_, i) => `* Added feature ${i}, wrapped\n  as usual.`).join(
+                '\n'
+            );
+        const text = `# Changelog\n\n${wrapped(2)}\n\n${wrapped(1)}\n`;
+        assert.equal(inferConfig(parseChangelog(text), text).maxLineLength, 100);
+
+        const long = text.replace(/wrapped\n  as usual/g, 'x'.repeat(120));
+        assert.equal(inferConfig(parseChangelog(long), long).maxLineLength, null);
+    });
+});

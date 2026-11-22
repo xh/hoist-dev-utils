@@ -90,6 +90,9 @@ The check fails on a malformed fragment and on entries written straight into `CH
 warns, or fails with `require`, when the pull request adds or edits no fragment. A pull request with
 the `skip-label` label skips that last check.
 
+The job summary shows the entries that the pull request adds, as the release will show them. A
+reviewer can read them there without opening the fragment file.
+
 | Input | Required | Description |
 |---|---|---|
 | `base` | No | Ref to diff against (default: the pull request base) |

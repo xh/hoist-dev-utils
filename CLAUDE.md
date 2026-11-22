@@ -146,7 +146,8 @@ Each change adds a fragment in `changelog.d/` - see the README section "Changelo
 documents the `xh-changelog` command this package ships. In short:
 
 - Write `changelog.d/<branch>.md` with the same `###` sections and bullets as `CHANGELOG.md`, and
-  no version heading. `pnpm changelog new` creates it. `pnpm changelog check` validates it.
+  no version heading. `pnpm changelog add fix "<text>"` adds a one-line entry. `pnpm changelog new`
+  creates an empty file for a longer one. `pnpm changelog check` validates it.
 - `CHANGELOG.md` keeps a bare `## <next-major>.0.0-SNAPSHOT - unreleased` heading at the top. Never
   write entries under it.
 - At release, `pnpm changelog release <version>` assembles the fragments into `CHANGELOG.md` and

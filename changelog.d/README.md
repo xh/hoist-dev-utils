@@ -9,9 +9,16 @@ under a version that has already shipped.
 
 ## Add an entry
 
-Run `xh-changelog new` (from `@xh/hoist-dev-utils`) to create `changelog.d/<branch>.md`, or
-create the file yourself. Write it as you would write the entries in `CHANGELOG.md`, with the
-same `###` section headings and bullets, but with no version heading:
+For a one-line entry, run `pnpm changelog add`. It names the file for your branch and finds the
+section from a short name:
+
+```bash
+pnpm changelog add fix "Fixed a crash when the widget had no data."
+```
+
+For more than that, run `pnpm changelog new` to create `changelog.d/<branch>.md`, or create the
+file yourself. Write it as you would write the entries in `CHANGELOG.md`, with the same `###`
+section headings and bullets, but with no version heading:
 
 ```markdown
 ### 🎁 New Features
@@ -23,14 +30,20 @@ same `###` section headings and bullets, but with no version heading:
 * Fixed a crash when the widget had no data.
 ```
 
-- Use only the sections listed in `changelog.d/config.json`.
+- Use only the sections listed in `changelog.d/config.json`. You can leave the emoji off a
+  heading. The release adds it.
+- Bullets can wrap and can hold sub-bullets.
 - To change an entry before release, edit its fragment. After release, edit `CHANGELOG.md`.
 - Release-level notes, such as an upgrade difficulty or topic groups, are added when the release
   is curated. Leave them out of fragments.
 
 ## Commands
 
-- `xh-changelog check` - validate the fragments. CI runs this on each pull request.
-- `xh-changelog preview` - print the next release as it will be assembled.
-- `xh-changelog release <version>` - assemble the release into `CHANGELOG.md` and delete the
+`pnpm changelog` runs `xh-changelog`, from `@xh/hoist-dev-utils`.
+
+- `pnpm changelog add <section> "<text>"` - add one entry to your branch's fragment.
+- `pnpm changelog new` - create an empty fragment for your branch.
+- `pnpm changelog check` - validate the fragments. CI runs this on each pull request.
+- `pnpm changelog preview` - print the next release as it will be assembled.
+- `pnpm changelog release <version>` - assemble the release into `CHANGELOG.md` and delete the
   fragments. Review and curate the result, then commit.
