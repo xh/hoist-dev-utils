@@ -427,6 +427,7 @@ curate the release.
 | `xh-changelog add <section> <text>` | Adds one entry to this branch's fragment. `<section>` is a section title or part of one. Takes `--name <fragment>`. |
 | `xh-changelog new [name]` | Creates an empty `changelog.d/<name>.md` to edit. The name defaults to the git branch. |
 | `xh-changelog check` | Validates every fragment, and checks that `CHANGELOG.md` has no entries under its unreleased heading. Add `--base <ref>` to warn when the branch adds no fragment, and `--require` to make that an error. |
+| `xh-changelog check --release <version>` | For a release build. Fails unless `CHANGELOG.md` holds `<version>` and no fragments are left. |
 | `xh-changelog preview` | Prints the next release as it would be assembled. Add `--base <ref>` to print only the entries this branch adds. |
 | `xh-changelog release <version>` | Assembles the fragments into `CHANGELOG.md` and deletes them. Takes `--date`, `--dry-run` and `--allow-breaking`. |
 | `xh-changelog snapshot [--version <v>]` | Writes the assembled fragments under the unreleased heading, for a snapshot build. Never commit the result. |
@@ -480,6 +481,10 @@ Run `xh-changelog release 92.1.0`, review and edit the new block in `CHANGELOG.m
 - Releasing the major that the unreleased heading names rolls the heading forward, for example
   from `92.0.0-SNAPSHOT` to `93.0.0-SNAPSHOT`.
 - Entries still written under the unreleased heading join the release, with a warning.
+
+Add `xh-changelog check --release <version>` to the release build, or pass `release` to the
+`check-changelog` action. The build then fails if someone starts a release before running
+`xh-changelog release`.
 
 For a hotfix on a release branch, add the fragment there and run `release`. When you merge the
 hotfix back, delete the matching fragment on `develop` if the same fix landed there too. Otherwise

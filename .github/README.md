@@ -98,6 +98,7 @@ reviewer can read them there without opening the fragment file.
 | `base` | No | Ref to diff against (default: the pull request base) |
 | `require` | No | Fail, not warn, when no fragment is added (default: `false`) |
 | `skip-label` | No | Label that marks a pull request as needing no entry (default: `no-changelog`) |
+| `release` | No | Version being published. Set it in a release build. See below |
 | `working-directory` | No | Where to run. The check uses the nearest `CHANGELOG.md` at or above it (default: `.`) |
 
 **Prerequisites:**
@@ -116,6 +117,16 @@ jobs:
               with:
                   fetch-depth: 0
             - uses: xh/hoist-dev-utils/.github/actions/check-changelog@master
+```
+
+**In a release build**, pass the version as `release`. The action then fails unless
+`CHANGELOG.md` holds that version and `changelog.d/` has no fragments left. This stops a release
+that someone started before running `xh-changelog release`. It needs no `fetch-depth`.
+
+```yaml
+- uses: xh/hoist-dev-utils/.github/actions/check-changelog@master
+  with:
+      release: ${{ inputs.version }}
 ```
 
 ## Supporting Scripts

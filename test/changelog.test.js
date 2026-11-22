@@ -595,6 +595,23 @@ describe('writing entries with less typing', () => {
         assert.ok(fs.existsSync(path.join(root, 'changelog.d/feature.md')));
     });
 
+    it('passes the release check only when the version is in and no fragments are left', () => {
+        write('changelog.d/a.md', '### 🐞 Bug Fixes\n\n* Fixed a bug.\n');
+        assert.equal(cli('check', '--release', '1.2.0'), 1);
+        assert.match(logs.join('\n'), /CHANGELOG\.md has no release 1\.2\.0/);
+        assert.match(logs.join('\n'), /1 fragment still in changelog\.d\/ \(a\.md\)/);
+
+        assert.equal(cli('check', '--release', '1.1'), 1);
+        assert.equal(cli('release', '1.2.0'), 0);
+        assert.equal(cli('check', '--release', 'v1.2.0'), 0);
+        assert.equal(cli('check', '--release', '2.0.0'), 1);
+    });
+
+    it('takes entry text that starts with dashes', () => {
+        assert.equal(cli('add', 'fix', '--watch mode now works.', '--name', 'e'), 0);
+        assert.match(read('changelog.d/e.md'), /\* --watch mode now works\./);
+    });
+
     it('prints usage for --help', () => {
         assert.equal(cli('--help'), 0);
         assert.match(logs[0], /^Usage: xh-changelog/);

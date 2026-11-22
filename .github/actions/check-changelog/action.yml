@@ -6,6 +6,9 @@
 # request adds no fragment at all. It also writes the entries the pull request adds to the job
 # summary, as the release will show them.
 #
+# In a release build, pass `release` instead. The action then fails unless CHANGELOG.md holds that
+# version and no fragments are left, so a release cannot ship without its changelog.
+#
 # Prerequisites:
 #   - The calling workflow must check out with `fetch-depth: 0`, so the PR's base commit is present.
 #   - Node is on the PATH (it is on GitHub-hosted runners).
@@ -26,6 +29,10 @@ inputs:
         description: 'A pull request with this label is not expected to add a fragment.'
         required: false
         default: 'no-changelog'
+    release:
+        description: 'Version being published. Set this in a release build, to check that CHANGELOG.md holds the version and no fragments are left. The pull request checks are skipped.'
+        required: false
+        default: ''
     working-directory:
         description: 'Directory to run from. The check uses the nearest CHANGELOG.md at or above it.'
         required: false
@@ -41,11 +48,16 @@ runs:
               BASE: ${{ inputs.base || github.event.pull_request.base.sha }}
               REQUIRE: ${{ inputs.require }}
               SKIP: ${{ contains(github.event.pull_request.labels.*.name, inputs.skip-label) }}
+              RELEASE: ${{ inputs.release }}
           run: |
+              cli="$GITHUB_ACTION_PATH/../../../bin/xh-changelog.js"
+              if [[ -n "$RELEASE" ]]; then
+                  node "$cli" check --release "$RELEASE"
+                  exit
+              fi
               args=(check)
               if [[ -n "$BASE" && "$SKIP" != "true" ]]; then args+=(--base "$BASE"); fi
               if [[ "$REQUIRE" == "true" ]]; then args+=(--require); fi
-              cli="$GITHUB_ACTION_PATH/../../../bin/xh-changelog.js"
               if [[ -n "$BASE" && -n "$GITHUB_STEP_SUMMARY" ]]; then
                   {
                       echo "### Changelog entries in this pull request"
