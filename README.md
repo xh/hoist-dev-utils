@@ -511,7 +511,7 @@ lines. App changelogs can wrap bullets and nest sub-bullets the way library chan
 
 The JSON keeps the shape that older hoist-react versions read: plain-text items in `parsed`, with
 wrapped lines joined and each sub-bullet appended after a ` • `. It also adds a `sections` list
-of markdown items, which hoist-react 92 and later render with code spans, links and nested lists.
+of markdown items, which hoist-react 91.1 and later render with code spans, links and nested lists.
 
 ## Shared GitHub Actions
 

@@ -16,7 +16,7 @@
   development.
 * App release notes keep wrapped bullets and sub-bullets. Before, the build kept only the first line
   of each bullet, so app changelogs had to write every bullet as one long line. The changelog JSON
-  also gains markdown `sections`, which hoist-react 92 renders with code spans, links and nested
+  also gains markdown `sections`, which hoist-react 91.1 renders with code spans, links and nested
   lists. See the README section "In-app release notes".
 
 ### ⚙️ Technical
