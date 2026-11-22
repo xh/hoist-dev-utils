@@ -641,7 +641,7 @@ describe('xh-changelog init', () => {
         fs.writeFileSync(
             path.join(root, 'client-app/package.json'),
             '{\n  "name": "app",\n  "scripts": {"start": "x"},\n' +
-                '  "devDependencies": {"@xh/hoist-dev-utils": "^17.0.0"}\n}\n'
+                '  "devDependencies": {"@xh/hoist-dev-utils": "^16.6.0"}\n}\n'
         );
         fs.writeFileSync(path.join(root, 'client-app/pnpm-lock.yaml'), '');
         logs = [];
@@ -774,7 +774,7 @@ describe('matching the repo it runs in', () => {
         write('CHANGELOG.md', CHANGELOG);
         write(
             'package.json',
-            '{\n  "name": "lib",\n  "devDependencies": {"@xh/hoist-dev-utils": "^17.0.0"}\n}\n'
+            '{\n  "name": "lib",\n  "devDependencies": {"@xh/hoist-dev-utils": "^16.6.0"}\n}\n'
         );
         write('.github/workflows/ci.yml', 'steps:\n    - uses: actions/checkout@abc123 # v9\n');
         fs.mkdirSync(path.join(root, '.git'));
