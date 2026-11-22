@@ -443,7 +443,8 @@ without `.md`, because a release would leave its entries out. It warns on lines 
 
 1. Run `xh-changelog init`, in an app from `client-app/`. It does the following, and skips any
    part that is already there:
-    - Creates `changelog.d/config.json`, inferred from recent releases.
+    - Creates `changelog.d/config.json`, inferred from recent releases: the sections and their
+      usual order, the heading format and the line length.
     - Creates `changelog.d/README.md`, a short guide for the team.
     - Moves any entries under an unreleased heading in `CHANGELOG.md` to
       `changelog.d/unreleased.md`.
@@ -463,6 +464,7 @@ without `.md`, because a release would leave its entries out. It warns on lines 
 | `sections` | Inferred from recent releases | `###` section titles, in release order. Fragments may use only these. |
 | `headingFormat` | `## {version} - {date}` | Release heading. `init` uses `## v{version} - {date}` if the latest release heading has a `v`. |
 | `maxLineLength` | None | Warn on longer fragment lines, and wrap entries that `add` writes. `init` sets `100` if recent releases keep to it. |
+| `compactHeadings` | Inferred | Write no blank line between a `###` heading and its first bullet. On by default in a changelog that is written that way. |
 | `allowOtherSections` | `false` | Accept sections that are not in `sections`, for apps that add one-off sections. They go after the listed sections. |
 
 ### Release

@@ -703,3 +703,86 @@ describe('xh-changelog init', () => {
         assert.equal(inferConfig(parseChangelog(long), long).maxLineLength, null);
     });
 });
+
+describe('matching the repo it runs in', () => {
+    let root, logs;
+    const cli = (...argv) =>
+        run(argv, {cwd: root, log: m => logs.push(m), env: {}, today: '2026-03-01'});
+    const read = name => fs.readFileSync(path.join(root, name), 'utf8');
+    const write = (name, text) => {
+        fs.mkdirSync(path.dirname(path.join(root, name)), {recursive: true});
+        fs.writeFileSync(path.join(root, name), text);
+    };
+    const infer = text => inferConfig(parseChangelog(text), text);
+
+    beforeEach(() => {
+        root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'xh-changelog-')));
+        logs = [];
+    });
+    afterEach(() => fs.rmSync(root, {recursive: true, force: true}));
+
+    it('orders sections that rarely share a release, with Libraries last', () => {
+        const release = (version, ...titles) =>
+            `## ${version} - 2026-01-01\n\n` + titles.map(t => `### ${t}\n\n* Entry.\n`).join('\n');
+        const text = [
+            '# Changelog\n',
+            release('3.0.0', 'Breaking', 'Features', 'Fixes', 'Technical', 'AI Docs'),
+            release('2.1.0', 'Technical'),
+            release('2.0.0', 'Breaking', 'Features', 'Fixes', 'Technical', 'Styles'),
+            release('1.0.0', 'Features', 'AI Docs', 'Libraries')
+        ].join('\n');
+        assert.deepEqual(infer(text).sections, [
+            'Breaking',
+            'Features',
+            'Fixes',
+            'Technical',
+            'AI Docs',
+            'Styles',
+            'Libraries'
+        ]);
+    });
+
+    it('learns from the unreleased block of a changelog with no release yet', () => {
+        const config = infer(
+            '# Changelog\n\n## v1.0-SNAPSHOT - unreleased\n\n### New Features\n* One.\n\n### Bug Fixes\n* Two.\n'
+        );
+        assert.deepEqual(config.sections, ['New Features', 'Bug Fixes']);
+        assert.equal(config.headingFormat, '## v{version} - {date}');
+        assert.equal(config.compactHeadings, true);
+    });
+
+    it('writes no blank line after a heading in a changelog that has none', () => {
+        write(
+            'CHANGELOG.md',
+            '# Changelog\n\n## v2.0-SNAPSHOT - unreleased\n\n## v1.0.0 - 2026-01-01\n\n' +
+                '### New Features\n- One.\n\n### Bug Fixes\n- Two.\n'
+        );
+        assert.equal(cli('add', 'fix', 'Fixed it.', '--name', 'a'), 0);
+        assert.equal(cli('add', 'feature', 'Added it.', '--name', 'a'), 0);
+        assert.equal(
+            read('changelog.d/a.md'),
+            '### Bug Fixes\n- Fixed it.\n\n### New Features\n- Added it.\n'
+        );
+        assert.equal(cli('release', '1.1.0'), 0);
+        assert.match(
+            read('CHANGELOG.md'),
+            /## v1\.1\.0 - 2026-03-01\n\n### New Features\n- Added it\.\n\n### Bug Fixes\n- Fixed it\.\n\n## v1\.0\.0/
+        );
+    });
+
+    it('writes the config and workflow in the style the repo already uses', () => {
+        write('CHANGELOG.md', CHANGELOG);
+        write(
+            'package.json',
+            '{\n  "name": "lib",\n  "devDependencies": {"@xh/hoist-dev-utils": "^17.0.0"}\n}\n'
+        );
+        write('.github/workflows/ci.yml', 'steps:\n    - uses: actions/checkout@abc123 # v9\n');
+        fs.mkdirSync(path.join(root, '.git'));
+        assert.equal(cli('init'), 0);
+        assert.match(read('changelog.d/config.json'), /^\{\n  "sections"/);
+        assert.match(
+            read('.github/workflows/changelog.yml'),
+            /- uses: actions\/checkout@abc123 # v9\n/
+        );
+    });
+});
