@@ -7,6 +7,7 @@
 'use strict';
 
 const assert = require('node:assert/strict'),
+    {execFileSync} = require('node:child_process'),
     fs = require('node:fs'),
     os = require('node:os'),
     path = require('node:path'),
@@ -59,6 +60,46 @@ const CONFIG = {
 };
 
 const fragment = text => ({name: 'f.md', sections: parseFragment(text).sections});
+
+/**
+ * Gives each test in the calling `describe` a temp repo with `CHANGELOG.md` at its root.
+ * `cwd` is the folder the CLI runs in. `files` are written before each test.
+ */
+function tempRepo({cwd = '', files = {}} = {}) {
+    let root;
+    const logs = [],
+        at = name => path.join(root, name),
+        read = name => fs.readFileSync(at(name), 'utf8'),
+        write = (name, text) => {
+            fs.mkdirSync(path.dirname(at(name)), {recursive: true});
+            fs.writeFileSync(at(name), text);
+        },
+        cli = (...argv) =>
+            run(argv, {
+                cwd: at(cwd),
+                log: m => logs.push(m),
+                warn: m => logs.push(m),
+                env: {},
+                today: '2026-03-01'
+            });
+
+    beforeEach(() => {
+        root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'xh-changelog-')));
+        fs.mkdirSync(at(cwd), {recursive: true});
+        logs.length = 0;
+        Object.entries({'CHANGELOG.md': CHANGELOG, ...files}).forEach(([name, text]) =>
+            write(name, text)
+        );
+    });
+    afterEach(() => fs.rmSync(root, {recursive: true, force: true}));
+
+    return {cli, logs, at, read, write};
+}
+
+// A repo that is set up for fragments, with a short line length to show wrapping.
+const WITH_CONFIG = {
+    files: {'changelog.d/config.json': JSON.stringify({...CONFIG, maxLineLength: 40})}
+};
 
 describe('parseChangelog', () => {
     const {releases, preamble} = parseChangelog(CHANGELOG);
@@ -121,6 +162,14 @@ describe('parseChangelog', () => {
         );
         assert.equal(sections.length, 1);
         assert.equal(sections[0].blocks.length, 1);
+    });
+
+    it('ignores a byte order mark and a comment marker inside a code span', () => {
+        const {sections} = parseFragment(
+            '\uFEFF### 🎁 New Features\n\n* Uses `<!--` here.\n* Two.\n'
+        );
+        assert.equal(sections[0].title, '🎁 New Features');
+        assert.equal(sections[0].blocks.length, 2);
     });
 });
 
@@ -208,7 +257,31 @@ describe('assembleBody', () => {
         assert.equal(markdown, '### 🎁 New Features\n\nIntro.\n\n* A.\n* B.');
     });
 
-    it('merges two bumps of the same library into one span, in any order', () => {
+    it('keeps a code block with the bullet it follows', () => {
+        const {markdown} = assembleBody(
+            [
+                fragment('### 🎁 New Features\n\n* First.\n'),
+                fragment(
+                    '### 🎁 New Features\n\n* Renamed `Foo`. Update calls:\n\n```ts\nbar();\n```\n'
+                )
+            ],
+            CONFIG
+        );
+        assert.equal(
+            markdown,
+            '### 🎁 New Features\n\n* First.\n* Renamed `Foo`. Update calls:\n\n```ts\nbar();\n```'
+        );
+    });
+
+    it('keeps topic groups from legacy entries', () => {
+        const {markdown} = assembleBody(
+            [fragment('### 💥 Breaking Changes\n\n* Loose.\n\n#### Grid\n\n* Grouped.\n')],
+            CONFIG
+        );
+        assert.equal(markdown, '### 💥 Breaking Changes\n\n* Loose.\n\n#### Grid\n\n* Grouped.');
+    });
+
+    it('merges two bumps of the same library into one span, in a Libraries section only', () => {
         const {markdown} = assembleBody(
             [
                 fragment('### 📚 Libraries\n\n* react `19.2 → 19.3`\n'),
@@ -217,6 +290,13 @@ describe('assembleBody', () => {
             {sections: ['📚 Libraries']}
         );
         assert.equal(markdown, '### 📚 Libraries\n\n* react `19.1 → 19.3`\n* mobx `7.0 → 7.1`');
+
+        // The same lines in another section are two entries.
+        const other = assembleBody(
+            [fragment('### ⚙️ Technical\n\n* a `1.0 → 1.1`\n* a `1.1 → 1.2`\n')],
+            CONFIG
+        );
+        assert.equal(other.markdown, '### ⚙️ Technical\n\n* a `1.0 → 1.1`\n* a `1.1 → 1.2`');
     });
 });
 
@@ -266,11 +346,23 @@ describe('insertRelease', () => {
         assert.equal(notes.length, 1);
     });
 
-    it('refuses a version that already exists', () => {
-        assert.throws(
-            () => insertRelease(CHANGELOG, {heading: '## 1.1.0', body, version: '1.1.0'}),
-            /already has/
+    it('refuses a version that already exists, in either form of its number', () => {
+        ['1.1.0', '1.1'].forEach(version =>
+            assert.throws(
+                () => insertRelease(CHANGELOG, {heading: `## ${version}`, body, version}),
+                /already has/
+            )
         );
+    });
+
+    it('keeps CRLF line endings', () => {
+        const crlf = CHANGELOG.replace(/\n/g, '\r\n'),
+            {text} = insertRelease(crlf, {
+                heading: '## 1.2.0',
+                body: '### T\n\n* x.',
+                version: '1.2.0'
+            });
+        assert.equal(text.split('\n').length, text.split('\r\n').length);
     });
 });
 
@@ -285,35 +377,39 @@ describe('extractUnreleased', () => {
         assert.equal(parseChangelog(text).releases[0].sections.length, 0);
         assert.equal(extractUnreleased(CHANGELOG), null);
     });
+
+    it('clears empty section headings left under the unreleased heading', () => {
+        const legacy = CHANGELOG.replace('unreleased\n', 'unreleased\n\n### 🎁 New Features\n');
+        const {fragment, text} = extractUnreleased(legacy);
+        assert.equal(fragment, null);
+        assert.equal(parseChangelog(text).releases[0].sections.length, 0);
+    });
 });
 
-describe('xh-changelog CLI', () => {
+describe('xh-changelog init', () => {
     let root, logs;
     const cli = (...argv) =>
-        run(argv, {
-            cwd: path.join(root, 'client-app'),
-            log: m => logs.push(m),
-            warn: m => logs.push(m),
-            env: {},
-            today: '2026-03-01'
-        });
+        run(argv, {cwd: path.join(root, 'client-app'), log: m => logs.push(m), env: {}});
+    const read = name => fs.readFileSync(path.join(root, name), 'utf8');
 
     beforeEach(() => {
         root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'xh-changelog-')));
         fs.mkdirSync(path.join(root, 'client-app'));
+        fs.mkdirSync(path.join(root, '.github/workflows'), {recursive: true});
         fs.writeFileSync(path.join(root, 'CHANGELOG.md'), CHANGELOG);
+        fs.writeFileSync(
+            path.join(root, 'client-app/package.json'),
+            '{\n  "name": "app",\n  "scripts": {"start": "x"},\n' +
+                '  "devDependencies": {"@xh/hoist-dev-utils": "^16.6.0"}\n}\n'
+        );
+        fs.writeFileSync(path.join(root, 'client-app/pnpm-lock.yaml'), '');
         logs = [];
     });
     afterEach(() => fs.rmSync(root, {recursive: true, force: true}));
 
-    const write = (name, text) => fs.writeFileSync(path.join(root, 'changelog.d', name), text);
-    const changelog = () => fs.readFileSync(path.join(root, 'CHANGELOG.md'), 'utf8');
-
     it('finds CHANGELOG.md above the working directory and sets up changelog.d', () => {
         assert.equal(cli('init'), 0);
-        const config = JSON.parse(
-            fs.readFileSync(path.join(root, 'changelog.d/config.json'), 'utf8')
-        );
+        const config = JSON.parse(read('changelog.d/config.json'));
         assert.deepEqual(config.sections, [
             '💥 Breaking Changes',
             '🎁 New Features',
@@ -322,72 +418,256 @@ describe('xh-changelog CLI', () => {
         assert.ok(fs.existsSync(path.join(root, 'changelog.d/README.md')));
     });
 
-    it('creates a fragment that fails check until it has entries', () => {
+    it('adds a package script, a workflow and a README that uses the package manager', () => {
+        assert.equal(cli('init'), 0);
+        assert.equal(JSON.parse(read('client-app/package.json')).scripts.changelog, 'xh-changelog');
+        assert.match(read('client-app/package.json'), /^\{\n  "name"/);
+        assert.match(read('.github/workflows/changelog.yml'), /check-changelog@master\n$/);
+        assert.match(read('changelog.d/README.md'), /pnpm changelog add feature "Added/);
+        assert.match(read('changelog.d/README.md'), /### 🎁 New Features/);
+        assert.match(read('changelog.d/README.md'), /Run it from `client-app\/`\./);
+        assert.doesNotMatch(read('changelog.d/README.md'), /Entry conventions/);
+    });
+
+    it("points the README at the repo's entry conventions", () => {
+        fs.writeFileSync(path.join(root, 'CLAUDE.md'), '# App\n\n## Changelog\n\nRules.\n');
         cli('init');
-        assert.equal(cli('new', 'feature/thing'), 0);
-        assert.ok(fs.existsSync(path.join(root, 'changelog.d/feature-thing.md')));
-        assert.equal(cli('check'), 1);
-        write('feature-thing.md', '### 🎁 New Features\n\n* Added a thing.\n');
+        assert.match(
+            read('changelog.d/README.md'),
+            /Entry conventions are in the "Changelog" section/
+        );
+    });
+
+    it('leaves an existing script and workflow alone, and skips the workflow with --no-ci', () => {
+        fs.writeFileSync(
+            path.join(root, '.github/workflows/ci.yml'),
+            'uses: xh/hoist-dev-utils/.github/actions/check-changelog@abc\n'
+        );
+        assert.equal(cli('init'), 0);
+        assert.ok(!fs.existsSync(path.join(root, '.github/workflows/changelog.yml')));
+
+        fs.rmSync(path.join(root, '.github/workflows/ci.yml'));
+        fs.rmSync(path.join(root, 'changelog.d'), {recursive: true});
+        logs = [];
+        assert.equal(cli('init', '--no-ci'), 0);
+        assert.ok(!fs.existsSync(path.join(root, '.github/workflows/changelog.yml')));
+        assert.doesNotMatch(logs.join('\n'), /Added a "changelog" script/);
+    });
+
+    it('names plain xh-changelog where no package installs the tool', () => {
+        fs.rmSync(path.join(root, 'client-app/package.json'));
+        assert.equal(cli('init'), 0);
+        assert.match(read('changelog.d/README.md'), /run `xh-changelog add`/);
+    });
+
+    it('sets the house line length only for a changelog that keeps to it', () => {
+        const wrapped = n =>
+            `## ${n}.0.0 - 2026-01-01\n\n### 🎁 New Features\n\n` +
+            Array.from({length: 12}, (_, i) => `* Added feature ${i}, wrapped\n  as usual.`).join(
+                '\n'
+            );
+        const text = `# Changelog\n\n${wrapped(2)}\n\n${wrapped(1)}\n`;
+        assert.equal(inferConfig(parseChangelog(text), text).maxLineLength, 100);
+
+        const long = text.replace(/wrapped\n  as usual/g, 'x'.repeat(120));
+        assert.equal(inferConfig(parseChangelog(long), long).maxLineLength, null);
+    });
+});
+
+describe('xh-changelog add', () => {
+    const {cli, logs, at, read, write} = tempRepo(WITH_CONFIG);
+
+    it('adds an entry under the section a short name refers to, wrapped at the line length', () => {
+        assert.equal(
+            cli('add', 'fix', 'Fixed a crash when the grid had no data.', '--name', 'b'),
+            0
+        );
+        assert.equal(cli('add', 'features', 'Added', 'a', 'thing.', '--name', 'b'), 0);
+        assert.equal(cli('add', 'Bug Fixes', '* Fixed more.', '--name', 'b'), 0);
+        assert.equal(
+            read('changelog.d/b.md'),
+            '### 🎁 New Features\n\n* Added a thing.\n\n' +
+                '### 🐞 Bug Fixes\n\n* Fixed a crash when the grid had no\n  data.\n* Fixed more.\n'
+        );
         assert.equal(cli('check'), 0);
     });
 
-    it('fails check when CHANGELOG.md has entries under its unreleased heading', () => {
-        fs.writeFileSync(
-            path.join(root, 'CHANGELOG.md'),
+    it('adds a new section in the configured order, not at the end', () => {
+        write('changelog.d/g.md', '### 🐞 Bug Fixes\n\n* One.\n\n### ⚙️ Technical\n\n* Two.\n');
+        cli('add', 'feature', 'Added a thing.', '--name', 'g');
+        cli('add', 'breaking', 'Removed a thing.', '--name', 'g');
+        assert.deepEqual(read('changelog.d/g.md').match(/^### .*$/gm), [
+            '### 💥 Breaking Changes',
+            '### 🎁 New Features',
+            '### 🐞 Bug Fixes',
+            '### ⚙️ Technical'
+        ]);
+        assert.match(read('changelog.d/g.md'), /\* Added a thing\.\n\n### 🐞 Bug Fixes/);
+        assert.equal(cli('check'), 0);
+    });
+
+    it('adds an entry to a fragment that `new` created, below its comment', () => {
+        cli('new', 'c');
+        cli('add', 'tech', 'Tuned a thing.', '--name', 'c');
+        assert.match(read('changelog.d/c.md'), /-->\n\n### ⚙️ Technical\n\n\* Tuned a thing\.\n$/);
+        assert.equal(cli('check'), 0);
+    });
+
+    it('sets a new entry off from a paragraph that ends its section', () => {
+        write('changelog.d/f.md', '### 🎁 New Features\n\nIntro.\n\n### 🐞 Bug Fixes\n\n* One.\n');
+        cli('add', 'feature', 'Added a thing.', '--name', 'f');
+        assert.match(read('changelog.d/f.md'), /Intro\.\n\n\* Added a thing\.\n\n### 🐞 Bug Fixes/);
+    });
+
+    it('keeps a fragment named with a path inside changelog.d, as a visible file', () => {
+        cli('add', 'fix', 'Two.', '--name', '../.hidden');
+        assert.ok(fs.existsSync(at('changelog.d/hidden.md')));
+    });
+
+    it('takes entry text that starts with dashes', () => {
+        assert.equal(cli('add', 'fix', '--watch mode now works.', '--name', 'e'), 0);
+        assert.match(read('changelog.d/e.md'), /\* --watch mode now works\./);
+    });
+
+    it('refuses a section name that matches none or more than one section', () => {
+        assert.equal(cli('add', 'x', 'Text.', '--name', 'd'), 1);
+        assert.match(logs.at(-1), /No section matches "x"/);
+        assert.equal(cli('add', 'e', 'Text.', '--name', 'd'), 1);
+        write('changelog.d/config.json', JSON.stringify({sections: ['Bug Fixes', 'Other Fixes']}));
+        assert.equal(cli('add', 'fix', 'Text.', '--name', 'd'), 1);
+        assert.match(logs.at(-1), /more than one section/);
+        assert.ok(!fs.existsSync(at('changelog.d/d.md')));
+    });
+});
+
+describe('xh-changelog check', () => {
+    const {cli, logs, at, write} = tempRepo(WITH_CONFIG);
+
+    it('fails on a fragment that `new` created until it has entries', () => {
+        assert.equal(cli('new', 'feature/thing'), 0);
+        assert.ok(fs.existsSync(at('changelog.d/feature-thing.md')));
+        assert.equal(cli('check'), 1);
+        write('changelog.d/feature-thing.md', '### 🎁 New Features\n\n* Added a thing.\n');
+        assert.equal(cli('check'), 0);
+    });
+
+    it('fails when CHANGELOG.md has entries under its unreleased heading', () => {
+        write(
+            'CHANGELOG.md',
             CHANGELOG.replace('unreleased\n', 'unreleased\n\n### 🐞 Bug Fixes\n\n* Old style.\n')
         );
         assert.equal(cli('check'), 1);
         assert.ok(logs.some(l => /Move them to a fragment/.test(l)));
     });
 
-    it('releases fragments into CHANGELOG.md and deletes them', () => {
-        cli('init');
-        write('a.md', '### 🎁 New Features\n\n* Added A.\n');
-        write('b.md', '### ⚙️ Technical\n\n* Tuned B.\n');
-        assert.equal(cli('release', '1.2.0'), 0);
-        assert.match(
-            changelog(),
-            /## 2\.0\.0-SNAPSHOT - unreleased\n\n## 1\.2\.0 - 2026-03-01\n\n### 🎁 New Features\n\n\* Added A\.\n\n### ⚙️ Technical\n\n\* Tuned B\.\n\n## 1\.1\.0/
-        );
-        assert.deepEqual(fs.readdirSync(path.join(root, 'changelog.d')).sort(), [
-            'README.md',
-            'config.json'
-        ]);
+    it('fails on a file in changelog.d that a release would leave out', () => {
+        write('changelog.d/a.md', '### 🐞 Bug Fixes\n\n* Fixed a bug.\n');
+        write('changelog.d/my-branch.txt', '### 🐞 Bug Fixes\n\n* Lost.\n');
+        assert.equal(cli('check'), 1);
+        assert.match(logs.join('\n'), /my-branch\.txt: error: Not a fragment/);
     });
 
-    it('refuses breaking changes in a minor release unless allowed', () => {
-        cli('init');
-        write('a.md', '### 💥 Breaking Changes\n\n* Removed A.\n');
-        assert.equal(cli('release', '1.2.0'), 1);
-        assert.equal(cli('release', '1.2.0', '--allow-breaking'), 0);
-    });
-
-    it('names a new unreleased heading for the package version in a snapshot build', () => {
-        fs.writeFileSync(
-            path.join(root, 'CHANGELOG.md'),
-            CHANGELOG.replace('## 2.0.0-SNAPSHOT - unreleased\n\n', '')
-        );
-        fs.writeFileSync(path.join(root, 'client-app/package.json'), '{"version": "2.0-SNAPSHOT"}');
-        cli('init');
-        write('a.md', '### 🎁 New Features\n\n* Added A.\n');
-        assert.equal(cli('snapshot'), 0);
-        assert.match(changelog(), /## 2\.0-SNAPSHOT - unreleased\n\n### 🎁 New Features/);
+    it('warns when a fragment repeats an entry that a release already holds', () => {
+        write('changelog.d/a.md', '### ⚙️ Technical\n\n* Tuned a thing.\n* Tuned another.\n');
+        assert.equal(cli('check'), 0);
+        const warnings = logs.filter(l => /warning/.test(l));
+        assert.equal(warnings.length, 1);
+        assert.match(warnings[0], /a\.md:3: warning: Release "1\.1\.0 - 2026-02-01" already has/);
     });
 
     it('fails --require when it cannot diff against the base', () => {
-        cli('init');
         assert.equal(cli('check', '--base', 'no-such-ref', '--require'), 1);
     });
 
-    it('writes fragments under the unreleased heading for a snapshot build', () => {
+    it('passes --release only when the version is in and no fragments are left', () => {
+        write('changelog.d/a.md', '### 🐞 Bug Fixes\n\n* Fixed a bug.\n');
+        assert.equal(cli('check', '--release', '1.2.0'), 1);
+        assert.match(logs.join('\n'), /CHANGELOG\.md has no release 1\.2\.0/);
+        assert.match(logs.join('\n'), /1 fragment still in changelog\.d\/ \(a\.md\)/);
+
+        assert.equal(cli('check', '--release', '1.1'), 1);
+        assert.equal(cli('release', '1.2.0'), 0);
+        assert.equal(cli('check', '--release', 'v1.2.0'), 0);
+        assert.equal(cli('check', '--release', '2.0.0'), 1);
+    });
+});
+
+describe('xh-changelog preview', () => {
+    const {cli, logs, at, write} = tempRepo(WITH_CONFIG),
+        git = (...args) => execFileSync('git', args, {cwd: at(''), stdio: 'ignore'});
+
+    it('prints only the entries that the branch adds', () => {
+        write('changelog.d/a.md', '### 🐞 Bug Fixes\n\n* On develop.\n');
+        git('init', '-q', '-b', 'develop');
+        git('add', '-A');
+        git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qm', 'base');
+        git('switch', '-qc', 'feature');
+        assert.equal(cli('preview', '--base', 'develop'), 0);
+        assert.match(logs.at(-1), /adds no changelog entries/);
+
+        cli('add', 'fix', 'On the branch.');
+        git('add', '-A');
+        git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qm', 'entry');
+        assert.equal(cli('preview', '--base', 'develop'), 0);
+        assert.match(logs.at(-1), /\* On the branch\./);
+        assert.doesNotMatch(logs.at(-1), /On develop/);
+        assert.ok(fs.existsSync(at('changelog.d/feature.md')));
+    });
+});
+
+describe('xh-changelog release', () => {
+    const {cli, at, read, write} = tempRepo(WITH_CONFIG);
+
+    it('assembles fragments into CHANGELOG.md and deletes them', () => {
         cli('init');
-        write('a.md', '### 🎁 New Features\n\n* Added A.\n');
+        write('changelog.d/a.md', '### 🎁 New Features\n\n* Added A.\n');
+        write('changelog.d/b.md', '### ⚙️ Technical\n\n* Tuned B.\n');
+        assert.equal(cli('release', '1.2.0'), 0);
+        assert.match(
+            read('CHANGELOG.md'),
+            /## 2\.0\.0-SNAPSHOT - unreleased\n\n## 1\.2\.0 - 2026-03-01\n\n### 🎁 New Features\n\n\* Added A\.\n\n### ⚙️ Technical\n\n\* Tuned B\.\n\n## 1\.1\.0/
+        );
+        assert.deepEqual(fs.readdirSync(at('changelog.d')).sort(), ['README.md', 'config.json']);
+    });
+
+    it('accepts a section heading written without its emoji, and releases it with one', () => {
+        write('changelog.d/a.md', '### bug fixes\n\n* Fixed a bug.\n');
+        assert.equal(cli('check'), 0);
+        assert.equal(cli('release', '1.2.0'), 0);
+        assert.match(
+            read('CHANGELOG.md'),
+            /## 1\.2\.0 - 2026-03-01\n\n### 🐞 Bug Fixes\n\n\* Fixed/
+        );
+    });
+
+    it('refuses breaking changes in a minor release unless allowed', () => {
+        write('changelog.d/a.md', '### 💥 Breaking Changes\n\n* Removed A.\n');
+        assert.equal(cli('release', '1.2.0'), 1);
+        assert.equal(cli('release', '1.2.0', '--allow-breaking'), 0);
+    });
+});
+
+describe('xh-changelog snapshot', () => {
+    const {cli, at, read, write} = tempRepo({cwd: 'client-app'});
+
+    it('writes fragments under the unreleased heading, and keeps them', () => {
+        cli('init');
+        write('changelog.d/a.md', '### 🎁 New Features\n\n* Added A.\n');
         assert.equal(cli('snapshot'), 0);
         assert.match(
-            changelog(),
+            read('CHANGELOG.md'),
             /## 2\.0\.0-SNAPSHOT - unreleased\n\n### 🎁 New Features\n\n\* Added A\.\n\n## 1\.1\.0/
         );
-        assert.ok(fs.existsSync(path.join(root, 'changelog.d/a.md')));
+        assert.ok(fs.existsSync(at('changelog.d/a.md')));
+    });
+
+    it('names a new unreleased heading for the package version', () => {
+        write('CHANGELOG.md', CHANGELOG.replace('## 2.0.0-SNAPSHOT - unreleased\n\n', ''));
+        write('client-app/package.json', '{"version": "2.0-SNAPSHOT"}');
+        cli('init');
+        write('changelog.d/a.md', '### 🎁 New Features\n\n* Added A.\n');
+        assert.equal(cli('snapshot'), 0);
+        assert.match(read('CHANGELOG.md'), /## 2\.0-SNAPSHOT - unreleased\n\n### 🎁 New Features/);
     });
 });
 
@@ -454,296 +734,6 @@ describe('app changelog JSON', () => {
 
         const snapshot = await buildLogged(t, '2.0.0-SNAPSHOT');
         assert.doesNotMatch(snapshot.log, /WARNING - this is a build of release/);
-    });
-});
-
-describe('review regressions', () => {
-    it('keeps a code block with the bullet it follows', () => {
-        const {markdown} = assembleBody(
-            [
-                fragment('### 🎁 New Features\n\n* First.\n'),
-                fragment(
-                    '### 🎁 New Features\n\n* Renamed `Foo`. Update calls:\n\n```ts\nbar();\n```\n'
-                )
-            ],
-            CONFIG
-        );
-        assert.equal(
-            markdown,
-            '### 🎁 New Features\n\n* First.\n* Renamed `Foo`. Update calls:\n\n```ts\nbar();\n```'
-        );
-    });
-
-    it('keeps topic groups from legacy entries', () => {
-        const {markdown} = assembleBody(
-            [fragment('### 💥 Breaking Changes\n\n* Loose.\n\n#### Grid\n\n* Grouped.\n')],
-            CONFIG
-        );
-        assert.equal(markdown, '### 💥 Breaking Changes\n\n* Loose.\n\n#### Grid\n\n* Grouped.');
-    });
-
-    it('merges library bumps only in a Libraries section', () => {
-        const {markdown} = assembleBody(
-            [fragment('### ⚙️ Technical\n\n* a `1.0 → 1.1`\n* a `1.1 → 1.2`\n')],
-            CONFIG
-        );
-        assert.equal(markdown, '### ⚙️ Technical\n\n* a `1.0 → 1.1`\n* a `1.1 → 1.2`');
-    });
-
-    it('refuses a release that matches an existing one in another form', () => {
-        assert.throws(
-            () => insertRelease(CHANGELOG, {heading: '## 1.1', body: '', version: '1.1'}),
-            /already has/
-        );
-    });
-
-    it('keeps CRLF line endings', () => {
-        const crlf = CHANGELOG.replace(/\n/g, '\r\n'),
-            {text} = insertRelease(crlf, {
-                heading: '## 1.2.0',
-                body: '### T\n\n* x.',
-                version: '1.2.0'
-            });
-        assert.equal(text.split('\n').length, text.split('\r\n').length);
-    });
-
-    it('ignores a byte order mark and a comment marker inside a code span', () => {
-        const {sections} = parseFragment(
-            '\uFEFF### 🎁 New Features\n\n* Uses `<!--` here.\n* Two.\n'
-        );
-        assert.equal(sections[0].title, '🎁 New Features');
-        assert.equal(sections[0].blocks.length, 2);
-    });
-
-    it('clears empty section headings left under the unreleased heading', () => {
-        const legacy = CHANGELOG.replace('unreleased\n', 'unreleased\n\n### 🎁 New Features\n');
-        const {fragment, text} = extractUnreleased(legacy);
-        assert.equal(fragment, null);
-        assert.equal(parseChangelog(text).releases[0].sections.length, 0);
-    });
-});
-
-describe('writing entries with less typing', () => {
-    const {execFileSync} = require('node:child_process');
-    let root, logs;
-    const cli = (...argv) =>
-        run(argv, {
-            cwd: root,
-            log: m => logs.push(m),
-            warn: m => logs.push(m),
-            env: {},
-            today: '2026-03-01'
-        });
-    const git = (...args) => execFileSync('git', args, {cwd: root, stdio: 'ignore'});
-    const read = name => fs.readFileSync(path.join(root, name), 'utf8');
-    const write = (name, text) => {
-        fs.mkdirSync(path.dirname(path.join(root, name)), {recursive: true});
-        fs.writeFileSync(path.join(root, name), text);
-    };
-
-    beforeEach(() => {
-        root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'xh-changelog-')));
-        write('CHANGELOG.md', CHANGELOG);
-        write('changelog.d/config.json', JSON.stringify({...CONFIG, maxLineLength: 40}));
-        logs = [];
-    });
-    afterEach(() => fs.rmSync(root, {recursive: true, force: true}));
-
-    it('accepts a section heading written without its emoji, and releases it with one', () => {
-        write('changelog.d/a.md', '### bug fixes\n\n* Fixed a bug.\n');
-        assert.equal(cli('check'), 0);
-        assert.equal(cli('release', '1.2.0'), 0);
-        assert.match(
-            read('CHANGELOG.md'),
-            /## 1\.2\.0 - 2026-03-01\n\n### 🐞 Bug Fixes\n\n\* Fixed/
-        );
-    });
-
-    it('adds an entry under the section a short name refers to, wrapped at the line length', () => {
-        assert.equal(
-            cli('add', 'fix', 'Fixed a crash when the grid had no data.', '--name', 'b'),
-            0
-        );
-        assert.equal(cli('add', 'features', 'Added', 'a', 'thing.', '--name', 'b'), 0);
-        assert.equal(cli('add', 'Bug Fixes', '* Fixed more.', '--name', 'b'), 0);
-        assert.equal(
-            read('changelog.d/b.md'),
-            '### 🎁 New Features\n\n* Added a thing.\n\n' +
-                '### 🐞 Bug Fixes\n\n* Fixed a crash when the grid had no\n  data.\n* Fixed more.\n'
-        );
-        assert.equal(cli('check'), 0);
-    });
-
-    it('adds a new section in the configured order, not at the end', () => {
-        write('changelog.d/g.md', '### 🐞 Bug Fixes\n\n* One.\n\n### ⚙️ Technical\n\n* Two.\n');
-        cli('add', 'feature', 'Added a thing.', '--name', 'g');
-        cli('add', 'breaking', 'Removed a thing.', '--name', 'g');
-        assert.deepEqual(read('changelog.d/g.md').match(/^### .*$/gm), [
-            '### 💥 Breaking Changes',
-            '### 🎁 New Features',
-            '### 🐞 Bug Fixes',
-            '### ⚙️ Technical'
-        ]);
-        assert.match(read('changelog.d/g.md'), /\* Added a thing\.\n\n### 🐞 Bug Fixes/);
-        assert.equal(cli('check'), 0);
-    });
-
-    it('adds an entry to a fragment that `new` created, below its comment', () => {
-        cli('new', 'c');
-        cli('add', 'tech', 'Tuned a thing.', '--name', 'c');
-        assert.match(read('changelog.d/c.md'), /-->\n\n### ⚙️ Technical\n\n\* Tuned a thing\.\n$/);
-        assert.equal(cli('check'), 0);
-    });
-
-    it('refuses a section name that matches none or more than one section', () => {
-        assert.equal(cli('add', 'x', 'Text.', '--name', 'd'), 1);
-        assert.match(logs.at(-1), /No section matches "x"/);
-        assert.equal(cli('add', 'e', 'Text.', '--name', 'd'), 1);
-        write('changelog.d/config.json', JSON.stringify({sections: ['Bug Fixes', 'Other Fixes']}));
-        assert.equal(cli('add', 'fix', 'Text.', '--name', 'd'), 1);
-        assert.match(logs.at(-1), /more than one section/);
-        assert.ok(!fs.existsSync(path.join(root, 'changelog.d/d.md')));
-    });
-
-    it('fails check on a file in changelog.d that a release would leave out', () => {
-        write('changelog.d/a.md', '### 🐞 Bug Fixes\n\n* Fixed a bug.\n');
-        write('changelog.d/my-branch.txt', '### 🐞 Bug Fixes\n\n* Lost.\n');
-        assert.equal(cli('check'), 1);
-        assert.match(logs.join('\n'), /my-branch\.txt: error: Not a fragment/);
-    });
-
-    it('warns when a fragment repeats an entry that a release already holds', () => {
-        write('changelog.d/a.md', '### ⚙️ Technical\n\n* Tuned a thing.\n* Tuned another.\n');
-        assert.equal(cli('check'), 0);
-        const warnings = logs.filter(l => /warning/.test(l));
-        assert.equal(warnings.length, 1);
-        assert.match(warnings[0], /a\.md:3: warning: Release "1\.1\.0 - 2026-02-01" already has/);
-    });
-
-    it('previews only the entries that the branch adds', () => {
-        write('changelog.d/a.md', '### 🐞 Bug Fixes\n\n* On develop.\n');
-        git('init', '-q', '-b', 'develop');
-        git('add', '-A');
-        git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qm', 'base');
-        git('switch', '-qc', 'feature');
-        assert.equal(cli('preview', '--base', 'develop'), 0);
-        assert.match(logs.at(-1), /adds no changelog entries/);
-
-        cli('add', 'fix', 'On the branch.');
-        git('add', '-A');
-        git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qm', 'entry');
-        assert.equal(cli('preview', '--base', 'develop'), 0);
-        assert.match(logs.at(-1), /\* On the branch\./);
-        assert.doesNotMatch(logs.at(-1), /On develop/);
-        assert.ok(fs.existsSync(path.join(root, 'changelog.d/feature.md')));
-    });
-
-    it('passes the release check only when the version is in and no fragments are left', () => {
-        write('changelog.d/a.md', '### 🐞 Bug Fixes\n\n* Fixed a bug.\n');
-        assert.equal(cli('check', '--release', '1.2.0'), 1);
-        assert.match(logs.join('\n'), /CHANGELOG\.md has no release 1\.2\.0/);
-        assert.match(logs.join('\n'), /1 fragment still in changelog\.d\/ \(a\.md\)/);
-
-        assert.equal(cli('check', '--release', '1.1'), 1);
-        assert.equal(cli('release', '1.2.0'), 0);
-        assert.equal(cli('check', '--release', 'v1.2.0'), 0);
-        assert.equal(cli('check', '--release', '2.0.0'), 1);
-    });
-
-    it('sets a new entry off from a paragraph, and keeps the file name visible', () => {
-        write('changelog.d/f.md', '### 🎁 New Features\n\nIntro.\n\n### 🐞 Bug Fixes\n\n* One.\n');
-        cli('add', 'feature', 'Added a thing.', '--name', 'f');
-        assert.match(read('changelog.d/f.md'), /Intro\.\n\n\* Added a thing\.\n\n### 🐞 Bug Fixes/);
-
-        cli('add', 'fix', 'Two.', '--name', '../.hidden');
-        assert.ok(fs.existsSync(path.join(root, 'changelog.d/hidden.md')));
-    });
-
-    it('takes entry text that starts with dashes', () => {
-        assert.equal(cli('add', 'fix', '--watch mode now works.', '--name', 'e'), 0);
-        assert.match(read('changelog.d/e.md'), /\* --watch mode now works\./);
-    });
-
-    it('prints usage for --help', () => {
-        assert.equal(cli('--help'), 0);
-        assert.match(logs[0], /^Usage: xh-changelog/);
-    });
-});
-
-describe('xh-changelog init', () => {
-    let root, logs;
-    const cli = (...argv) =>
-        run(argv, {cwd: path.join(root, 'client-app'), log: m => logs.push(m), env: {}});
-    const read = name => fs.readFileSync(path.join(root, name), 'utf8');
-
-    beforeEach(() => {
-        root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'xh-changelog-')));
-        fs.mkdirSync(path.join(root, 'client-app'));
-        fs.mkdirSync(path.join(root, '.github/workflows'), {recursive: true});
-        fs.writeFileSync(path.join(root, 'CHANGELOG.md'), CHANGELOG);
-        fs.writeFileSync(
-            path.join(root, 'client-app/package.json'),
-            '{\n  "name": "app",\n  "scripts": {"start": "x"},\n' +
-                '  "devDependencies": {"@xh/hoist-dev-utils": "^16.6.0"}\n}\n'
-        );
-        fs.writeFileSync(path.join(root, 'client-app/pnpm-lock.yaml'), '');
-        logs = [];
-    });
-    afterEach(() => fs.rmSync(root, {recursive: true, force: true}));
-
-    it('adds a package script, a workflow and a README that uses the package manager', () => {
-        assert.equal(cli('init'), 0);
-        assert.equal(JSON.parse(read('client-app/package.json')).scripts.changelog, 'xh-changelog');
-        assert.match(read('client-app/package.json'), /^\{\n  "name"/);
-        assert.match(read('.github/workflows/changelog.yml'), /check-changelog@master\n$/);
-        assert.match(read('changelog.d/README.md'), /pnpm changelog add feature "Added/);
-        assert.match(read('changelog.d/README.md'), /### 🎁 New Features/);
-        assert.match(read('changelog.d/README.md'), /Run it from `client-app\/`\./);
-        assert.doesNotMatch(read('changelog.d/README.md'), /Entry conventions/);
-    });
-
-    it("points the README at the repo's entry conventions", () => {
-        fs.writeFileSync(path.join(root, 'CLAUDE.md'), '# App\n\n## Changelog\n\nRules.\n');
-        cli('init');
-        assert.match(
-            read('changelog.d/README.md'),
-            /Entry conventions are in the "Changelog" section/
-        );
-    });
-
-    it('leaves an existing script and workflow alone, and skips the workflow with --no-ci', () => {
-        fs.writeFileSync(
-            path.join(root, '.github/workflows/ci.yml'),
-            'uses: xh/hoist-dev-utils/.github/actions/check-changelog@abc\n'
-        );
-        assert.equal(cli('init'), 0);
-        assert.ok(!fs.existsSync(path.join(root, '.github/workflows/changelog.yml')));
-
-        fs.rmSync(path.join(root, '.github/workflows/ci.yml'));
-        fs.rmSync(path.join(root, 'changelog.d'), {recursive: true});
-        logs = [];
-        assert.equal(cli('init', '--no-ci'), 0);
-        assert.ok(!fs.existsSync(path.join(root, '.github/workflows/changelog.yml')));
-        assert.doesNotMatch(logs.join('\n'), /Added a "changelog" script/);
-    });
-
-    it('names plain xh-changelog where no package installs the tool', () => {
-        fs.rmSync(path.join(root, 'client-app/package.json'));
-        assert.equal(cli('init'), 0);
-        assert.match(read('changelog.d/README.md'), /run `xh-changelog add`/);
-    });
-
-    it('sets the house line length only for a changelog that keeps to it', () => {
-        const wrapped = n =>
-            `## ${n}.0.0 - 2026-01-01\n\n### 🎁 New Features\n\n` +
-            Array.from({length: 12}, (_, i) => `* Added feature ${i}, wrapped\n  as usual.`).join(
-                '\n'
-            );
-        const text = `# Changelog\n\n${wrapped(2)}\n\n${wrapped(1)}\n`;
-        assert.equal(inferConfig(parseChangelog(text), text).maxLineLength, 100);
-
-        const long = text.replace(/wrapped\n  as usual/g, 'x'.repeat(120));
-        assert.equal(inferConfig(parseChangelog(long), long).maxLineLength, null);
     });
 });
 

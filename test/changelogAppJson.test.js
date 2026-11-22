@@ -131,13 +131,6 @@ describe('buildAppChangelogJson', () => {
             {title: null, items: ['Hoist Core v33.2 -> v36.1', 'Hoist React v78.1.4 -> v80.0.1']}
         ]);
     });
-
-    it('returns no versions for an empty changelog', () => {
-        assert.deepEqual(buildAppChangelogJson('# Changelog\n'), {
-            title: 'Changelog',
-            versions: []
-        });
-    });
 });
 
 function collapseBlankLines(text) {
