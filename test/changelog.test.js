@@ -516,10 +516,13 @@ describe('xh-changelog init', () => {
         assert.equal(JSON.parse(read('client-app/package.json')).scripts.changelog, 'xh-changelog');
         assert.match(read('client-app/package.json'), /^\{\n  "name"/);
         assert.match(read('.github/workflows/changelog.yml'), /check-changelog@master\n$/);
-        assert.match(read('changelog.d/README.md'), /pnpm changelog add feature "Added/);
-        assert.match(read('changelog.d/README.md'), /### 🎁 New Features/);
-        assert.match(read('changelog.d/README.md'), /Run it from `client-app\/`\./);
-        assert.doesNotMatch(read('changelog.d/README.md'), /Entry conventions/);
+        const readme = read('changelog.d/README.md');
+        assert.match(
+            readme,
+            /`pnpm changelog add <section> "<text>"`\. Run it from `client-app\/`\./
+        );
+        assert.match(readme, /README\.md#changelog-fragments\)/);
+        assert.doesNotMatch(readme, /Entry conventions/);
     });
 
     it("points the README at the repo's entry conventions", () => {
@@ -550,7 +553,7 @@ describe('xh-changelog init', () => {
     it('names plain xh-changelog where no package installs the tool', () => {
         fs.rmSync(path.join(root, 'client-app/package.json'));
         assert.equal(cli('init'), 0);
-        assert.match(read('changelog.d/README.md'), /run `xh-changelog add`/);
+        assert.match(read('changelog.d/README.md'), /`xh-changelog add <section> "<text>"`\.\n/);
     });
 
     it('sets the house line length only for a changelog that keeps to it', () => {

@@ -449,7 +449,7 @@ without `.md`, because a release would leave its entries out. It warns on lines 
    part that is already there:
     - Creates `changelog.d/config.json`, inferred from recent releases: the sections and their
       usual order, the heading format and the line length.
-    - Creates `changelog.d/README.md`, a short guide for the team.
+    - Creates `changelog.d/README.md`, a short note that points here.
     - Moves any entries under an unreleased heading in `CHANGELOG.md` to
       `changelog.d/unreleased.md`.
     - Adds a `changelog` script to `package.json`, so the team runs `pnpm changelog`.
