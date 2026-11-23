@@ -99,8 +99,7 @@ to a commit SHA also pins the checks it runs.
 | Input | Required | Description |
 |---|---|---|
 | `base` | No | Ref to diff against (default: the pull request base) |
-| `require` | No | Fail, not warn, when no fragment is added (default: `false`) |
-| `skip-label` | No | Label that marks a pull request as needing no entry (default: `no-changelog`) |
+| `skip-label` | No | Label that marks a pull request as needing no entry, and turns off the warning (default: `no-changelog`) |
 | `release` | No | Version being published. Runs the [release check](../README.md#release) in place of the pull request checks |
 | `working-directory` | No | Where to run. The check uses the nearest `CHANGELOG.md` at or above it (default: `.`) |
 

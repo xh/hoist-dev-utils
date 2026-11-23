@@ -11,12 +11,8 @@ inputs:
         description: 'Ref or SHA to diff against when looking for a new fragment. Defaults to the pull request base.'
         required: false
         default: ''
-    require:
-        description: 'Set to true to fail, not warn, when the pull request adds no fragment.'
-        required: false
-        default: 'false'
     skip-label:
-        description: 'A pull request with this label is not expected to add a fragment.'
+        description: 'A pull request with this label needs no fragment. It turns off the warning.'
         required: false
         default: 'no-changelog'
     release:
@@ -36,7 +32,6 @@ runs:
           working-directory: ${{ inputs.working-directory }}
           env:
               BASE: ${{ inputs.base || github.event.pull_request.base.sha }}
-              REQUIRE: ${{ inputs.require }}
               SKIP: ${{ contains(github.event.pull_request.labels.*.name, inputs.skip-label) }}
               RELEASE: ${{ inputs.release }}
           run: |
@@ -47,7 +42,6 @@ runs:
               fi
               args=(check)
               if [[ -n "$BASE" && "$SKIP" != "true" ]]; then args+=(--base "$BASE"); fi
-              if [[ "$REQUIRE" == "true" ]]; then args+=(--require); fi
               if [[ -n "$BASE" && -n "$GITHUB_STEP_SUMMARY" ]]; then
                   {
                       echo "### Changelog entries in this pull request"

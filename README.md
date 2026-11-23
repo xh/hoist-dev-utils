@@ -427,7 +427,7 @@ curate the release.
 | Command | What it does |
 |---|---|
 | `xh-changelog add <section> <text>` | Adds one entry to this branch's fragment, creating the file or the section if needed, and wraps it at `maxLineLength`. `<section>` is a section title or part of one. Takes `--name <fragment>`. |
-| `xh-changelog check` | Validates every fragment, and checks that `CHANGELOG.md` has no entries under its unreleased heading. Add `--base <ref>` to warn when the branch adds no fragment, and `--require` to make that an error. |
+| `xh-changelog check` | Validates every fragment, and checks that `CHANGELOG.md` has no entries under its unreleased heading. Add `--base <ref>` to warn when the branch adds no fragment. |
 | `xh-changelog check --release <version>` | For a release build. Fails unless `CHANGELOG.md` holds `<version>` and no fragments are left. |
 | `xh-changelog preview` | Prints the next release as it would be assembled. Add `--base <ref>` to print only the entries this branch adds. |
 | `xh-changelog release <version>` | Assembles the fragments into `CHANGELOG.md` and deletes them. Takes `--date`, `--dry-run` and `--allow-breaking`. |

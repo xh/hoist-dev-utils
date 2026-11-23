@@ -672,8 +672,9 @@ describe('xh-changelog check', () => {
         assert.match(warnings[0], /a\.md:3: warning: Release "1\.1\.0 - 2026-02-01" already has/);
     });
 
-    it('fails --require when it cannot diff against the base', () => {
-        assert.equal(cli('check', '--base', 'no-such-ref', '--require'), 1);
+    it('warns when it cannot diff against the base', () => {
+        assert.equal(cli('check', '--base', 'no-such-ref'), 0);
+        assert.match(logs.join('\n'), /warning: Could not diff against no-such-ref/);
     });
 
     it('passes --release only when the version is in and no fragments are left', () => {
