@@ -728,6 +728,15 @@ describe('xh-changelog release', () => {
         assert.deepEqual(fs.readdirSync(at('changelog.d')).sort(), ['README.md', 'config.json']);
     });
 
+    it('refuses entries written under the unreleased heading', () => {
+        const old = CHANGELOG.replace('unreleased\n', 'unreleased\n\n### 🐞 Bug Fixes\n\n* Old.\n');
+        write('CHANGELOG.md', old);
+        write('changelog.d/a.md', '### 🐞 Bug Fixes\n\n* New.\n');
+        assert.equal(cli('release', '1.2.0'), 1);
+        assert.equal(read('CHANGELOG.md'), old);
+        assert.ok(fs.existsSync(at('changelog.d/a.md')));
+    });
+
     it('accepts a section heading written without its emoji, and releases it with one', () => {
         write('changelog.d/a.md', '### bug fixes\n\n* Fixed a bug.\n');
         assert.equal(cli('check'), 0);

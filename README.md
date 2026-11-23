@@ -485,7 +485,7 @@ Run `xh-changelog release 92.1.0`, review and edit the new block in `CHANGELOG.m
   pass `--allow-breaking`.
 - Releasing the major that the unreleased heading names rolls the heading forward, for example
   from `92.0.0-SNAPSHOT` to `93.0.0-SNAPSHOT`.
-- Entries still written under the unreleased heading join the release, with a warning.
+- Entries still written under the unreleased heading stop the release, as they fail `check`.
 
 Add `xh-changelog check --release <version>` to the release build, or pass `release` to the
 `check-changelog` action. The build then fails if someone starts a release before running
