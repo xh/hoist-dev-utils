@@ -180,8 +180,6 @@ Prettier config (`.prettierrc.json`):
 
 ## Git Workflow
 
-These rules are shared verbatim with hoist-react - keep the two in sync when either changes.
-
 **Branching, committing, and pushing all require an explicit ask - never do them unprompted.**
 When it isn't abundantly clear that the user wants one of these, ask first.
 
