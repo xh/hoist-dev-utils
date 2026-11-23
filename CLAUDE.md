@@ -88,8 +88,8 @@ building and running Toolbox.
 
 **Package manager: pnpm.** `pnpm-lock.yaml` is the source of truth — do not invoke `npm install`
 or `yarn install`, and do not create a `package-lock.json` or `yarn.lock`. The required pnpm
-version is pinned via the `packageManager` field in `package.json`; if pnpm is not on the PATH,
-run it through corepack (`corepack pnpm <cmd>`). Use `pnpm why <pkg>` to inspect the dependency
+version is pinned via the `packageManager` field in `package.json`. Any recent pnpm switches to
+that version automatically - do not use corepack. Use `pnpm why <pkg>` to inspect the dependency
 tree in read-only fashion without reinstalling.
 
 ### Commands
