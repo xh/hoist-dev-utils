@@ -21,6 +21,7 @@ const {parseChangelog, parseFragment} = require('../lib/changelog/parse'),
         insertRelease,
         extractUnreleased
     } = require('../lib/changelog/assemble'),
+    {releaseNotes} = require('../lib/changelog/notes'),
     {run} = require('../lib/changelog/cli');
 
 const CHANGELOG = `# Changelog
@@ -386,6 +387,98 @@ describe('extractUnreleased', () => {
     });
 });
 
+describe('releaseNotes', () => {
+    const release = body =>
+        `# Changelog\n\n## 2.0.0-SNAPSHOT - unreleased\n\n## 1.2.0 - 2026-03-01\n\n${body}\n\n## 1.1.0 - 2026-02-01\n\n* Older.\n`;
+
+    it('returns the body of a release without its heading, for any form of the version', () => {
+        assert.equal(
+            releaseNotes(CHANGELOG, 'v1.1'),
+            '### 🎁 New Features\n\n* Added a wrapped entry that runs onto a second line.\n' +
+                '    * With a sub-bullet.\n\n### ⚙️ Technical\n\n* Tuned a thing.'
+        );
+        assert.equal(releaseNotes(CHANGELOG, '1.1.0'), releaseNotes(CHANGELOG, 'v1.1'));
+    });
+
+    it('returns null for a version that is not released', () => {
+        assert.equal(releaseNotes(CHANGELOG, '1.5.0'), null);
+        assert.equal(releaseNotes(CHANGELOG, '2.0.0'), null);
+    });
+
+    it('joins wrapped paragraphs and bullets, and leaves the other blocks as written', () => {
+        const notes = releaseNotes(
+            release(
+                [
+                    '### Breaking Changes',
+                    '',
+                    'See the upgrade notes',
+                    'for each step.',
+                    '',
+                    '* Renamed `Foo`. Update',
+                    '  calls:',
+                    '',
+                    '  ```ts',
+                    '  bar(',
+                    '      1',
+                    '  );',
+                    '  ```',
+                    '* First line.  ',
+                    '  After a hard break.',
+                    '',
+                    '| Old | New |',
+                    '|-----|-----|',
+                    '| a   | b   |'
+                ].join('\n')
+            ),
+            '1.2.0'
+        );
+        assert.equal(
+            notes,
+            [
+                '### Breaking Changes',
+                '',
+                'See the upgrade notes for each step.',
+                '',
+                '* Renamed `Foo`. Update calls:',
+                '',
+                '  ```ts',
+                '  bar(',
+                '      1',
+                '  );',
+                '  ```',
+                '* First line.  ',
+                '  After a hard break.',
+                '',
+                '| Old | New |',
+                '|-----|-----|',
+                '| a   | b   |'
+            ].join('\n')
+        );
+    });
+
+    it('points relative links at the link base, and leaves other links and code alone', () => {
+        const notes = releaseNotes(
+            release(
+                [
+                    '* See [`docs/upgrade.md`](docs/upgrade.md) and [the guide](./guide/README.md#setup).',
+                    '* See [the site](https://xh.io), [an anchor](#top) and [a root path](/abs).',
+                    '* Write a link as `[text](path)`.'
+                ].join('\n')
+            ),
+            '1.2.0',
+            {linkBase: 'https://github.com/xh/lib/blob/v1.2.0/'}
+        );
+        assert.equal(
+            notes,
+            [
+                '* See [`docs/upgrade.md`](https://github.com/xh/lib/blob/v1.2.0/docs/upgrade.md) and [the guide](https://github.com/xh/lib/blob/v1.2.0/guide/README.md#setup).',
+                '* See [the site](https://xh.io), [an anchor](#top) and [a root path](/abs).',
+                '* Write a link as `[text](path)`.'
+            ].join('\n')
+        );
+    });
+});
+
 describe('xh-changelog init', () => {
     let root, logs;
     const cli = (...argv) =>
@@ -650,6 +743,26 @@ describe('xh-changelog release', () => {
         write('changelog.d/a.md', '### 💥 Breaking Changes\n\n* Removed A.\n');
         assert.equal(cli('release', '1.2.0'), 1);
         assert.equal(cli('release', '1.2.0', '--allow-breaking'), 0);
+    });
+});
+
+describe('xh-changelog notes', () => {
+    const {cli, logs} = tempRepo(WITH_CONFIG);
+
+    it('prints the notes of a release, and fails for a version with none', () => {
+        assert.equal(
+            cli('notes', '1.0.0', '--link-base', 'https://github.com/xh/lib/blob/v1.0.0'),
+            0
+        );
+        assert.equal(
+            logs.at(-1),
+            '### 💥 Breaking Changes (upgrade difficulty: 🟢 LOW)\n\nSee the upgrade notes.\n\n' +
+                '* Removed `Foo`.\n\n### 🎁 New Features\n\n* First feature.'
+        );
+
+        assert.equal(cli('notes', '1.5.0'), 1);
+        assert.match(logs.at(-1), /CHANGELOG\.md has no release 1\.5\.0/);
+        assert.equal(cli('notes'), 1);
     });
 });
 
