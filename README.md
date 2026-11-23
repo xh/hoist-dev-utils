@@ -404,17 +404,15 @@ bullets as `CHANGELOG.md`. Bullets can wrap, and they can hold sub-bullets.
 * Fixed `GridModel` losing its sort when its store reloaded with a filter applied.
 ```
 
-For a one-line entry, `xh-changelog add` does the typing. It names the file for your branch and
-finds the section from a short name, such as `fix`, `feature`, `tech` or `lib`:
+For a one-line entry, run `add` with a short section name, such as `fix`, `feature`, `tech` or
+`lib`:
 
 ```bash
 xh-changelog add fix "Fixed GridModel losing its sort when its store reloaded with a filter."
 ```
 
-It wraps the bullet at `maxLineLength` and adds it under the right heading, creating the file or the
-section if needed. For a longer entry, run `xh-changelog new` to create `changelog.d/<branch>.md`
-with the valid sections listed in a comment, or create the file yourself with any name. You can
-leave the emoji off a heading, as in `### Bug Fixes`. The release writes the configured title.
+For a longer entry, run `new`, or create a file in `changelog.d/` with any name. You can leave the
+emoji off a heading, as in `### Bug Fixes`. The release writes the configured title.
 
 A pull request can add more than one fragment, and it can edit a fragment that another pull request
 added.
@@ -427,8 +425,8 @@ curate the release.
 
 | Command | What it does |
 |---|---|
-| `xh-changelog add <section> <text>` | Adds one entry to this branch's fragment. `<section>` is a section title or part of one. Takes `--name <fragment>`. |
-| `xh-changelog new [name]` | Creates an empty `changelog.d/<name>.md` to edit. The name defaults to the git branch. |
+| `xh-changelog add <section> <text>` | Adds one entry to this branch's fragment, creating the file or the section if needed, and wraps it at `maxLineLength`. `<section>` is a section title or part of one. Takes `--name <fragment>`. |
+| `xh-changelog new [name]` | Creates `changelog.d/<name>.md`, with the valid sections listed in a comment. The name defaults to the git branch. |
 | `xh-changelog check` | Validates every fragment, and checks that `CHANGELOG.md` has no entries under its unreleased heading. Add `--base <ref>` to warn when the branch adds no fragment, and `--require` to make that an error. |
 | `xh-changelog check --release <version>` | For a release build. Fails unless `CHANGELOG.md` holds `<version>` and no fragments are left. |
 | `xh-changelog preview` | Prints the next release as it would be assembled. Add `--base <ref>` to print only the entries this branch adds. |
@@ -445,8 +443,7 @@ without `.md`, because a release would leave its entries out. It warns on lines 
 
 ### Set up a repo
 
-1. Run `xh-changelog init`, in an app from `client-app/`. It does the following, and skips any
-   part that is already there:
+1. Run `xh-changelog init`. It does the following, and skips any part that is already there:
     - Creates `changelog.d/config.json`, inferred from recent releases: the sections and their
       usual order, the heading format and the line length.
     - Creates `changelog.d/README.md`, a short note that points here.
@@ -480,8 +477,8 @@ Run `xh-changelog release 92.1.0`, review and edit the new block in `CHANGELOG.m
 - Sections follow the config order. Within a section, bullets follow fragment file name order.
   Prose that opens a fragment's section goes above the bullets. Prose that follows a bullet, such
   as a code block, stays with that bullet.
-- Duplicate bullets are dropped. Two bumps of one library in a `Libraries` section merge into one
-  bullet.
+- The release drops duplicate bullets. Two bumps of one library in a `Libraries` section merge
+  into one bullet.
 - The block goes above the newest release with a lower version, so a hotfix to an older line lands
   in version order.
 - A `Breaking Changes` section blocks a release that is not a major (`N.0.0` or `N.0`), unless you
@@ -496,7 +493,7 @@ Add `xh-changelog check --release <version>` to the release build, or pass `rele
 
 For a hotfix on a release branch, add the fragment there and run `release`. When you merge the
 hotfix back, delete the matching fragment on `develop` if the same fix landed there too. Otherwise
-the next release lists it twice. `check` warns about an entry that a release already holds.
+the next release lists it twice.
 
 ### GitHub release notes
 
@@ -543,18 +540,18 @@ lists.
 
 This repository provides a set of reusable [composite GitHub Actions](https://docs.github.com/en/actions/sharing-automations/creating-actions/creating-a-composite-action)
 for CI/CD across the Hoist ecosystem. These actions standardize release validation, snapshot
-versioning, and tag/release creation for all `xh` repositories — including npm-based projects
+versioning, and tag/release creation for all `xh` repositories - including npm-based projects
 (hoist-react, hoist-dev-utils) and Gradle-based projects (hoist-core).
 
 Available actions under `.github/actions/`:
 
-* **`validate-release-version`** — Ensures a proposed release version is valid semver and a strict
+* **`validate-release-version`** - Ensures a proposed release version is valid semver and a strict
   single increment from the latest tag. Supports hotfix releases.
-* **`prepare-npm-snapshot-version`** — Resolves and writes a SNAPSHOT version to `package.json`
+* **`prepare-npm-snapshot-version`** - Resolves and writes a SNAPSHOT version to `package.json`
   with an optional uniqueness timestamp.
-* **`prepare-gradle-snapshot-version`** — Resolves and writes a SNAPSHOT version to
+* **`prepare-gradle-snapshot-version`** - Resolves and writes a SNAPSHOT version to
   `gradle.properties` for Java/Grails projects.
-* **`create-tag-and-github-release`** — Tags a commit, pushes the tag, and creates a GitHub Release
+* **`create-tag-and-github-release`** - Tags a commit, pushes the tag, and creates a GitHub Release
   with the version's notes from `CHANGELOG.md` and auto-generated notes.
 * **`check-changelog`** - Validates the changelog fragments a pull request adds. See
   [Changelog fragments](#changelog-fragments).

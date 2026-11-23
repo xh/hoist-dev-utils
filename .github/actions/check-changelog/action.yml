@@ -1,17 +1,7 @@
-# Check Changelog - Reusable composite action that validates changelog fragments on a pull request.
+# Check Changelog - Reusable composite action that validates changelog fragments on a pull request,
+# or checks a release build for its changelog. See .github/README.md.
 #
-# Runs `xh-changelog check` from this repository's checkout of hoist-dev-utils, with plain Node and
-# no install, so it works in npm projects, Hoist apps and Gradle projects alike. It fails on a
-# malformed fragment or on entries written straight into CHANGELOG.md, and warns when the pull
-# request adds no fragment at all. It also writes the entries the pull request adds to the job
-# summary, as the release will show them.
-#
-# In a release build, pass `release` instead. The action then fails unless CHANGELOG.md holds that
-# version and no fragments are left, so a release cannot ship without its changelog.
-#
-# Prerequisites:
-#   - The calling workflow must check out with `fetch-depth: 0`, so the PR's base commit is present.
-#   - Node is on the PATH (it is on GitHub-hosted runners).
+# Prerequisites: Node on the PATH, as on GitHub-hosted runners.
 
 name: Check Changelog
 description: Validates changelog fragments in changelog.d/ and warns when a pull request adds none.

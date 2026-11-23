@@ -2,8 +2,8 @@
 
 This directory contains reusable [composite actions](https://docs.github.com/en/actions/sharing-automations/creating-actions/creating-a-composite-action)
 and CI/CD workflows for the Hoist framework ecosystem. Because this is a public repository, these
-actions can be referenced by any GitHub repository. They are used by Hoist ecosystem projects —
-including hoist-dev-utils itself, hoist-react, and hoist-core — to standardize release and snapshot
+actions can be referenced by any GitHub repository. They are used by Hoist ecosystem projects -
+including hoist-dev-utils itself, hoist-react, and hoist-core - to standardize release and snapshot
 deployment processes. Changes to these actions are documented in the root `CHANGELOG.md` and
 reflected in semantic versioning.
 
@@ -88,28 +88,24 @@ generated notes alone.
 
 ### `check-changelog`
 
-Validates the changelog fragments in `changelog.d/` on a pull request. It runs `xh-changelog check`
-from this repository with plain Node and no install, so it works for npm projects, Hoist apps and
-Gradle projects alike. See [Changelog fragments](../README.md#changelog-fragments).
+Runs `xh-changelog check` on a pull request, and writes the entries that the pull request adds to
+the job summary. The README section [Changelog fragments](../README.md#changelog-fragments)
+documents what the check enforces.
 
-The check fails on a malformed fragment and on entries written straight into `CHANGELOG.md`. It
-warns, or fails with `require`, when the pull request adds or edits no fragment. A pull request with
-the `skip-label` label skips that last check.
-
-The job summary shows the entries that the pull request adds, as the release will show them. A
-reviewer can read them there without opening the fragment file.
+The action runs the command from its own checkout of this repository, with plain Node and no
+install. It works in npm projects, Hoist apps and Gradle projects. A workflow that pins the action
+to a commit SHA also pins the checks it runs.
 
 | Input | Required | Description |
 |---|---|---|
 | `base` | No | Ref to diff against (default: the pull request base) |
 | `require` | No | Fail, not warn, when no fragment is added (default: `false`) |
 | `skip-label` | No | Label that marks a pull request as needing no entry (default: `no-changelog`) |
-| `release` | No | Version being published. Set it in a release build. See below |
+| `release` | No | Version being published. Runs the [release check](../README.md#release) in place of the pull request checks |
 | `working-directory` | No | Where to run. The check uses the nearest `CHANGELOG.md` at or above it (default: `.`) |
 
-**Prerequisites:**
-- The calling workflow must check out with `fetch-depth: 0`, so the base commit is present.
-- To re-run when a label changes, trigger on `labeled` and `unlabeled` too:
+On a pull request, check out with `fetch-depth: 0` so the base commit is present. Trigger on
+`labeled` and `unlabeled` so that adding `skip-label` re-runs the check:
 
 ```yaml
 on:
@@ -125,13 +121,7 @@ jobs:
             - uses: xh/hoist-dev-utils/.github/actions/check-changelog@master
 ```
 
-The action runs the `xh-changelog` command from its own checkout of this repository, not from the
-calling project's `node_modules`. A workflow that pins the action to a commit SHA therefore also
-pins the version of the checks it runs.
-
-**In a release build**, pass the version as `release`. The action then fails unless
-`CHANGELOG.md` holds that version and `changelog.d/` has no fragments left. This stops a release
-that someone started before running `xh-changelog release`. It needs no `fetch-depth`.
+In a release build:
 
 ```yaml
 - uses: xh/hoist-dev-utils/.github/actions/check-changelog@master
@@ -143,8 +133,8 @@ that someone started before running `xh-changelog release`. It needs no `fetch-d
 
 The `scripts/` directory contains shell scripts used internally by the composite actions:
 
-- **`validate-release-version.sh`** — Core validation logic for release versions.
-- **`find-latest-version.sh`** — Finds the latest semver tag or the latest tag before a given
+- **`validate-release-version.sh`** - Core validation logic for release versions.
+- **`find-latest-version.sh`** - Finds the latest semver tag or the latest tag before a given
   version.
 
 ## Tests
@@ -155,11 +145,11 @@ The `test/` directory contains unit tests for the scripts, run by `unitTestActio
 
 The `workflows/` directory contains workflows for hoist-dev-utils' *own* CI/CD:
 
-- **`deployRelease.yml`** — Manually triggered workflow to publish numbered releases to npm.
+- **`deployRelease.yml`** - Manually triggered workflow to publish numbered releases to npm.
   Uses `validate-release-version` and `create-tag-and-github-release` actions.
-- **`deploySnapshot.yml`** — Publishes a SNAPSHOT build to npm (tagged `next`) on every push to
+- **`deploySnapshot.yml`** - Publishes a SNAPSHOT build to npm (tagged `next`) on every push to
   `develop`. Uses `prepare-npm-snapshot-version`.
-- **`unitTestActions.yml`** — Runs unit tests for the shared actions and scripts on PRs that
+- **`unitTestActions.yml`** - Runs unit tests for the shared actions and scripts on PRs that
   modify files under `.github/`.
 - **`changelog.yml`** - Runs `check-changelog` on every pull request.
 
