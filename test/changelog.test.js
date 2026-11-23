@@ -664,14 +664,6 @@ describe('xh-changelog check', () => {
         assert.match(logs.join('\n'), /my-branch\.txt: error: Not a fragment/);
     });
 
-    it('warns when a fragment repeats an entry that a release already holds', () => {
-        write('changelog.d/a.md', '### ⚙️ Technical\n\n* Tuned a thing.\n* Tuned another.\n');
-        assert.equal(cli('check'), 0);
-        const warnings = logs.filter(l => /warning/.test(l));
-        assert.equal(warnings.length, 1);
-        assert.match(warnings[0], /a\.md:3: warning: Release "1\.1\.0 - 2026-02-01" already has/);
-    });
-
     it('warns when it cannot diff against the base', () => {
         assert.equal(cli('check', '--base', 'no-such-ref'), 0);
         assert.match(logs.join('\n'), /warning: Could not diff against no-such-ref/);

@@ -439,7 +439,7 @@ curate the release.
 suffix, a `####` group, an empty fragment or bullet, and entries written straight into
 `CHANGELOG.md`. It also fails on a file in `changelog.d/` that is not a fragment, such as one saved
 without `.md`, because a release would leave its entries out. It warns on lines longer than
-`maxLineLength`, and on an entry that a release in `CHANGELOG.md` already holds.
+`maxLineLength`.
 
 ### Set up a repo
 
