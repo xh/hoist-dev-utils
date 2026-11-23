@@ -12,10 +12,6 @@
 * New `check-changelog` shared action, which runs `xh-changelog check` on pull requests. The job
   summary shows the entries that the pull request adds. In a release build, pass `release` to fail
   the build unless `CHANGELOG.md` holds the version and no fragments are left.
-* GitHub releases now lead with the version's notes from `CHANGELOG.md`, above the notes that
-  GitHub generates. The `create-tag-and-github-release` action gets them from the new
-  `xh-changelog notes <version>` command, which joins wrapped lines and resolves relative links.
-  A repo with no `CHANGELOG.md` entry for the version gets the generated notes as before.
 * App builds show unreleased changelog fragments in the in-app release notes, under the version in
   development.
 * App release notes keep wrapped bullets and sub-bullets. Before, the build kept only the first line

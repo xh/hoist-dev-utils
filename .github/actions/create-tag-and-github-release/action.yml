@@ -1,18 +1,15 @@
 # Create Tag & GitHub Release — Reusable composite action.
 #
-# Tags the current commit, pushes the tag, and creates a GitHub release. The release leads with
-# the version's notes from CHANGELOG.md, when the repo has them, followed by GitHub's
-# auto-generated notes. Uses find-latest-version.sh to scope the generated notes to the
-# semver-previous tag, or to the full history for a first release. Hotfix releases are marked as
-# non-latest.
+# Tags the current commit, pushes the tag, and creates a GitHub release with auto-generated
+# notes. Uses find-latest-version.sh to scope release notes to the semver-previous tag, or to the
+# full history for a first release. Hotfix releases are marked as non-latest.
 
 # Prerequisites:
 #   - Creates tags following the convention "v{X.Y.Z}" (e.g. v12.0.0) and expects existing release tags to use the same format.
 #   - The calling workflow must checkout with `fetch-depth: 0` and `fetch-tags: true` so that all git tags are available locally.
-#   - For the CHANGELOG.md notes: CHANGELOG.md is at the repo root and Node is on the PATH (it is on GitHub-hosted runners).
 
 name: Create Tag & GitHub Release
-description: Tags the commit, pushes the tag, and creates a GitHub release with notes from CHANGELOG.md and auto-generated notes.
+description: Tags the commit, pushes the tag, and creates a GitHub release with auto-generated notes.
 
 inputs:
     version:
@@ -47,24 +44,14 @@ runs:
               fi
               # Always scope release notes to the semver-previous tag so that
               # hotfix tags created out of order don't skew the range.
-              NOTES_ARGS=(--generate-notes)
+              NOTES_FLAG="--generate-notes"
               # No previous tag (e.g. a first release) is expected, so drop the helper's error output.
               PREV_TAG=$("$GITHUB_ACTION_PATH/../../scripts/find-latest-version.sh" "$VERSION" 2>/dev/null) || true
               if [ -n "$PREV_TAG" ]; then
-                  NOTES_ARGS+=(--notes-start-tag "v$PREV_TAG")
-              fi
-
-              # Lead with this version's notes from CHANGELOG.md. `gh` puts them above the
-              # generated notes. A repo with no CHANGELOG.md, or no entry for this version, gets
-              # the generated notes alone: the package is already published, so this step must
-              # not fail the release.
-              CHANGELOG_NOTES=$(node "$GITHUB_ACTION_PATH/../../../bin/xh-changelog.js" notes "$VERSION" \
-                  --link-base "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/blob/v$VERSION" 2>/dev/null) || CHANGELOG_NOTES=""
-              if [ -n "$CHANGELOG_NOTES" ]; then
-                  NOTES_ARGS+=(--notes "$CHANGELOG_NOTES")
+                  NOTES_FLAG="--generate-notes --notes-start-tag v$PREV_TAG"
               fi
 
               gh release create "v$VERSION" \
                   --title "v$VERSION" \
-                  "${NOTES_ARGS[@]}" \
+                  $NOTES_FLAG \
                   "$LATEST_FLAG"
