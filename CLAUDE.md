@@ -247,10 +247,14 @@ harness only auto-loads the CLAUDE.md of the primary working directory.
 
 ## hoist-ai plugin (`xh@hoist-ai`)
 
-The shared `.claude/settings.json` enables XH's `xh@hoist-ai` plugin. Claude Code offers to
-install it on your first session here. Its `xh:clear-writing` skill sets the house style for
-CHANGELOG entries, PR descriptions, docs, and comments written here. Its other skills mostly
-target Hoist applications.
+The shared `.claude/settings.json` enables XH's `xh@hoist-ai` plugin, but enabling does not
+install it. Each developer should install it once per machine at user scope, which covers every
+repo and worktree and auto-updates. If no `xh:` skills appear in your available skills, tell the
+developer the plugin is missing and give them the command
+`claude plugin install xh@hoist-ai --scope user`. Offer to run it for them.
+
+Its `xh:clear-writing` skill sets the house style for CHANGELOG entries, PR descriptions, docs,
+and comments written here. Its other skills mostly target Hoist applications.
 
 ## GitHub
 
