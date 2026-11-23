@@ -1,40 +1,38 @@
 {
-    "$schema": "https://json.schemastore.org/claude-code-settings.json",
-    "permissions": {
-        "allow": [
-            "Edit",
-            "Glob",
-            "Grep",
-            "Read",
-            "WebFetch",
-            "WebSearch",
-            "Write",
-            "mcp__github__get_*",
-            "mcp__github__issue_read",
-            "mcp__github__list_*",
-            "mcp__github__pull_request_read",
-            "mcp__github__search_*",
-            "mcp__hoist-react__*",
-            "mcp__ide__getDiagnostics",
-            "mcp__idea__analyze_calls",
-            "mcp__idea__generate_inspection_kts_api",
-            "mcp__idea__generate_inspection_kts_examples",
-            "mcp__idea__generate_psi_tree",
-            "mcp__idea__get_*",
-            "mcp__idea__git_status",
-            "mcp__idea__introspect_schema",
-            "mcp__idea__lint_files",
-            "mcp__idea__list_*",
-            "mcp__idea__read_*",
-            "mcp__idea__search_*",
-            "mcp__idea__test_database_connection",
-            "mcp__idea__xdebug_get_*",
-            "mcp__idea__xdebug_list_breakpoints"
-        ]
-    },
-    "attribution": {
-        "commit": "",
-        "pr": "",
-        "sessionUrl": false
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "attribution": {
+    "commit": "",
+    "pr": "",
+    "sessionUrl": false
+  },
+  "permissions": {
+    "allow": [
+      "Edit",
+      "Glob",
+      "Grep",
+      "Read",
+      "WebFetch",
+      "WebSearch",
+      "Write",
+      "Skill(xh:clear-writing)",
+      "Skill(xh:hoist-upgrade)",
+      "Skill(xh:onboard-app)",
+      "Skill(xh:right-size)",
+      "Skill(xh:setup-worktree)",
+      "Skill(xh:using-hoist-core-reference)",
+      "Skill(xh:using-hoist-react-reference)"
+    ]
+  },
+  "enabledPlugins": {
+    "xh@hoist-ai": true
+  },
+  "extraKnownMarketplaces": {
+    "hoist-ai": {
+      "source": {
+        "source": "github",
+        "repo": "xh/hoist-ai"
+      },
+      "autoUpdate": true
     }
+  }
 }

@@ -245,32 +245,14 @@ apply in every repo you touch, not just this one — and each sibling repo has i
 with additional rules that bind while you work there. Read it before writing to that repo; the
 harness only auto-loads the CLAUDE.md of the primary working directory.
 
-## MCP Servers
+## hoist-ai plugin (`xh@hoist-ai`)
 
-### GitHub MCP Server (opt-in)
+The shared `.claude/settings.json` enables XH's `xh@hoist-ai` plugin. Claude Code offers to
+install it on your first session here. Its `xh:clear-writing` skill sets the house style for
+CHANGELOG entries, PR descriptions, docs, and comments written here. Its other skills mostly
+target Hoist applications.
 
-A Docker-based server providing GitHub API tools (issues, PRs, code search, etc.) via the
-official `github-mcp-server` image. Configured in `.mcp.json` but **not enabled by default** —
-it requires Docker and an authenticated GitHub CLI, which not every developer keeps running.
+## GitHub
 
-**To enable:**
-
-1. Install and start **Docker**.
-2. Install the **GitHub CLI** (`brew install gh`) and authenticate with `gh auth login`. The
-   server invokes `gh auth token` at startup to fetch a token from the macOS Keychain (or
-   `gh`'s credential store on other platforms), so no plaintext token needs to live in your
-   shell environment.
-3. Add `"github"` to `enabledMcpjsonServers` in `.claude/settings.local.json` (local settings
-   merge with the shared `settings.json` — enabling locally does not affect other developers):
-   ```json
-   {
-     "enabledMcpjsonServers": ["github"]
-   }
-   ```
-
-If Docker is not running or `gh` is not authenticated when the server is enabled, Claude Code
-may show errors on startup — remove `"github"` from your local settings to resolve.
-
-**Fallback when not enabled:** The `gh` CLI provides functionally equivalent access to the same
-operations (`gh pr view`, `gh issue list`, `gh api`, `gh pr create`, etc.). Prefer `gh` over
-crafting raw `curl` calls to the GitHub API.
+Use the GitHub CLI (`gh`) for GitHub operations: `gh pr view`, `gh issue list`, `gh pr create`,
+and `gh api` for anything else. Prefer it over raw `curl` calls to the GitHub API.
