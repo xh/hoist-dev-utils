@@ -602,8 +602,8 @@ describe('xh-changelog add', () => {
         assert.equal(cli('check'), 0);
     });
 
-    it('adds an entry to a fragment that `new` created, below its comment', () => {
-        cli('new', 'c');
+    it('adds an entry to a fragment below its comment', () => {
+        write('changelog.d/c.md', '<!--\n  Notes for this branch.\n-->\n');
         cli('add', 'tech', 'Tuned a thing.', '--name', 'c');
         assert.match(read('changelog.d/c.md'), /-->\n\n### ⚙️ Technical\n\n\* Tuned a thing\.\n$/);
         assert.equal(cli('check'), 0);
@@ -618,6 +618,8 @@ describe('xh-changelog add', () => {
     it('keeps a fragment named with a path inside changelog.d, as a visible file', () => {
         cli('add', 'fix', 'Two.', '--name', '../.hidden');
         assert.ok(fs.existsSync(at('changelog.d/hidden.md')));
+        cli('add', 'fix', 'Three.', '--name', 'feature/thing');
+        assert.ok(fs.existsSync(at('changelog.d/feature-thing.md')));
     });
 
     it('takes entry text that starts with dashes', () => {
@@ -639,9 +641,8 @@ describe('xh-changelog add', () => {
 describe('xh-changelog check', () => {
     const {cli, logs, at, write} = tempRepo(WITH_CONFIG);
 
-    it('fails on a fragment that `new` created until it has entries', () => {
-        assert.equal(cli('new', 'feature/thing'), 0);
-        assert.ok(fs.existsSync(at('changelog.d/feature-thing.md')));
+    it('fails on a fragment that holds only a comment', () => {
+        write('changelog.d/feature-thing.md', '<!--\n  Entries go here.\n-->\n');
         assert.equal(cli('check'), 1);
         write('changelog.d/feature-thing.md', '### 🎁 New Features\n\n* Added a thing.\n');
         assert.equal(cli('check'), 0);

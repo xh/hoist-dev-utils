@@ -411,8 +411,9 @@ For a one-line entry, run `add` with a short section name, such as `fix`, `featu
 xh-changelog add fix "Fixed GridModel losing its sort when its store reloaded with a filter."
 ```
 
-For a longer entry, run `new`, or create a file in `changelog.d/` with any name. You can leave the
-emoji off a heading, as in `### Bug Fixes`. The release writes the configured title.
+For a longer entry, edit the file that `add` writes, or create one in `changelog.d/` with any
+name. You can leave the emoji off a heading, as in `### Bug Fixes`. The release writes the
+configured title.
 
 A pull request can add more than one fragment, and it can edit a fragment that another pull request
 added.
@@ -426,7 +427,6 @@ curate the release.
 | Command | What it does |
 |---|---|
 | `xh-changelog add <section> <text>` | Adds one entry to this branch's fragment, creating the file or the section if needed, and wraps it at `maxLineLength`. `<section>` is a section title or part of one. Takes `--name <fragment>`. |
-| `xh-changelog new [name]` | Creates `changelog.d/<name>.md`, with the valid sections listed in a comment. The name defaults to the git branch. |
 | `xh-changelog check` | Validates every fragment, and checks that `CHANGELOG.md` has no entries under its unreleased heading. Add `--base <ref>` to warn when the branch adds no fragment, and `--require` to make that an error. |
 | `xh-changelog check --release <version>` | For a release build. Fails unless `CHANGELOG.md` holds `<version>` and no fragments are left. |
 | `xh-changelog preview` | Prints the next release as it would be assembled. Add `--base <ref>` to print only the entries this branch adds. |
