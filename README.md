@@ -433,6 +433,7 @@ curate the release.
 | `xh-changelog check --release <version>` | For a release build. Fails unless `CHANGELOG.md` holds `<version>` and no fragments are left. |
 | `xh-changelog preview` | Prints the next release as it would be assembled. Add `--base <ref>` to print only the entries this branch adds. |
 | `xh-changelog release <version>` | Assembles the fragments into `CHANGELOG.md` and deletes them. Takes `--date`, `--dry-run` and `--allow-breaking`. |
+| `xh-changelog notes <version>` | Prints the notes of a release in `CHANGELOG.md`, ready for a GitHub release. Takes `--link-base <url>`. |
 | `xh-changelog snapshot [--version <v>]` | Writes the assembled fragments under the unreleased heading, for a snapshot build. Never commit the result. |
 | `xh-changelog init` | Sets up `changelog.d/` in a repo. |
 
@@ -497,6 +498,24 @@ For a hotfix on a release branch, add the fragment there and run `release`. When
 hotfix back, delete the matching fragment on `develop` if the same fix landed there too. Otherwise
 the next release lists it twice. `check` warns about an entry that a release already holds.
 
+### GitHub release notes
+
+The `create-tag-and-github-release` action puts a version's `CHANGELOG.md` notes at the top of its
+GitHub release, above the notes that GitHub generates. Nobody writes the notes twice.
+
+It gets them from `xh-changelog notes <version>`, which changes two things for the release page:
+
+- It joins each wrapped bullet into one line. GitHub shows a line break for every newline in a
+  release body, so a bullet wrapped at 100 characters would show as ragged lines.
+- With `--link-base <url>`, it points relative links at that URL. The action passes the URL of
+  the tagged tree, so a link to `docs/upgrade-notes/...` opens the file as it was at the release.
+
+To publish by hand:
+
+```bash
+xh-changelog notes 2.1.0 | gh release create v2.1.0 --title v2.1.0 --notes-file -
+```
+
 ### Snapshot builds
 
 A snapshot should show what it holds.
@@ -536,7 +555,7 @@ Available actions under `.github/actions/`:
 * **`prepare-gradle-snapshot-version`** — Resolves and writes a SNAPSHOT version to
   `gradle.properties` for Java/Grails projects.
 * **`create-tag-and-github-release`** — Tags a commit, pushes the tag, and creates a GitHub Release
-  with auto-generated notes.
+  with the version's notes from `CHANGELOG.md` and auto-generated notes.
 * **`check-changelog`** - Validates the changelog fragments a pull request adds. See
   [Changelog fragments](#changelog-fragments).
 
