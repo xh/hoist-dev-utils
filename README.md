@@ -576,10 +576,9 @@ app's `node_modules` with your package manager's link command - e.g.
 manager the app itself uses.
 
 This repo itself is managed with [pnpm](https://pnpm.io) - run `pnpm install` to install its
-dependencies. The required pnpm version is pinned via the `packageManager` field in `package.json`
-and will be provisioned automatically by [corepack](https://nodejs.org/api/corepack.html)
-(`corepack enable pnpm`) or by a standalone pnpm install of v10+. Run `pnpm test` for the
-`node --test` specs under `test/`.
+dependencies. The `packageManager` field in `package.json` pins the exact pnpm version. Install
+any recent pnpm (see [pnpm.io/installation](https://pnpm.io/installation)), and it switches to the
+pinned version automatically. Run `pnpm test` for the `node --test` specs under `test/`.
 
 ------------------------------------------
 

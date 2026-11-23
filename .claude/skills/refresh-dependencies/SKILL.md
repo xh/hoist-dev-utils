@@ -63,8 +63,8 @@ Work from the repo root: `/Users/amcclain/dev/hoist-dev-utils`. Track these as t
   (`HEAD`) as its before-baseline.
 - This repo uses **pnpm** (version pinned via the `packageManager` field in `package.json`).
   Never run `npm install` or `yarn install`, or create a `package-lock.json` or `yarn.lock`.
-  `pnpm-lock.yaml` is the source of truth. If pnpm is not on the PATH, run it through corepack
-  (`corepack pnpm <cmd>`).
+  `pnpm-lock.yaml` is the source of truth. Any recent pnpm switches to the pinned version
+  automatically - do not use corepack.
 
 ### 2. See what's available
 
