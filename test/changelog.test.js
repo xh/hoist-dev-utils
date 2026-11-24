@@ -422,8 +422,9 @@ describe('releaseNotes', () => {
                     '      1',
                     '  );',
                     '  ```',
-                    '* First line.  ',
-                    '  After a hard break.',
+                    '',
+                    '> Read the upgrade notes',
+                    '> before you start.',
                     '',
                     '| Old | New |',
                     '|-----|-----|',
@@ -446,8 +447,9 @@ describe('releaseNotes', () => {
                 '      1',
                 '  );',
                 '  ```',
-                '* First line.  ',
-                '  After a hard break.',
+                '',
+                '> Read the upgrade notes',
+                '> before you start.',
                 '',
                 '| Old | New |',
                 '|-----|-----|',
@@ -462,7 +464,10 @@ describe('releaseNotes', () => {
                 [
                     '* See [`docs/upgrade.md`](docs/upgrade.md) and [the guide](./guide/README.md#setup).',
                     '* See [the site](https://xh.io), [an anchor](#top) and [a root path](/abs).',
-                    '* Write a link as `[text](path)`.'
+                    '',
+                    '```md',
+                    '[text](path)',
+                    '```'
                 ].join('\n')
             ),
             '1.2.0',
@@ -473,7 +478,10 @@ describe('releaseNotes', () => {
             [
                 '* See [`docs/upgrade.md`](https://github.com/xh/lib/blob/v1.2.0/docs/upgrade.md) and [the guide](https://github.com/xh/lib/blob/v1.2.0/guide/README.md#setup).',
                 '* See [the site](https://xh.io), [an anchor](#top) and [a root path](/abs).',
-                '* Write a link as `[text](path)`.'
+                '',
+                '```md',
+                '[text](path)',
+                '```'
             ].join('\n')
         );
     });
