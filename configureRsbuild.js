@@ -363,7 +363,11 @@ async function configureRsbuild(env) {
 
     // Parse CHANGELOG.md to JSON (or write an empty fallback), then install a resolver alias to
     // the synthetic import path used by XH.changelogService.
-    resolveAliases['@xh/app-changelog.json'] = await writeChangelogJson(basePath, parseChangelog);
+    resolveAliases['@xh/app-changelog.json'] = await writeChangelogJson(
+        basePath,
+        parseChangelog,
+        appVersion
+    );
 
     // TS-only support - fail fast on any .jsx source.
     checkNoJsxFiles([srcPath, ...extraIncludePaths]);

@@ -1,0 +1,11 @@
+{
+    "sections": [
+        "💥 Breaking Changes",
+        "🎁 New Features",
+        "⚙️ Technical",
+        "🐞 Bug Fixes",
+        "📚 Libraries"
+    ],
+    "headingFormat": "## {version} - {date}",
+    "maxLineLength": 100
+}
