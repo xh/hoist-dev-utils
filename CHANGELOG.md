@@ -2,6 +2,44 @@
 
 ## 17.0.0-SNAPSHOT - unreleased
 
+## 16.6.0 - 2026-11-23
+
+### 🎁 New Features
+
+* New `xh-changelog` command for changelog fragments. Each pull request adds its entries as a
+  markdown file in `changelog.d/`, and `xh-changelog release <version>` assembles them into
+  `CHANGELOG.md`. Pull requests stop conflicting over `CHANGELOG.md`, and an entry merged after a
+  release can no longer land under the version that shipped. It runs on plain Node, for libraries
+  and apps alike. See the README section "Changelog fragments".
+    * `xh-changelog add fix "<text>"` adds one entry to the branch's fragment. It finds the section
+      from a short name, so nobody types an emoji heading.
+    * `xh-changelog init` sets up a repo: the config, a README, a `changelog` package script and a
+      GitHub workflow.
+* New `check-changelog` shared action, which runs `xh-changelog check` on pull requests. The job
+  summary shows the entries that the pull request adds. In a release build, pass `release` to fail
+  the build unless `CHANGELOG.md` holds the version and no fragments are left.
+* App builds show unreleased changelog fragments in the in-app release notes, under the version in
+  development.
+* App release notes keep wrapped bullets and sub-bullets. Before, the build kept only the first line
+  of each bullet, so app changelogs had to write every bullet as one long line. The changelog JSON
+  also gains markdown `sections`, which hoist-react releases after 91.0 render with code spans,
+  links and nested lists. See the README section "In-app release notes".
+* New `devOpenBrowser` option (`XH_DEV_OPEN_BROWSER`). Set it to `false` to stop the dev server
+  opening `devServerOpenPage` in a browser on start. The bare root `/` still redirects there.
+* GitHub releases now lead with the version's notes from `CHANGELOG.md`, above the notes that
+  GitHub generates. The `create-tag-and-github-release` action gets them from the new
+  `xh-changelog notes <version>` command, which joins wrapped lines and resolves relative links.
+  A repo with no `CHANGELOG.md` entry for the version gets the generated notes as before.
+
+### ⚙️ Technical
+
+* This repo now writes its own changelog entries as fragments in `changelog.d/`.
+
+### 📚 Libraries
+
+* changelog-parser `removed`
+* remove-markdown `added @ 0.6`
+
 ## 16.5.0 - 2026-11-18
 
 ### 🎁 New Features
