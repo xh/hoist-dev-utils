@@ -64,6 +64,10 @@ jobs:
           with:
               version: ${{ inputs.version }}
 
+        # List the unreleased changelog fragments in the published CHANGELOG.md. Not committed.
+        - name: Add unreleased changelog entries
+          run: node bin/xh-changelog.js snapshot
+
         # Auth is OIDC trusted publishing only (npm >= 11.5.1), with no token fallback - a trusted
         # publisher config that does not match this repo and workflow fails the publish rather
         # than npm silently publishing with a long-lived token. npm attaches provenance itself

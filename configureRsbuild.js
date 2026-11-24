@@ -166,9 +166,12 @@ const hoistReactPkg = resolveAppPackage('@xh/hoist', basePath),
  *      testing on alternate workstations or devices. Will be automatically set to lowercase. Dev-mode only.
  * @param {number} [env.devGrailsPort] - port of local Grails server. Dev-mode only.
  * @param {number} [env.devWebpackPort] - port on which to start the dev server. (Historic name retained.) Dev-mode only.
- * @param {string} [env.devServerOpenPage] - path to auto-open when the dev server starts. Leave null to disable
- *      automatic page open on startup. Also where the dev server redirects a request for the bare root `/` -
- *      unset, that redirect goes to the `app` entry, or to the only entry if there is one. Dev-mode only.
+ * @param {string} [env.devServerOpenPage] - path to auto-open when the dev server starts. Also where the dev
+ *      server redirects a request for the bare root `/` - unset, that redirect goes to the `app` entry, or to the
+ *      only entry if there is one. To stop the auto-open, set `devOpenBrowser: false` rather than leaving this
+ *      unset, which can leave `/` with no redirect. Dev-mode only.
+ * @param {boolean} [env.devOpenBrowser=true] - false to stop the dev server opening `devServerOpenPage` in a
+ *      browser on start. The bare-root redirect still applies. Dev-mode only.
  * @param {boolean} [env.devLiveReload=true] - false to stop the dev server from reloading the page when an edit
  *      cannot be hot-swapped (the equivalent of webpack-dev-server's `--no-live-reload`). Hot-swaps of CSS and
  *      Fast-Refresh-eligible components still apply; other edits are rebuilt but not applied until a manual
@@ -203,6 +206,7 @@ async function configureRsbuild(env) {
         minify = parseFlag(env.minify, true) === true,
         devClientOverlay = env.devClientOverlay ?? {errors: true, runtimeErrors: false},
         devLiveReload = parseFlag(env.devLiveReload, true) === true,
+        devOpenBrowser = parseFlag(env.devOpenBrowser, true) === true,
         devHmr = parseFlag(env.devHmr, true) === true,
         devFastRefresh = devHmr && parseFlag(env.devFastRefresh, true) === true,
         devHost = env.devHost ? env.devHost.toLowerCase() : 'localhost',
@@ -361,7 +365,11 @@ async function configureRsbuild(env) {
 
     // Parse CHANGELOG.md to JSON (or write an empty fallback), then install a resolver alias to
     // the synthetic import path used by XH.changelogService.
-    resolveAliases['@xh/app-changelog.json'] = await writeChangelogJson(basePath, parseChangelog);
+    resolveAliases['@xh/app-changelog.json'] = await writeChangelogJson(
+        basePath,
+        parseChangelog,
+        appVersion
+    );
 
     // TS-only support - fail fast on any .jsx source.
     checkNoJsxFiles([srcPath, ...extraIncludePaths]);
@@ -648,7 +656,8 @@ async function configureRsbuild(env) {
                       // the next free port, breaking OAuth redirect URIs and fixed-port scripts.
                       strictPort: true,
                       https: _.isPlainObject(devHttps) ? devHttps : undefined,
-                      open: env.devServerOpenPage ? [env.devServerOpenPage] : false,
+                      open:
+                          devOpenBrowser && env.devServerOpenPage ? [env.devServerOpenPage] : false,
                       // Support HTML5 history routes for apps, with /appName/ as the base route for each
                       historyApiFallback: {rewrites: appRouteRewrites(clientAppNames)},
                       // Redirect the bare root to a default app, as the `location = /` block in
@@ -921,6 +930,7 @@ function readCliEnv(processEnv = process.env) {
         XH_DEV_LIVE_RELOAD: 'devLiveReload',
         XH_DEV_FAST_REFRESH: 'devFastRefresh',
         XH_DEV_HMR: 'devHmr',
+        XH_DEV_OPEN_BROWSER: 'devOpenBrowser',
         XH_LOG_LEVEL: 'logLevel'
     };
     const ret = {};

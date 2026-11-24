@@ -180,10 +180,16 @@ declare namespace configureRsbuild {
         /** Port on which to start the dev server (historic name). Default 3000. Dev-mode only. */
         devWebpackPort?: number | string;
         /**
-         * Path to open when the dev server starts. Unset to open nothing. Also where the dev server
-         * redirects the bare root `/` - unset, the `app` entry or a sole entry. Dev-mode only.
+         * Path to open when the dev server starts. Also where the dev server redirects the bare root
+         * `/` - unset, the `app` entry or a sole entry. To stop the auto-open, set
+         * `devOpenBrowser: false` rather than unsetting this. Dev-mode only.
          */
         devServerOpenPage?: string;
+        /**
+         * False to stop the dev server opening `devServerOpenPage` on start. The bare-root
+         * redirect still applies. Default true. Dev-mode only.
+         */
+        devOpenBrowser?: boolean;
         /**
          * `true` to run the dev server over SSL with a self-signed cert, or Node
          * `https.createServer` options for a custom cert/key. Default false. Dev-mode only.

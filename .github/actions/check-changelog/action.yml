@@ -1,0 +1,54 @@
+# Check Changelog - Reusable composite action that validates changelog fragments on a pull request,
+# or checks a release build for its changelog. See .github/README.md.
+#
+# Prerequisites: Node on the PATH, as on GitHub-hosted runners.
+
+name: Check Changelog
+description: Validates changelog fragments in changelog.d/ and warns when a pull request adds none.
+
+inputs:
+    base:
+        description: 'Ref or SHA to diff against when looking for a new fragment. Defaults to the pull request base.'
+        required: false
+        default: ''
+    skip-label:
+        description: 'A pull request with this label needs no fragment. It turns off the warning.'
+        required: false
+        default: 'no-changelog'
+    release:
+        description: 'Version being published. Set this in a release build, to check that CHANGELOG.md holds the version and no fragments are left. The pull request checks are skipped.'
+        required: false
+        default: ''
+    working-directory:
+        description: 'Directory to run from. The check uses the nearest CHANGELOG.md at or above it.'
+        required: false
+        default: '.'
+
+runs:
+    using: composite
+    steps:
+        - name: Check changelog fragments
+          shell: bash
+          working-directory: ${{ inputs.working-directory }}
+          env:
+              BASE: ${{ inputs.base || github.event.pull_request.base.sha }}
+              SKIP: ${{ contains(github.event.pull_request.labels.*.name, inputs.skip-label) }}
+              RELEASE: ${{ inputs.release }}
+          run: |
+              cli="$GITHUB_ACTION_PATH/../../../bin/xh-changelog.js"
+              if [[ -n "$RELEASE" ]]; then
+                  node "$cli" check --release "$RELEASE"
+                  exit
+              fi
+              args=(check)
+              if [[ -n "$BASE" && "$SKIP" != "true" ]]; then args+=(--base "$BASE"); fi
+              if [[ -n "$BASE" && -n "$GITHUB_STEP_SUMMARY" ]]; then
+                  {
+                      echo "### Changelog entries in this pull request"
+                      echo
+                      GITHUB_ACTIONS=false node "$cli" preview --base "$BASE" 2>/dev/null \
+                          | sed -e 's/^## /#### /' -e 's/^### /##### /' \
+                          || echo "Could not build a preview."
+                  } >> "$GITHUB_STEP_SUMMARY"
+              fi
+              node "$cli" "${args[@]}"
