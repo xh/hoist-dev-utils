@@ -68,11 +68,10 @@ projects like hoist-core. Timestamp appending defaults to `false` for Maven Cent
 
 Creates a git tag (`v{version}`), pushes it, and creates a GitHub Release.
 
-The release leads with the version's notes from `CHANGELOG.md`, as `xh-changelog notes` prints
-them: wrapped lines are joined, and relative links point at the tagged files. GitHub's
-auto-generated notes follow, scoped to the previous semver tag. A first release gets generated
-notes for the full history. A repo with no `CHANGELOG.md`, or no entry for the version, gets the
-generated notes alone.
+The release leads with the version's notes from `CHANGELOG.md`. See
+[GitHub release notes](../README.md#github-release-notes). GitHub's auto-generated notes follow,
+scoped to the previous semver tag. A first release gets generated notes for the full history. A
+repo with no `CHANGELOG.md`, or no entry for the version, gets the generated notes alone.
 
 | Input | Required | Description |
 |---|---|---|
